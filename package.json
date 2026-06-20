@@ -1,0 +1,25 @@
+{
+    "name": "whatsapp-youtube",
+    "version": "1.0.0",
+    "description": "This is a WhatsApp Youtube Demo.",
+    "main": "index.js",
+    "scripts": {
+        "start": "node src/index.js"
+    },
+    "author": "Raj Kapadia",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.20.3",
+        "cloudinary": "^1.41.3",
+        "dotenv": "^8.6.0",
+        "ejs": "^3.1.10",
+        "express": "^4.21.2",
+        "express-session": "^1.19.0",
+        "mongodb": "^6.20.0",
+        "mongoose": "^9.0.2",
+        "multer": "^2.0.2",
+        "node-cron": "^4.2.1",
+        "node-fetch": "^3.3.2",
+        "twilio": "^3.84.1"
+    }
+}
