@@ -237,15 +237,40 @@
             margin-top: 14px;
             border: 1px dashed rgba(255,255,255,0.10);
             border-radius: var(--radius);
-            padding: 18px;
+            padding: 14px;
             text-align: center;
-            cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .csv-zone:hover, .csv-zone.drag-over {
+        .csv-zone.drag-over {
             border-color: var(--border-focus);
             background: var(--green-dim);
+        }
+
+        .csv-paste-area {
+            width: 100%; min-height: 72px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+            font-size: 12px; padding: 10px 12px;
+            resize: none; line-height: 1.6;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+            display: block; margin-bottom: 10px;
+        }
+        .csv-paste-area::placeholder { color: var(--text-3); }
+        .csv-paste-area:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+
+        .csv-or {
+            font-size: 10px; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.6px;
+            margin-bottom: 8px;
         }
 
         .csv-zone label {
@@ -255,7 +280,7 @@
 
         .csv-zone input[type="file"] { display: none; }
 
-        .csv-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+        .csv-icon { font-size: 20px; display: block; margin-bottom: 4px; }
 
         .csv-hint {
             font-size: 11px; color: var(--text-3); margin-top: 4px;
@@ -602,9 +627,16 @@
 
             <!-- CSV drop zone -->
             <div class="csv-zone" id="csvDropZone">
+                <textarea
+                    class="csv-paste-area"
+                    id="csvPasteArea"
+                    placeholder="Pega el CSV de tu lector aquí (iPhone: mantén presionado → Pegar)"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                ></textarea>
+                <div class="csv-or">o</div>
                 <span class="csv-icon">📄</span>
                 <label for="csvFileInput">
-                    Arrastra un CSV aquí o haz clic para seleccionar archivo
+                    Arrastra o haz clic para seleccionar archivo
                     <input type="file" id="csvFileInput" accept=".csv,.txt">
                 </label>
                 <div class="csv-hint">Acepta columna EPC o EPCs línea a línea</div>
@@ -1077,6 +1109,46 @@
             if (!file) return;
             el.csvFilename.textContent = file.name;
             loadCSVFile(file);
+        });
+
+        // Paste textarea — works on iPhone (long-press → Pegar) and desktop (Ctrl+V)
+        const csvPasteArea = document.getElementById('csvPasteArea');
+
+        function handlePastedCSV(text) {
+            const epcs = parseCSV(text);
+            if (!epcs.length) {
+                toast('error', 'Sin EPCs válidos', 'El texto pegado no contiene EPCs de 24 caracteres hex.');
+                return;
+            }
+            const current = el.textarea.value.trim();
+            el.textarea.value = current ? `${current}\n${epcs.join('\n')}` : epcs.join('\n');
+            el.csvFilename.textContent = `${epcs.length} EPC(s) pegados`;
+            csvPasteArea.value = '';
+            clearTimeout(debounceTimer);
+            updateEverything();
+            toast('success', 'CSV pegado', `${epcs.length} EPC(s) cargados desde portapapeles`);
+        }
+
+        // paste event fires on desktop and most Android browsers
+        csvPasteArea.addEventListener('paste', e => {
+            const text = e.clipboardData && e.clipboardData.getData('text');
+            if (text) { e.preventDefault(); handlePastedCSV(text); return; }
+            // fallback: let the text land, then read it
+            setTimeout(() => { if (csvPasteArea.value) handlePastedCSV(csvPasteArea.value); }, 50);
+        });
+
+        // input fallback — catches iOS where clipboardData is unavailable in paste event
+        csvPasteArea.addEventListener('input', () => {
+            if (csvPasteArea.value) handlePastedCSV(csvPasteArea.value);
+        });
+
+        // Global paste: catch Ctrl+V anywhere on the page except inside inputs/textareas
+        document.addEventListener('paste', e => {
+            const tag = document.activeElement && document.activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            const text = e.clipboardData.getData('text');
+            if (!text) return;
+            handlePastedCSV(text);
         });
 
         // ─────────────────────────────────────────────────────────────
