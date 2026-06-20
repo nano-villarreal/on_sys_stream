@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resumen — <%= client || 'Cliente' %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0e1117;--surface:#161b22;--border:rgba(255,255,255,0.07);--green:#3ecf8e;--green-dim:rgba(62,207,142,0.10);--green-glow:rgba(62,207,142,0.22);--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;--indigo:#6366f1;--text:#ededef;--text-2:#8b8fa8;--text-3:#4a4f62;--radius:13px;}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 20px;background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(62,207,142,0.07) 0%,transparent 100%);}
+        .header{text-align:center;padding:40px 0 36px;animation:fadeUp 0.4s ease both;}
+        .nav-logo{width:48px;height:48px;background:linear-gradient(135deg,var(--green),#22c55e);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#0a1008;box-shadow:0 0 24px var(--green-glow);margin-bottom:16px;}
+        .sys-name{font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+        .client-name{font-size:28px;font-weight:800;letter-spacing:-1px;}
+        .generated{font-size:11px;color:var(--text-3);margin-top:6px;}
+        .container{max-width:700px;margin:0 auto;}
+        .card{background:rgba(22,27,34,0.80);border:1px solid var(--border);border-radius:18px;padding:24px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+        .card+.card{margin-top:14px;}
+        .card-title{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px;}
+        .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+        @media(max-width:500px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+        .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 14px;text-align:center;}
+        .stat-value{font-size:34px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin-bottom:5px;}
+        .stat-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;}
+        .article-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;}
+        .article-row:last-child{border-bottom:none;}
+        .article-name{font-weight:600;color:var(--text);}
+        .article-count{font-weight:700;color:var(--green);}
+        .last-row{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;color:var(--text-2);}
+        .last-row strong{color:var(--text);}
+        .readonly-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;color:var(--text-3);margin-top:12px;}
+        .alert-error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:var(--radius);padding:24px;font-size:14px;text-align:center;margin-top:40px;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+    </style>
+</head>
+<body>
+
+<% if (error && !client) { %>
+<div class="container">
+    <div class="alert-error">
+        <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+        <%= error %>
+    </div>
+</div>
+<% } else { %>
+
+<div class="header">
+    <div class="nav-logo">ON</div>
+    <div class="sys-name">Sistema de Inventario — Resumen</div>
+    <div class="client-name"><%= client %></div>
+    <div class="generated">Generado <%= new Date(generatedAt).toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) %></div>
+    <div class="readonly-badge">🔒 Solo lectura</div>
+</div>
+
+<div class="container" style="animation:fadeUp 0.4s 0.1s ease both;">
+
+    <% if (stats) { %>
+    <!-- Key stats -->
+    <div class="card">
+        <div class="card-title">Estado actual de inventario</div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" style="color:var(--text)"><%= stats.total %></div><div class="stat-label">Total prendas</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--green)"><%= stats.delivered %></div><div class="stat-label">Entregadas</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--blue)"><%= stats.currentlyOut %></div><div class="stat-label">En circulación</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--indigo)"><%= stats.avgWashes %></div><div class="stat-label">Avg. lavados</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--amber)"><%= stats.totalWashes %></div><div class="stat-label">Lavados totales</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--red)"><%= stats.damaged %></div><div class="stat-label">Dañadas</div></div>
+        </div>
+    </div>
+
+    <!-- Last movement -->
+    <div class="card">
+        <div class="card-title">Última actividad</div>
+        <% if (lastRecol) { %>
+        <div class="last-row"><span>Última recolección</span><strong><%= new Date(lastRecol.date).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'}) %></strong></div>
+        <% } %>
+        <% if (lastEntrega) { %>
+        <div class="last-row"><span>Última entrega</span><strong><%= new Date(lastEntrega.date).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'}) %></strong></div>
+        <% } %>
+        <% if (!lastRecol && !lastEntrega) { %><div style="color:var(--text-3);font-size:13px;">Sin actividad registrada.</div><% } %>
+    </div>
+
+    <!-- Article breakdown -->
+    <% if (articles && articles.length > 0) { %>
+    <div class="card">
+        <div class="card-title">Inventario por artículo</div>
+        <% articles.forEach(a => { %>
+        <div class="article-row">
+            <span class="article-name"><%= a._id || 'Sin artículo' %></span>
+            <span class="article-count"><%= a.count %> prendas</span>
+        </div>
+        <% }) %>
+    </div>
+    <% } %>
+    <% } else { %>
+    <div class="card" style="text-align:center;padding:48px;color:var(--text-3);">Sin datos disponibles para este cliente.</div>
+    <% } %>
+
+    <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text-3);">
+        Este enlace es de solo lectura. Generado por ON Sistema de Inventario.
+    </div>
+</div>
+<% } %>
+</body>
+</html>

@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Dashboard · <%= client || 'Cliente' %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --surface-2:    #1c2333;
+            --border:       rgba(255,255,255,0.07);
+            --border-focus: rgba(62,207,142,0.35);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --red:          #ef4444;
+            --red-dim:      rgba(239,68,68,0.10);
+            --amber:        #f59e0b;
+            --amber-dim:    rgba(245,158,11,0.10);
+            --blue:         #3b82f6;
+            --blue-dim:     rgba(59,130,246,0.10);
+            --indigo:       #6366f1;
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 28px 20px; padding-top: 92px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(62,207,142,0.06) 0%, transparent 100%);
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 64px;
+            background: rgba(14,17,23,0.80);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--green), #22c55e);
+            border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #0a1008;
+            box-shadow: 0 0 18px var(--green-glow); flex-shrink: 0;
+        }
+        .brand-text { display: flex; flex-direction: column; gap: 1px; }
+        .brand-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; line-height: 1; }
+        .brand-sub  { font-size: 10px; font-weight: 500; color: var(--text-3); letter-spacing: 0.4px; text-transform: uppercase; }
+        .nav-links  { display: flex; gap: 6px; align-items: center; }
+        .nav-link {
+            padding: 6px 14px; font-size: 13px; font-weight: 500;
+            text-decoration: none; border-radius: 8px; border: 1px solid transparent;
+            color: var(--text-2); transition: all 0.15s;
+        }
+        .nav-link:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+        .nav-link.active { background: var(--green-dim); color: var(--green); border-color: rgba(62,207,142,0.18); }
+
+        /* ── Layout ── */
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .page-header { text-align: center; margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+        .page-title {
+            font-size: 32px; font-weight: 800; letter-spacing: -1.2px; margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 20%, var(--green) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .page-subtitle { font-size: 14px; color: var(--text-2); }
+
+        /* ── Cards ── */
+        .card {
+            background: rgba(22,27,34,0.75);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 24px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        }
+        .card + .card { margin-top: 14px; }
+
+        .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+        .card-title { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px; }
+
+        /* ── Search ── */
+        .search-row { display: flex; gap: 10px; }
+        input[type="text"] {
+            flex: 1; padding: 11px 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+        }
+        input[type="text"]::placeholder { color: var(--text-3); }
+        input[type="text"]:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(62,207,142,0.07); }
+
+        .btn-search {
+            padding: 11px 22px; font-size: 13px; font-weight: 700;
+            background: var(--green); color: #091a12;
+            border: none; border-radius: var(--radius); cursor: pointer;
+            box-shadow: 0 4px 14px var(--green-glow); transition: all 0.15s; white-space: nowrap;
+        }
+        .btn-search:hover { background: #4ddfaa; transform: translateY(-1px); }
+
+        /* ── Client badge ── */
+        .client-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--green-dim); border: 1px solid rgba(62,207,142,0.18);
+            border-radius: 20px; padding: 4px 14px 4px 10px;
+            font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 20px;
+        }
+        .client-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+        /* ── Stats grid (5 columns) ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        @media (max-width: 860px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 560px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px 16px; text-align: center;
+            transition: border-color 0.2s;
+        }
+        .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+        .stat-value { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+        .stat-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px; }
+        .c-green  { color: var(--green); }
+        .c-text   { color: var(--text); }
+        .c-amber  { color: var(--amber); }
+        .c-red    { color: var(--red); }
+        .c-indigo { color: var(--indigo); }
+        .c-blue   { color: var(--blue); }
+
+        /* ── Charts grid ── */
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 700px) { .chart-grid { grid-template-columns: 1fr; } }
+
+        .chart-wrap { position: relative; height: 260px; }
+        .chart-wrap-tall { position: relative; height: 300px; }
+
+        .chart-loading {
+            display: flex; align-items: center; justify-content: center;
+            height: 100%; color: var(--text-3); font-size: 13px;
+        }
+
+        /* ── Action buttons ── */
+        .btn-action {
+            padding: 6px 14px; font-size: 12px; font-weight: 600;
+            background: var(--surface-2, var(--surface)); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-2); cursor: pointer;
+            transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px;
+            text-decoration: none; white-space: nowrap;
+        }
+        .btn-action:hover { background: var(--surface); color: var(--text); border-color: rgba(255,255,255,0.12); }
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            padding: 10px 14px; text-align: left;
+            font-size: 11px; font-weight: 600; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.7px; border-bottom: 1px solid var(--border);
+        }
+        tbody td {
+            padding: 13px 14px; font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-2);
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+        .td-article { font-weight: 600; color: var(--text); }
+        .td-avg { font-weight: 700; }
+
+        /* Health indicator */
+        .health-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            margin-right: 5px; vertical-align: middle; flex-shrink: 0;
+        }
+        .health-green .health-dot { background: var(--green); }
+        .health-amber .health-dot { background: var(--amber); }
+        .health-red   .health-dot { background: var(--red); }
+        .health-green .td-avg { color: var(--green); }
+        .health-amber .td-avg { color: var(--amber); }
+        .health-red   .td-avg { color: var(--red); }
+
+        /* ── Error / empty states ── */
+        .alert-error {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+            color: #f87171; border-radius: var(--radius); padding: 14px 18px;
+            font-size: 13px; margin-bottom: 16px;
+        }
+        .empty-state { text-align: center; padding: 48px 0; font-size: 14px; color: var(--text-3); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Mobile hamburger ── */
+        .nav-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; cursor: pointer; color: var(--text-2); flex-direction: column; gap: 4px; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+        .nav-toggle:hover { background: var(--surface); color: var(--text); }
+        .nav-toggle span { display: block; width: 18px; height: 1.5px; background: currentColor; border-radius: 2px; transition: transform 0.22s ease, opacity 0.15s; }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+        @media (max-width: 780px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(10,13,18,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px 16px; flex-direction: column; gap: 4px; z-index: 999; }
+            .nav-links.open { display: flex; animation: slideDown 0.18s ease; }
+            .nav-link { padding: 10px 14px; width: 100%; }
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── PDF Panel ── */
+        .pdf-trigger { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .pdf-date-row {
+            display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .pdf-date-row.open { display: flex; }
+        input[type="date"].pdf-date {
+            padding: 7px 11px; background: var(--surface-2, var(--surface));
+            border: 1px solid var(--border); border-radius: var(--radius);
+            font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text);
+            cursor: pointer; color-scheme: dark; transition: border-color 0.2s;
+        }
+        input[type="date"].pdf-date:focus { outline: none; border-color: rgba(62,207,142,0.35); }
+        .btn-pdf-gen {
+            padding: 7px 16px; font-size: 12px; font-weight: 700;
+            background: var(--green); color: #091a12;
+            border: none; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-pdf-gen:hover { background: #4ddfaa; }
+        .btn-pdf-gen:disabled { opacity: 0.55; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <div class="nav-logo">ON</div>
+            <div class="brand-text">
+                <span class="brand-name">Sistema de Inventario</span>
+                <span class="brand-sub">Dashboard</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link" href="/">Conteo en Vivo</a>
+            <a class="nav-link" href="/dar-de-alta">Dar de Alta</a>
+            <a class="nav-link" href="/log?client=<%= encodeURIComponent(client || '') %>">Bitácora</a>
+            <a class="nav-link" href="/damage-breakdown?client=<%= encodeURIComponent(client || '') %>">Daños</a>
+            <a class="nav-link" href="/compare">Comparar</a>
+            <a class="nav-link" href="/tag-history">Tag</a>
+            <a class="nav-link" href="/lost-tags?client=<%= encodeURIComponent(client || '') %>">Perdidos</a>
+            <a class="nav-link" href="/batch-status">Corrector</a>
+            <a class="nav-link active" href="/dashboard">Dashboard</a>
+            <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Inventario, lavados y estado de prendas por cliente</p>
+        </div>
+
+        <!-- Search card -->
+        <div class="card" style="animation: fadeUp 0.4s ease both;">
+            <div class="card-header"><span class="card-title">Buscar cliente</span></div>
+            <form method="POST" action="/dashboard">
+                <div class="search-row">
+                    <input type="text" name="client" placeholder="Nombre del cliente — ej. Club Country"
+                        value="<%= client || '' %>" required autofocus />
+                    <button type="submit" class="btn-search">Buscar →</button>
+                </div>
+            </form>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert-error"><%= error %></div>
+        <% } %>
+
+        <% if (typeof stats !== 'undefined' && stats) { %>
+
+            <!-- Client label + 5-stat grid -->
+            <div class="card" style="animation: fadeUp 0.4s 0.05s ease both;">
+                <div class="client-badge">
+                    <span class="client-dot"></span>
+                    <%= client %>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value c-text"><%= stats.totalItems %></div>
+                        <div class="stat-label">Total Prendas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-green"><%= stats.totalWashCount %></div>
+                        <div class="stat-label">Lavados Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-indigo"><%= overallAverage %></div>
+                        <div class="stat-label">Promedio General</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-blue"><%= currentlyOut %></div>
+                        <div class="stat-label">En Circulación</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-red"><%= stats.damagedCount %></div>
+                        <div class="stat-label">Prendas Dañadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return rate + Share link row -->
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;animation:fadeUp 0.4s 0.06s ease both;">
+                <% if (typeof returnRate !== 'undefined' && returnRate !== null) { %>
+                <div class="stat-card" style="flex:1;min-width:160px;text-align:center;">
+                    <div class="stat-value <%= returnRate >= 80 ? 'c-green' : returnRate >= 50 ? 'c-amber' : 'c-red' %>" style="font-size:28px;"><%= returnRate %>%</div>
+                    <div class="stat-label">Tasa retorno (30d)</div>
+                </div>
+                <% } %>
+                <% if (typeof summaryToken !== 'undefined' && summaryToken && client) { %>
+                <div class="stat-card" style="flex:1;min-width:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                    <div class="stat-label" style="margin-bottom:0;">Enlace compartible</div>
+                    <button id="copyShareLink" class="btn-action" style="font-size:12px;">📋 Copiar enlace</button>
+                    <a id="openShareLink" href="/summary?client=<%= encodeURIComponent(client) %>&token=<%= summaryToken %>" target="_blank" class="btn-action" style="font-size:11px;color:var(--text-3);">Abrir →</a>
+                </div>
+                <% } %>
+                <% if (client) { %>
+                <div class="stat-card" style="flex:1;min-width:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                    <div class="stat-label" style="margin-bottom:0;">Herramientas</div>
+                    <a href="/lost-tags?client=<%= encodeURIComponent(client) %>&days=30" class="btn-action">Tags perdidos</a>
+                    <a href="/log?client=<%= encodeURIComponent(client) %>" class="btn-action">Ver bitácora</a>
+                </div>
+                <div class="stat-card" style="flex:1;min-width:200px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:14px 16px;">
+                    <div class="stat-label" style="margin-bottom:2px;">Descargar PDF</div>
+                    <div class="pdf-trigger">
+                        <button class="btn-action" id="btnTogglePDF">↓ PDF</button>
+                    </div>
+                    <div class="pdf-date-row" id="pdfDateRow">
+                        <input type="date" class="pdf-date" id="pdfFrom" title="Desde" />
+                        <span style="font-size:11px;color:var(--text-3);">—</span>
+                        <input type="date" class="pdf-date" id="pdfTo" title="Hasta" />
+                        <button class="btn-pdf-gen" id="btnGeneratePDF">Generar</button>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Lifecycle alerts -->
+            <% if (typeof lifecycleAlerts !== 'undefined' && lifecycleAlerts.length > 0) { %>
+            <div class="card" style="animation:fadeUp 0.4s 0.07s ease both;margin-top:14px;border-color:rgba(245,158,11,0.2);">
+                <div class="card-header">
+                    <span class="card-title" style="color:var(--amber);">⚠ Alertas de ciclo de vida</span>
+                    <span style="font-size:11px;color:var(--text-3);">Artículos al 80%+ de su umbral de lavados</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                    <% lifecycleAlerts.forEach(alert => { %>
+                    <div style="background:var(--surface);border:1px solid <%= alert.critical ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.2)' %>;border-radius:var(--radius);padding:14px 18px;min-width:180px;flex:1;">
+                        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;"><%= alert.article %></div>
+                        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Avg. <%= alert.avgWashes %> / <%= alert.threshold %> lavados</div>
+                        <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:<%= Math.min(alert.pct,100) %>%;background:<%= alert.critical ? '#ef4444' : '#f59e0b' %>;border-radius:3px;"></div>
+                        </div>
+                        <div style="font-size:11px;font-weight:700;color:<%= alert.critical ? '#ef4444' : '#f59e0b' %>;margin-top:5px;"><%= alert.pct %>% del umbral<%= alert.critical ? ' — SUPERA LÍMITE' : '' %></div>
+                    </div>
+                    <% }) %>
+                </div>
+                <div style="margin-top:14px;font-size:11px;color:var(--text-3);">
+                    Ajustar umbral:
+                    <% lifecycleAlerts.forEach(alert => { %>
+                    <button class="btn-action" style="font-size:10px;margin:2px;" onclick="setThreshold('<%= client %>', '<%= alert.article %>')">Editar límite de <%= alert.article %></button>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Two side-by-side charts: wash bar + status donut -->
+            <div class="chart-grid" style="animation: fadeUp 0.4s 0.08s ease both; margin-top: 14px;">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Lavados promedio por artículo</span></div>
+                    <div class="chart-wrap">
+                        <% if (typeof articleAverages !== 'undefined' && articleAverages && articleAverages.length > 0) { %>
+                        <canvas id="washChart"></canvas>
+                        <% } else { %>
+                        <div class="chart-loading">Sin datos de lavados</div>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Estado actual de prendas</span></div>
+                    <div class="chart-wrap">
+                        <canvas id="statusChart"></canvas>
+                        <div class="chart-loading" id="statusLoading">Cargando…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily usage line chart (async) -->
+            <div class="card" style="animation: fadeUp 0.4s 0.11s ease both; margin-top: 14px;">
+                <div class="card-header">
+                    <span class="card-title">Uso diario por artículo</span>
+                    <button id="downloadDailyChart" class="btn-action">↓ Descargar</button>
+                </div>
+                <div class="chart-wrap-tall">
+                    <canvas id="dailyChart" style="display:none;"></canvas>
+                    <div class="chart-loading" id="dailyLoading">Cargando gráfica…</div>
+                </div>
+            </div>
+
+            <!-- Article breakdown table with CSV export -->
+            <% if (typeof articleAverages !== 'undefined' && articleAverages && articleAverages.length > 0) { %>
+            <div class="card" style="animation: fadeUp 0.4s 0.14s ease both; margin-top: 14px;">
+                <div class="card-header">
+                    <span class="card-title">Promedio de lavados por artículo</span>
+                    <button id="exportCSV" class="btn-action">↓ CSV</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Artículo</th>
+                                <th>Cantidad</th>
+                                <th>Lavados totales</th>
+                                <th>Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% articleAverages.forEach(item => {
+                                const avg = item.avgWashes || 0;
+                                const healthClass = avg <= 25 ? 'health-green' : avg <= 75 ? 'health-amber' : 'health-red';
+                            %>
+                            <tr class="<%= healthClass %>">
+                                <td class="td-article"><span class="health-dot"></span><%= item._id || 'Sin artículo' %></td>
+                                <td><%= item.itemCount %></td>
+                                <td><%= item.totalWashes %></td>
+                                <td class="td-avg"><%= avg.toFixed(1) %></td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <% } else if (client) { %>
+                <div class="card" style="animation: fadeUp 0.4s 0.10s ease both; margin-top: 14px;">
+                    <div class="empty-state">No hay artículos registrados para este cliente.</div>
+                </div>
+            <% } %>
+
+            <!-- ── Per-article status breakdown ─────────────────────────────────── -->
+            <div class="card" id="articleStatusCard" style="animation: fadeUp 0.4s 0.17s ease both; margin-top: 14px; display:none;">
+                <div class="card-header">
+                    <span class="card-title">Inventario por artículo</span>
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <button id="btnPrevDay" class="btn-action" style="padding:3px 10px;font-size:14px;line-height:1">←</button>
+                        <span id="artStatusDateLabel" style="font-size:12px;color:var(--text-2);min-width:90px;text-align:center;font-weight:600">Hoy</span>
+                        <button id="btnNextDay"  class="btn-action" style="padding:3px 10px;font-size:14px;line-height:1">→</button>
+                    </div>
+                </div>
+
+                <div style="padding:0 14px 8px">
+                    <div id="artStatusLoading" style="padding:20px 0;text-align:center;color:var(--text-3);font-size:13px">Cargando…</div>
+                    <div id="artStatusContent" style="display:none">
+
+                        <!-- Breakdown table -->
+                        <div style="overflow-x:auto;margin-bottom:18px">
+                            <table id="artStatusTable" style="width:100%;border-collapse:collapse;font-size:13px"></table>
+                        </div>
+
+                        <!-- Historical trend -->
+                        <div style="border-top:1px solid var(--border);padding-top:14px">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                                <span class="card-title" style="font-size:13px">Tendencia histórica —</span>
+                                <select id="trendArticleSelect" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--text);font-size:12px;font-family:inherit;cursor:pointer"></select>
+                            </div>
+                            <div style="position:relative;height:220px"><canvas id="articleTrendChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <% } else if (typeof client !== 'undefined' && client) { %>
+            <div class="card" style="animation: fadeUp 0.4s 0.05s ease both; margin-top: 14px;">
+                <div class="empty-state">No se encontraron datos para <strong><%= client %></strong>.</div>
+            </div>
+        <% } %>
+
+    </div>
+
+    <script>
+    // ── Hamburger nav ────────────────────────────────────────────────────────
+    const t = document.getElementById('navToggle'), n = document.getElementById('navLinks');
+    t.addEventListener('click', () => { t.classList.toggle('open'); n.classList.toggle('open'); });
+    n.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { t.classList.remove('open'); n.classList.remove('open'); }));
+
+    <% if (typeof stats !== 'undefined' && stats) { %>
+    const CLIENT_NAME = '<%= (client || '').replace(/'/g, "\\'") %>';
+
+    // ── Chart.js global defaults ─────────────────────────────────────────────
+    Chart.defaults.color = '#8b8fa8';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+    // ── Wash bar chart (uses server-side articleAverages data) ───────────────
+    <% if (typeof articleAverages !== 'undefined' && articleAverages && articleAverages.length > 0) { %>
+    (function() {
+        const labels = <%- JSON.stringify(articleAverages.map(a => a._id || 'Sin artículo')) %>;
+        const avgs   = <%- JSON.stringify(articleAverages.map(a => parseFloat((a.avgWashes || 0).toFixed(1)))) %>;
+
+        const colors = avgs.map(v => v <= 25 ? '#3ecf8e' : v <= 75 ? '#f59e0b' : '#ef4444');
+
+        new Chart(document.getElementById('washChart'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Promedio de lavados',
+                    data: avgs,
+                    backgroundColor: colors.map(c => c + '44'),
+                    borderColor: colors,
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                }
+            }
+        });
+    })();
+    <% } %>
+
+    // ── Status donut + daily usage charts (async from analytics API) ─────────
+    let dailyChartInstance = null;
+
+    (async function() {
+        try {
+            const resp = await fetch(`/api/analytics?client=${encodeURIComponent(CLIENT_NAME)}`);
+            if (!resp.ok) throw new Error('analytics fetch failed');
+            const data = await resp.json();
+
+            // ── Status donut ──────────────────────────────────────────────
+            const statusLoading = document.getElementById('statusLoading');
+            const statusCanvas  = document.getElementById('statusChart');
+
+            const STATUS_COLORS = {
+                'Entregado':         '#3ecf8e',
+                'Recoleccion':       '#3b82f6',
+                'Sin actualizacion': '#4a4f62',
+                'Conteo de Bodega':  '#f59e0b',
+                'Reprocesado':       '#8b5cf6'
+            };
+
+            const statusLabels = Object.keys(data.statusBreakdown);
+            const statusValues = statusLabels.map(k => data.statusBreakdown[k]);
+            const statusColors = statusLabels.map(k => STATUS_COLORS[k] || '#4a4f62');
+
+            if (statusLabels.length > 0) {
+                if (statusLoading) statusLoading.style.display = 'none';
+                new Chart(statusCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusValues,
+                            backgroundColor: statusColors.map(c => c + 'bb'),
+                            borderColor: statusColors,
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '62%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#8b8fa8', padding: 12, font: { size: 11 } } }
+                        }
+                    }
+                });
+            } else {
+                if (statusLoading) statusLoading.textContent = 'Sin datos';
+            }
+
+            // ── Daily usage line chart ────────────────────────────────────
+            const dailyCanvas  = document.getElementById('dailyChart');
+            const dailyLoading = document.getElementById('dailyLoading');
+
+            if (data.dailyUsage && data.dailyUsage.length > 0 && data.articles.length > 0) {
+                if (dailyLoading) dailyLoading.style.display = 'none';
+                dailyCanvas.style.display = 'block';
+
+                const PALETTE = ['#3ecf8e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#a3e635'];
+                const dates   = data.dailyUsage.map(d => d.date);
+
+                const datasets = data.articles.map((article, i) => ({
+                    label: article,
+                    data: data.dailyUsage.map(d => d[article] || 0),
+                    borderColor: PALETTE[i % PALETTE.length],
+                    backgroundColor: PALETTE[i % PALETTE.length] + '22',
+                    borderWidth: 2, pointRadius: 3, pointHoverRadius: 5,
+                    tension: 0.35, fill: false
+                }));
+
+                dailyChartInstance = new Chart(dailyCanvas, {
+                    type: 'line',
+                    data: { labels: dates, datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#8b8fa8', padding: 12, font: { size: 11 } },
+                                onClick(e, item, legend) {
+                                    const meta = legend.chart.getDatasetMeta(item.datasetIndex);
+                                    meta.hidden = meta.hidden === null ? !legend.chart.data.datasets[item.datasetIndex].hidden : !meta.hidden;
+                                    legend.chart.update();
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#4a4f62', maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            y: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                if (dailyLoading) dailyLoading.textContent = 'Sin registros de entrega';
+            }
+
+        } catch (err) {
+            console.error('Analytics load error:', err);
+            const dl = document.getElementById('dailyLoading');
+            if (dl) dl.textContent = 'No se pudo cargar la gráfica';
+            const sl = document.getElementById('statusLoading');
+            if (sl) sl.textContent = 'No se pudo cargar';
+        }
+    })();
+
+    // ── Download daily chart ─────────────────────────────────────────────────
+    document.getElementById('downloadDailyChart').addEventListener('click', () => {
+        if (!dailyChartInstance) return;
+        const link = document.createElement('a');
+        link.download = `uso-diario-${CLIENT_NAME}.png`;
+        link.href = dailyChartInstance.toBase64Image('image/png', 1);
+        link.click();
+    });
+
+    // ── CSV export ───────────────────────────────────────────────────────────
+    const exportBtn = document.getElementById('exportCSV');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const rows = [['Artículo', 'Cantidad', 'Lavados Totales', 'Promedio']];
+            const articleData = <%- JSON.stringify(articleAverages || []) %>;
+            articleData.forEach(item => {
+                rows.push([
+                    `"${(item._id || 'Sin artículo').replace(/"/g, '""')}"`,
+                    item.itemCount,
+                    item.totalWashes,
+                    (item.avgWashes || 0).toFixed(1)
+                ]);
+            });
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dashboard-${CLIENT_NAME}.csv`;
+            link.click();
+        });
+    }
+    // ── Copy share link ──────────────────────────────────────────────────────
+    const copyBtn = document.getElementById('copyShareLink');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const url = window.location.origin + document.getElementById('openShareLink').getAttribute('href');
+            navigator.clipboard.writeText(url).then(() => {
+                const orig = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copiado';
+                setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+            });
+        });
+    }
+
+    // ── Offscreen chart → base64 (used by both PDF generators) ─────────────
+    function renderUsageChartToBase64(dailyUsage, articles) {
+        return new Promise((resolve) => {
+            if (!dailyUsage || dailyUsage.length === 0 || !articles || articles.length === 0) {
+                return resolve(null);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width  = 880;
+            canvas.height = 300;
+            canvas.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+            document.body.appendChild(canvas);
+
+            const PALETTE = ['#27ae74','#2563eb','#d97706','#dc2626','#7c3aed','#db2777','#0891b2','#65a30d'];
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: dailyUsage.map(d => d.date),
+                    datasets: articles.map((article, i) => ({
+                        label: article,
+                        data: dailyUsage.map(d => d[article] || 0),
+                        borderColor: PALETTE[i % PALETTE.length],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        tension: 0.3
+                    }))
+                },
+                options: {
+                    responsive: false,
+                    animation: false,
+                    scales: {
+                        x: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.07)' } },
+                        y: { beginAtZero: true, ticks: { color: '#555', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.07)' } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#333', font: { size: 11 }, padding: 14 } }
+                    }
+                },
+                plugins: [{
+                    id: 'pdfBg',
+                    beforeDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, chart.width, chart.height);
+                        ctx.restore();
+                    }
+                }]
+            });
+
+            requestAnimationFrame(() => {
+                const img = canvas.toDataURL('image/png');
+                document.body.removeChild(canvas);
+                resolve(img);
+            });
+        });
+    }
+
+    // ── PDF download ─────────────────────────────────────────────────────────
+    (function() {
+        const toggleBtn   = document.getElementById('btnTogglePDF');
+        const dateRow     = document.getElementById('pdfDateRow');
+        const fromInput   = document.getElementById('pdfFrom');
+        const toInput     = document.getElementById('pdfTo');
+        const generateBtn = document.getElementById('btnGeneratePDF');
+        if (!toggleBtn) return;
+
+        // Default range: last 7 days
+        const today   = new Date();
+        const week    = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        toInput.value   = today.toISOString().slice(0, 10);
+        fromInput.value = week.toISOString().slice(0, 10);
+
+        toggleBtn.addEventListener('click', () => {
+            dateRow.classList.toggle('open');
+            toggleBtn.textContent = dateRow.classList.contains('open') ? '✕ Cerrar' : '↓ PDF';
+        });
+
+        generateBtn.addEventListener('click', () => downloadDashboardPDF(fromInput.value, toInput.value));
+    })();
+
+    async function downloadDashboardPDF(from, to) {
+        const btn = document.getElementById('btnGeneratePDF');
+        btn.textContent = 'Generando…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`/api/pdf-data?client=${encodeURIComponent(CLIENT_NAME)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+            if (!resp.ok) throw new Error('pdf-data fetch failed');
+            const data = await resp.json();
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const W = doc.internal.pageSize.getWidth();
+            const H = doc.internal.pageSize.getHeight();
+            const GREEN  = [62, 207, 142];
+            const DARK   = [14, 17, 23];
+            const GRAY   = [100, 106, 128];
+            const LIGHT  = [248, 250, 252];
+
+            // ── Header bar ──────────────────────────────────────────────
+            doc.setFillColor(...GREEN);
+            doc.rect(0, 0, W, 22, 'F');
+
+            doc.setFillColor(...DARK);
+            doc.roundedRect(8, 5, 12, 12, 2, 2, 'F');
+            doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+            doc.text('ON', 14, 13, { align: 'center' });
+
+            doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+            doc.text('ON Sistema de Inventario', 24, 11);
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+            doc.text('DASHBOARD — REPORTE DE INVENTARIO', 24, 17);
+
+            let y = 32;
+
+            // ── Client + date range ──────────────────────────────────────
+            doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+            doc.text(data.client, 14, y); y += 7;
+
+            const fmtDate = (iso) => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+            doc.text(`Período: ${fmtDate(data.from)} — ${fmtDate(data.to)}`, 14, y); y += 14;
+
+            // ── Stats boxes ──────────────────────────────────────────────
+            const statsData = [
+                { label: 'TOTAL PRENDAS',    value: data.stats.totalItems,      color: DARK },
+                { label: 'LAVADOS TOTALES',  value: data.stats.totalWashCount,  color: GREEN },
+                { label: 'PROMEDIO',         value: data.stats.overallAvg,      color: [99, 102, 241] },
+                { label: 'EN CIRCULACIÓN',   value: data.stats.currentlyOut,    color: [59, 130, 246] },
+                { label: 'DAÑADAS',          value: data.stats.damagedCount,    color: [239, 68, 68] }
+            ];
+            const boxW = (W - 28 - 4 * 3) / 5;
+            statsData.forEach((s, i) => {
+                const x = 14 + i * (boxW + 3);
+                doc.setFillColor(...LIGHT);
+                doc.roundedRect(x, y, boxW, 22, 2, 2, 'F');
+                doc.setFontSize(17); doc.setFont('helvetica', 'bold'); doc.setTextColor(...s.color);
+                doc.text(String(s.value), x + boxW / 2, y + 12, { align: 'center' });
+                doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+                doc.text(s.label, x + boxW / 2, y + 18.5, { align: 'center' });
+            });
+            y += 30;
+
+            // ── Daily wash chart ─────────────────────────────────────────
+            const chartImg = await renderUsageChartToBase64(data.dailyUsage, data.dailyArticles);
+            if (chartImg) {
+                if (y + 74 > H - 20) { doc.addPage(); y = 20; }
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+                doc.text('ACTIVIDAD DIARIA POR ARTÍCULO', 14, y); y += 4;
+                const chartW = W - 28;
+                const chartH = Math.round((300 / 880) * chartW);
+                doc.addImage(chartImg, 'PNG', 14, y, chartW, chartH);
+                y += chartH + 10;
+            }
+
+            // ── Activity in period ───────────────────────────────────────
+            if (y + 40 > H - 20) { doc.addPage(); y = 20; }
+            doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+            doc.text('ACTIVIDAD EN EL PERÍODO', 14, y); y += 3;
+            doc.autoTable({
+                startY: y,
+                head: [['Indicador', 'Valor']],
+                body: [
+                    ['Recolecciones', data.summary.totalRecolecciones],
+                    ['Entregas', data.summary.totalEntregas],
+                    ['Prendas recogidas', data.summary.totalPrendasRecogidas],
+                    ['Prendas entregadas', data.summary.totalPrendasEntregadas],
+                    ['Tasa de retorno', data.returnRate !== null ? data.returnRate + '%' : 'N/A']
+                ],
+                styles: { font: 'helvetica', fontSize: 9, cellPadding: 3.5 },
+                headStyles: { fillColor: DARK, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+                alternateRowStyles: { fillColor: LIGHT },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 90 }, 1: { halign: 'right' } },
+                margin: { left: 14, right: 14 },
+                tableLineColor: [220, 225, 235], tableLineWidth: 0.1
+            });
+            y = doc.lastAutoTable.finalY + 10;
+
+            // ── Article breakdown ────────────────────────────────────────
+            if (data.articleBreakdown && data.articleBreakdown.length > 0) {
+                if (y + 30 > H - 20) { doc.addPage(); y = 20; }
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+                doc.text('DESGLOSE POR ARTÍCULO', 14, y); y += 3;
+                doc.autoTable({
+                    startY: y,
+                    head: [['Artículo', 'Cantidad', 'Lavados Totales', 'Promedio']],
+                    body: data.articleBreakdown.map(a => [a.article, a.count, a.totalWashes, a.avgWashes]),
+                    styles: { font: 'helvetica', fontSize: 9, cellPadding: 3.5 },
+                    headStyles: { fillColor: GREEN, textColor: [5, 30, 15], fontStyle: 'bold', fontSize: 8 },
+                    alternateRowStyles: { fillColor: LIGHT },
+                    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+                    margin: { left: 14, right: 14 },
+                    tableLineColor: [220, 225, 235], tableLineWidth: 0.1
+                });
+            }
+
+            // ── Footer ───────────────────────────────────────────────────
+            const generated = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+            doc.text(`Generado el ${generated} · ON Sistema de Inventario`, 14, H - 10);
+            doc.text('Confidencial', W - 14, H - 10, { align: 'right' });
+
+            doc.save(`dashboard-${CLIENT_NAME.replace(/\s+/g, '-')}-${from}.pdf`);
+        } catch (err) {
+            console.error('PDF error:', err);
+            alert('Error al generar el PDF. Intenta de nuevo.');
+        } finally {
+            btn.textContent = 'Generar';
+            btn.disabled = false;
+        }
+    }
+
+    // ── Per-article status breakdown ─────────────────────────────────────────
+    (async function () {
+        const STATUS_META = {
+            'Entregado':         { label: 'Entregado',    color: '#3ecf8e' },
+            'Recoleccion':       { label: 'Lavandería',   color: '#f59e0b' },
+            'Conteo de Bodega':  { label: 'Bodega',       color: '#3b82f6' },
+            'Reprocesado':       { label: 'Reprocesado',  color: '#818cf8' },
+            'Sin actualizacion': { label: 'Sin actualiz.', color: '#6b7280' },
+        };
+
+        let data = null;
+        let dayOffset = 0;          // 0 = today, -1 = yesterday …
+        let trendChart = null;
+
+        const card      = document.getElementById('articleStatusCard');
+        const loadEl    = document.getElementById('artStatusLoading');
+        const contentEl = document.getElementById('artStatusContent');
+        const tableEl   = document.getElementById('artStatusTable');
+        const labelEl   = document.getElementById('artStatusDateLabel');
+        const artSel    = document.getElementById('trendArticleSelect');
+        const prevBtn   = document.getElementById('btnPrevDay');
+        const nextBtn   = document.getElementById('btnNextDay');
+
+        try {
+            const r = await fetch(`/api/article-status?client=${encodeURIComponent(CLIENT_NAME)}&days=30`);
+            if (!r.ok) throw new Error('fetch failed');
+            data = await r.json();
+        } catch (e) {
+            loadEl.textContent = 'No se pudo cargar el desglose por artículo.';
+            card.style.display = 'block';
+            return;
+        }
+
+        // Populate article selector
+        (data.articles || []).forEach(art => {
+            const o = document.createElement('option');
+            o.value = o.textContent = art;
+            artSel.appendChild(o);
+        });
+
+        // Ordered status list — deterministic column order
+        const STATUS_ORDER = ['Entregado', 'Recoleccion', 'Conteo de Bodega', 'Reprocesado', 'Sin actualizacion'];
+        const activeCols = STATUS_ORDER.filter(s => (data.statuses || []).includes(s));
+
+        function snapshotForOffset(offset) {
+            if (offset === 0) return data.current;
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            const key = d.toISOString().slice(0, 10);
+            const entry = (data.history || []).find(h => h.date === key);
+            return entry ? entry.snapshot : null;
+        }
+
+        function dateLabel(offset) {
+            if (offset === 0) return 'Hoy';
+            if (offset === -1) return 'Ayer';
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+        }
+
+        function renderTable(snap) {
+            if (!snap) {
+                tableEl.innerHTML = `<tr><td colspan="99" style="padding:20px;text-align:center;color:var(--text-3);font-size:13px">Sin datos registrados para este día</td></tr>`;
+                return;
+            }
+            const arts = data.articles || [];
+            // header
+            let h = `<thead><tr style="border-bottom:1px solid var(--border)">
+                <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Artículo</th>
+                <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total</th>`;
+            activeCols.forEach(s => {
+                const m = STATUS_META[s] || { label: s, color: '#9ca3af' };
+                h += `<th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${m.color}">${m.label}</th>`;
+            });
+            h += '</tr></thead><tbody>';
+            // rows
+            arts.forEach((art, i) => {
+                const artData = snap[art] || {};
+                const total = Object.values(artData).reduce((s, v) => s + v, 0);
+                h += `<tr style="${i % 2 ? 'background:rgba(255,255,255,0.02)' : ''}">`;
+                h += `<td style="padding:9px 12px;font-weight:600;color:var(--text)">${art}</td>`;
+                h += `<td style="padding:9px 12px;text-align:right;color:var(--text-2);font-weight:500">${total}</td>`;
+                activeCols.forEach(s => {
+                    const cnt = artData[s] || 0;
+                    const m   = STATUS_META[s] || { color: 'var(--text)' };
+                    const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+                    const bar = total > 0 ? `<div style="height:3px;border-radius:2px;background:${m.color};width:${pct}%;margin-top:3px;opacity:.7"></div>` : '';
+                    h += `<td style="padding:9px 12px;text-align:right">
+                        <span style="font-weight:600;color:${cnt > 0 ? m.color : 'var(--text-3)'}">${cnt > 0 ? cnt : '—'}</span>
+                        ${cnt > 0 ? `<span style="font-size:10px;color:var(--text-3);margin-left:3px">${pct}%</span>` : ''}
+                        ${bar}
+                    </td>`;
+                });
+                h += '</tr>';
+            });
+            h += '</tbody>';
+            tableEl.innerHTML = h;
+        }
+
+        function renderTrend(selectedArt) {
+            // Build sorted timeline: history + today
+            const today = new Date().toISOString().slice(0, 10);
+            const points = [...(data.history || [])];
+            if (!points.find(p => p.date === today)) {
+                points.push({ date: today, snapshot: data.current });
+            }
+            points.sort((a, b) => a.date.localeCompare(b.date));
+
+            const labels   = points.map(p => {
+                const d = new Date(p.date + 'T12:00:00');
+                return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+            });
+            const datasets = activeCols.map(s => {
+                const m = STATUS_META[s] || { label: s, color: '#9ca3af' };
+                return {
+                    label: m.label,
+                    data:  points.map(p => (p.snapshot?.[selectedArt]?.[s]) || 0),
+                    backgroundColor: m.color + 'bb',
+                    borderColor:     m.color,
+                    borderWidth: 1,
+                };
+            });
+
+            const ctx = document.getElementById('articleTrendChart');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#8b8fa8', font: { size: 11 }, padding: 12, boxWidth: 10, boxHeight: 10 } },
+                        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}` } }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#8b8fa8', font: { size: 10 }, maxRotation: 45 } },
+                        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8b8fa8', font: { size: 10 } }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function render() {
+            labelEl.textContent  = dateLabel(dayOffset);
+            nextBtn.disabled     = dayOffset >= 0;
+            nextBtn.style.opacity = dayOffset >= 0 ? '0.35' : '1';
+            renderTable(snapshotForOffset(dayOffset));
+            renderTrend(artSel.value || (data.articles || [])[0]);
+        }
+
+        prevBtn.addEventListener('click', () => { dayOffset--; render(); });
+        nextBtn.addEventListener('click', () => { if (dayOffset < 0) { dayOffset++; render(); } });
+        artSel.addEventListener('change', () => renderTrend(artSel.value));
+
+        card.style.display = 'block';
+        loadEl.style.display   = 'none';
+        contentEl.style.display = 'block';
+        render();
+    })();
+
+    // ── Lifecycle threshold editor ────────────────────────────────────────────
+    async function setThreshold(client, article) {
+        const input = prompt(`Umbral de lavados para "${article}" (actual: 80):`, '80');
+        if (!input) return;
+        const threshold = parseInt(input);
+        if (isNaN(threshold) || threshold < 1) return alert('Número inválido');
+        try {
+            const r = await fetch('/api/set-threshold', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client, article, threshold })
+            });
+            if (r.ok) { alert(`Umbral actualizado a ${threshold} lavados. Recarga para ver cambios.`); }
+            else { alert('Error al guardar'); }
+        } catch(e) { alert('Error de red'); }
+    }
+    <% } %>
+    </script>
+</body>
+</html>

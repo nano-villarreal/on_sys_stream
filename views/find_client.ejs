@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Buscar Cliente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --border:       rgba(255,255,255,0.07);
+            --border-focus: rgba(62,207,142,0.35);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(62,207,142,0.07) 0%, transparent 100%);
+        }
+
+        .card {
+            background: rgba(22,27,34,0.80);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%; max-width: 440px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            text-align: center;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .nav-logo {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--green) 0%, #22c55e 100%);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 16px; color: #0a1008;
+            box-shadow: 0 0 24px var(--green-glow);
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 26px; font-weight: 800; letter-spacing: -0.8px;
+            background: linear-gradient(135deg, #fff 20%, var(--green) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 32px;
+        }
+
+        .field-label {
+            font-size: 11px; font-weight: 600;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px;
+            display: block; text-align: left; margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%; padding: 12px 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green); margin-bottom: 14px;
+        }
+        input[type="text"]::placeholder { color: var(--text-3); }
+        input[type="text"]:focus {
+            outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+
+        button {
+            width: 100%; padding: 12px;
+            font-size: 14px; font-weight: 700;
+            background: var(--green); color: #091a12;
+            border: none; border-radius: var(--radius);
+            cursor: pointer;
+            box-shadow: 0 4px 16px var(--green-glow);
+            transition: all 0.15s; letter-spacing: -0.1px;
+        }
+        button:hover { background: #4ddfaa; transform: translateY(-1px); }
+        button:active { transform: scale(0.98); }
+
+        .back-link {
+            display: block; margin-top: 24px;
+            font-size: 13px; color: var(--text-2);
+            text-decoration: none; transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--green); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="nav-logo">ON</div>
+        <h1>Buscar Cliente</h1>
+        <p class="subtitle">Ingresa el nombre del cliente para ver su inventario, lavados y prendas dañadas.</p>
+
+        <form method="POST" action="/dashboard">
+            <label class="field-label" for="client">Nombre del cliente</label>
+            <input type="text" id="client" name="client" placeholder="Ej: Club Country" required autofocus />
+            <button type="submit">Ver Dashboard →</button>
+        </form>
+
+        <a href="/" class="back-link">← Volver al conteo en vivo</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Conteo en Vivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ─── Design tokens ─────────────────────────────────────────── */
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --surface-2:    #1c2333;
+            --border:       rgba(255,255,255,0.07);
+            --border-focus: rgba(62,207,142,0.35);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --indigo:       #6366f1;
+            --indigo-dim:   rgba(99,102,241,0.12);
+            --amber:        #f59e0b;
+            --amber-dim:    rgba(245,158,11,0.12);
+            --red:          #ef4444;
+            --red-dim:      rgba(239,68,68,0.10);
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+
+        /* ─── Reset & base ──────────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 28px 20px;
+            padding-top: 92px;
+            /* ambient background glow centered top */
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(62,207,142,0.07) 0%, transparent 100%);
+        }
+
+        /* ─── Navbar ────────────────────────────────────────────────── */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 64px;
+            background: rgba(14,17,23,0.80);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--green) 0%, #22c55e 100%);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px;
+            color: #0a1008;
+            box-shadow: 0 0 18px var(--green-glow);
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            display: flex; flex-direction: column; gap: 1px;
+        }
+
+        .brand-name {
+            font-size: 14px; font-weight: 700;
+            color: var(--text); letter-spacing: -0.3px; line-height: 1;
+        }
+
+        .brand-sub {
+            font-size: 10px; font-weight: 500;
+            color: var(--text-3); letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .nav-links { display: flex; gap: 6px; align-items: center; }
+
+        .nav-link {
+            padding: 6px 14px;
+            font-size: 13px; font-weight: 500;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            color: var(--text-2);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: var(--surface);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .nav-link.accent {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: rgba(62,207,142,0.18);
+        }
+
+        .nav-link.accent:hover {
+            background: rgba(62,207,142,0.18);
+            border-color: rgba(62,207,142,0.35);
+        }
+
+        /* ─── Layout ────────────────────────────────────────────────── */
+        .container { max-width: 680px; margin: 0 auto; }
+
+        /* ─── Page header ───────────────────────────────────────────── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: fadeUp 0.45s ease both;
+        }
+
+        .page-title {
+            font-size: 34px; font-weight: 800; letter-spacing: -1.2px;
+            line-height: 1.1; margin-bottom: 10px;
+            /* gradient text */
+            background: linear-gradient(135deg, #fff 20%, var(--green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 14px; color: var(--text-2); line-height: 1.6;
+            max-width: 460px; margin: 0 auto;
+        }
+
+        /* ─── Cards ─────────────────────────────────────────────────── */
+        .card {
+            background: rgba(22,27,34,0.75);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .card + .card { margin-top: 14px; }
+
+        .card-header {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 12px; font-weight: 600;
+            color: var(--text-2); text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .live-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse 2s ease infinite;
+            flex-shrink: 0;
+        }
+
+        /* ─── Textarea ──────────────────────────────────────────────── */
+        textarea {
+            width: 100%;
+            min-height: 148px;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 12.5px;
+            color: var(--text);
+            resize: vertical;
+            line-height: 1.7;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+        }
+
+        textarea::placeholder { color: var(--text-3); }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+
+        /* ─── Counter row ───────────────────────────────────────────── */
+        .counter-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 8px;
+            gap: 8px;
+        }
+
+        .pill {
+            font-size: 11px; font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid;
+        }
+
+        .pill-green {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: rgba(62,207,142,0.15);
+        }
+
+        .pill-muted {
+            background: transparent;
+            color: var(--text-3);
+            border-color: var(--border);
+        }
+
+        /* ─── CSV drop zone ─────────────────────────────────────────── */
+        .csv-zone {
+            margin-top: 14px;
+            border: 1px dashed rgba(255,255,255,0.10);
+            border-radius: var(--radius);
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .csv-zone:hover, .csv-zone.drag-over {
+            border-color: var(--border-focus);
+            background: var(--green-dim);
+        }
+
+        .csv-zone label {
+            cursor: pointer; display: block;
+            color: var(--text-2); font-size: 13px; font-weight: 500;
+        }
+
+        .csv-zone input[type="file"] { display: none; }
+
+        .csv-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+
+        .csv-hint {
+            font-size: 11px; color: var(--text-3); margin-top: 4px;
+        }
+
+        .csv-filename {
+            font-size: 11px; color: var(--green);
+            font-weight: 600; margin-top: 8px;
+        }
+
+        /* ─── Stats ─────────────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 12px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+
+        .stat-value {
+            font-size: 32px; font-weight: 800;
+            letter-spacing: -1.5px; line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stat-total  { color: var(--text); }
+        .stat-found  { color: var(--green); }
+        .stat-miss   { color: var(--red); }
+
+        .stat-label {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px;
+        }
+
+        /* ─── Summary box ───────────────────────────────────────────── */
+        .summary {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            min-height: 96px;
+            white-space: pre-line;
+            font-size: 13px; line-height: 1.85;
+            color: var(--text-2);
+            margin-bottom: 0;
+        }
+
+        .summary .loading {
+            color: var(--text-3); font-style: italic;
+        }
+
+        /* ─── Actions ───────────────────────────────────────────────── */
+        .actions-section { animation: fadeUp 0.45s 0.08s ease both; }
+
+        .actions-header {
+            font-size: 11px; font-weight: 600;
+            color: var(--text-3); text-transform: uppercase;
+            letter-spacing: 0.8px; margin-bottom: 12px;
+        }
+
+        .actions {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            font-size: 13px; font-weight: 600;
+            border: none; border-radius: 9px;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            letter-spacing: -0.1px;
+            transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+        }
+
+        .btn:disabled {
+            opacity: 0.28; cursor: not-allowed;
+        }
+
+        .btn:not(:disabled):active { transform: scale(0.97); }
+
+        .btn-recoleccion {
+            background: var(--green); color: #091a12;
+            box-shadow: 0 4px 14px var(--green-glow);
+        }
+        .btn-recoleccion:not(:disabled):hover {
+            background: #4ddfaa;
+            box-shadow: 0 6px 20px rgba(62,207,142,0.38);
+            transform: translateY(-1px);
+        }
+
+        .btn-entrega {
+            background: var(--surface-2, #1c2333);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-entrega:not(:disabled):hover {
+            border-color: var(--green);
+            color: var(--green);
+            transform: translateY(-1px);
+        }
+
+        .btn-reprocesado {
+            background: var(--amber-dim);
+            color: var(--amber);
+            border: 1px solid rgba(245,158,11,0.20);
+        }
+        .btn-reprocesado:not(:disabled):hover {
+            background: rgba(245,158,11,0.20);
+            transform: translateY(-1px);
+        }
+
+        .btn-bodega {
+            background: var(--indigo-dim);
+            color: var(--indigo);
+            border: 1px solid rgba(99,102,241,0.20);
+        }
+        .btn-bodega:not(:disabled):hover {
+            background: rgba(99,102,241,0.22);
+            transform: translateY(-1px);
+        }
+
+        /* ─── Reprocesado toggle ────────────────────────────────────── */
+        .toggle-wrap {
+            display: flex; align-items: center; gap: 8px; margin-left: auto;
+        }
+
+        .toggle-label {
+            font-size: 12px; font-weight: 500; color: var(--text-2);
+        }
+
+        .switch {
+            position: relative; display: inline-block;
+            width: 38px; height: 21px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background: var(--surface-2, #1c2333);
+            border: 1px solid var(--border);
+            transition: .25s; border-radius: 34px;
+        }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            height: 15px; width: 15px;
+            left: 2px; bottom: 2px;
+            background: var(--text-3);
+            transition: .25s; border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: var(--green-dim);
+            border-color: rgba(62,207,142,0.30);
+        }
+
+        input:checked + .slider::before {
+            transform: translateX(17px);
+            background: var(--green);
+        }
+
+        /* ─── Toast notifications ───────────────────────────────────── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            display: flex; flex-direction: column;
+            gap: 8px; z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 13px 16px;
+            border-radius: 12px;
+            font-size: 13px; font-weight: 500;
+            max-width: 320px;
+            display: flex; align-items: flex-start; gap: 10px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            animation: toastIn 0.25s cubic-bezier(.34,1.56,.64,1) both;
+            pointer-events: all;
+        }
+
+        .toast.success {
+            background: rgba(10,24,14,0.96);
+            border: 1px solid rgba(62,207,142,0.28);
+            color: var(--green);
+        }
+
+        .toast.error {
+            background: rgba(24,10,10,0.96);
+            border: 1px solid rgba(239,68,68,0.28);
+            color: #f87171;
+        }
+
+        .toast.info {
+            background: rgba(10,12,24,0.96);
+            border: 1px solid rgba(99,102,241,0.28);
+            color: #a5b4fc;
+        }
+
+        .toast-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+        .toast-body { flex: 1; }
+
+        .toast-title { font-weight: 700; margin-bottom: 2px; }
+
+        .toast-msg { opacity: 0.75; font-size: 12px; line-height: 1.4; }
+
+        /* ─── Mobile hamburger ──────────────────────────────────────── */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 9px;
+            cursor: pointer;
+            color: var(--text-2);
+            flex-direction: column;
+            gap: 4px;
+            transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+        .nav-toggle:hover { background: var(--surface); color: var(--text); }
+        .nav-toggle span {
+            display: block; width: 18px; height: 1.5px;
+            background: currentColor; border-radius: 2px;
+            transition: transform 0.22s ease, opacity 0.15s;
+        }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+        @media (max-width: 780px) {
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 64px; left: 0; right: 0;
+                background: rgba(10,13,18,0.97);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid var(--border);
+                padding: 10px 16px 16px;
+                flex-direction: column;
+                gap: 4px;
+                z-index: 999;
+            }
+            .nav-links.open { display: flex; animation: slideDown 0.18s ease; }
+            .nav-link { padding: 10px 14px; width: 100%; }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── Keyframes ─────────────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(18px) scale(0.96); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes toastOut {
+            to   { opacity: 0; transform: translateX(18px) scale(0.96); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+            50%       { opacity: 0.5; box-shadow: 0 0 2px var(--green); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── Navbar ──────────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <div class="nav-logo">ON</div>
+            <div class="brand-text">
+                <span class="brand-name">Sistema de Inventario</span>
+                <span class="brand-sub">Conteo en vivo</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link accent" href="/dar-de-alta">Dar de Alta</a>
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+            <a class="nav-link" href="/compare">Comparar</a>
+            <a class="nav-link" href="/tag-history">Historial Tag</a>
+            <a class="nav-link" href="/batch-status">Corrector</a>
+            <a class="nav-link" href="/create_defect">Reportar Daño</a>
+            <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+        </div>
+    </nav>
+
+    <!-- ─── Toast container ─────────────────────────────────────────── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+
+        <!-- Page title -->
+        <div class="page-header">
+            <h1 class="page-title">Conteo en Vivo</h1>
+            <p class="page-subtitle">
+                Pega o carga EPCs y verás en tiempo real qué artículos y clientes se están leyendo
+            </p>
+        </div>
+
+        <!-- ─── Input card ─────────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s ease both;">
+            <div class="card-header">
+                <div class="live-dot"></div>
+                <span class="card-title">Entrada de EPCs</span>
+            </div>
+
+            <textarea
+                id="epcInput"
+                placeholder="Pega EPCs aquí — uno por línea, separados por coma, espacio, etc."
+            ></textarea>
+
+            <div class="counter-row">
+                <span class="pill pill-muted" id="ignoredLabel" style="display:none"></span>
+                <span class="pill pill-green" id="uniqueCounter">0 IDs únicos</span>
+            </div>
+
+            <!-- CSV drop zone -->
+            <div class="csv-zone" id="csvDropZone">
+                <span class="csv-icon">📄</span>
+                <label for="csvFileInput">
+                    Arrastra un CSV aquí o haz clic para seleccionar archivo
+                    <input type="file" id="csvFileInput" accept=".csv,.txt">
+                </label>
+                <div class="csv-hint">Acepta columna EPC o EPCs línea a línea</div>
+                <div class="csv-filename" id="csvFilename"></div>
+            </div>
+        </div>
+
+        <!-- ─── Stats card ─────────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s 0.05s ease both;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value stat-total" id="total">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-found" id="found">0</div>
+                    <div class="stat-label">Encontrados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value stat-miss" id="notfound">0</div>
+                    <div class="stat-label">No encontrados</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Summary card ───────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s 0.10s ease both;">
+            <div class="card-header">
+                <span class="card-title">Resumen</span>
+            </div>
+            <div class="summary" id="summary">
+                <span class="loading">Escribe o pega EPCs para comenzar…</span>
+            </div>
+        </div>
+
+        <!-- ─── Actions card ───────────────────────────────────────── -->
+        <div class="card actions-section">
+            <div class="actions-header">Registrar operación</div>
+            <div class="actions">
+                <button id="btnRecoleccion" class="btn btn-recoleccion" disabled>
+                    ↩ Recolección
+                </button>
+                <button id="btnEntrega" class="btn btn-entrega" disabled>
+                    ↪ Entrega
+                </button>
+                <button id="btnReprocesado" class="btn btn-reprocesado" disabled>
+                    ↺ Reprocesado
+                </button>
+                <button id="btnBodega" class="btn btn-bodega" disabled>
+                    ◫ Conteo de Bodega
+                </button>
+
+                <div class="toggle-wrap">
+                    <span class="toggle-label">Modo reprocesado</span>
+                    <label class="switch">
+                        <input type="checkbox" id="reprocesadoSwitch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        //  DOM references
+        // ─────────────────────────────────────────────────────────────
+        const el = {
+            textarea:         document.getElementById('epcInput'),
+            uniqueCounter:    document.getElementById('uniqueCounter'),
+            ignoredLabel:     document.getElementById('ignoredLabel'),
+            total:            document.getElementById('total'),
+            found:            document.getElementById('found'),
+            notfound:         document.getElementById('notfound'),
+            summary:          document.getElementById('summary'),
+            btnRecoleccion:   document.getElementById('btnRecoleccion'),
+            btnReprocesado:   document.getElementById('btnReprocesado'),
+            btnEntrega:       document.getElementById('btnEntrega'),
+            btnBodega:        document.getElementById('btnBodega'),
+            reprocesadoSwitch:document.getElementById('reprocesadoSwitch'),
+            csvFileInput:     document.getElementById('csvFileInput'),
+            csvFilename:      document.getElementById('csvFilename'),
+            csvDropZone:      document.getElementById('csvDropZone'),
+            toastContainer:   document.getElementById('toastContainer'),
+        };
+
+        // ─────────────────────────────────────────────────────────────
+        //  State
+        // ─────────────────────────────────────────────────────────────
+        let debounceTimer;
+        let currentEPCs    = [];   // validated unique EPCs from textarea
+        let currentResults = [];   // last lookup response from /api/lookup
+        let isReprocesado  = false;
+
+        // ─────────────────────────────────────────────────────────────
+        //  Constants
+        // ─────────────────────────────────────────────────────────────
+        const EPC_LEN   = 24;
+        const EPC_REGEX = /^[0-9A-Fa-f]{24}$/;
+
+        // ─────────────────────────────────────────────────────────────
+        //  Toast notification system
+        //  type: 'success' | 'error' | 'info'
+        // ─────────────────────────────────────────────────────────────
+        function toast(type, title, msg = '', duration = 4500) {
+            const icons = { success: '✓', error: '✕', info: 'ℹ' };
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `
+                <span class="toast-icon">${icons[type] ?? 'ℹ'}</span>
+                <div class="toast-body">
+                    <div class="toast-title">${title}</div>
+                    ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+                </div>`;
+            el.toastContainer.appendChild(t);
+            setTimeout(() => {
+                t.style.animation = 'toastOut 0.25s ease forwards';
+                setTimeout(() => t.remove(), 260);
+            }, duration);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  EPC validation helpers
+        // ─────────────────────────────────────────────────────────────
+
+        /** Returns current timestamp as "DD.MM.YYYY HH:MM" */
+        function getTimestamp() {
+            const n = new Date();
+            const p = v => String(v).padStart(2, '0');
+            return `${p(n.getDate())}.${p(n.getMonth()+1)}.${n.getFullYear()} ${p(n.getHours())}:${p(n.getMinutes())}`;
+        }
+
+        /**
+         * Splits raw text on any common delimiter, validates each token
+         * as a 24-char hex string, and deduplicates.
+         */
+        function extractValidEPCs(text) {
+            const parts = text
+                .split(/[\r\n,;\s|]+/)
+                .map(s => s.trim().toUpperCase())
+                .filter(s => s.length === EPC_LEN && EPC_REGEX.test(s));
+            return [...new Set(parts)];
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  CSV parsing
+        //  Handles:
+        //    - Metadata rows before the real header (RFID reader exports)
+        //    - "TAG ID", "EPC", "TAGID", "TAG_ID" column names
+        //    - Quoted fields: "E280..."
+        //    - Plain EPC-per-line files with no header at all
+        // ─────────────────────────────────────────────────────────────
+
+        /** Splits one CSV line respecting double-quoted fields */
+        function splitCSVLine(line) {
+            const cols = [];
+            let cur = '', inQ = false;
+            for (const ch of line) {
+                if (ch === '"')                              { inQ = !inQ; }
+                else if ((ch === ',' || ch === ';' || ch === '\t') && !inQ) { cols.push(cur.trim()); cur = ''; }
+                else                                         { cur += ch; }
+            }
+            cols.push(cur.trim());
+            return cols;
+        }
+
+        // All recognised column names that contain the EPC / tag ID value
+        const EPC_HEADERS = new Set(['EPC', 'TAG ID', 'TAGID', 'TAG_ID', 'EPC ID', 'EPCID']);
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return [];
+
+            // Scan every line for a recognised header row — files from RFID
+            // readers often include metadata rows above the real column headers.
+            let headerIdx = -1, epcCol = -1;
+            for (let i = 0; i < lines.length; i++) {
+                const cols = splitCSVLine(lines[i]).map(h => h.toUpperCase());
+                const found = cols.findIndex(h => EPC_HEADERS.has(h));
+                if (found !== -1) { headerIdx = i; epcCol = found; break; }
+            }
+
+            const epcs = [];
+            if (headerIdx !== -1) {
+                // Structured: pull only the EPC column from every data row
+                for (let i = headerIdx + 1; i < lines.length; i++) {
+                    const val = (splitCSVLine(lines[i])[epcCol] ?? '').toUpperCase();
+                    if (val) epcs.push(val);
+                }
+            } else {
+                // Unstructured: every cell is a candidate — validation filters junk
+                for (const line of lines)
+                    for (const cell of splitCSVLine(line)) {
+                        const val = cell.toUpperCase();
+                        if (val) epcs.push(val);
+                    }
+            }
+
+            return [...new Set(epcs.filter(e => e.length === EPC_LEN && EPC_REGEX.test(e)))];
+        }
+
+        /** Reads a File, parses EPCs from CSV text, appends into the textarea */
+        function loadCSVFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const epcs = parseCSV(e.target.result);
+                if (!epcs.length) {
+                    toast('error', 'Sin EPCs válidos', 'El archivo no contiene EPCs de 24 caracteres hex.');
+                    return;
+                }
+                const current = el.textarea.value.trim();
+                el.textarea.value = current ? `${current}\n${epcs.join('\n')}` : epcs.join('\n');
+                clearTimeout(debounceTimer);
+                updateEverything();
+                toast('info', 'CSV cargado', `${epcs.length} EPC(s) agregados desde ${file.name}`);
+            };
+            reader.readAsText(file);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  API calls
+        // ─────────────────────────────────────────────────────────────
+
+        /** Batch-lookup EPCs against the DB via /api/lookup */
+        async function lookupEPCs(epcs) {
+            if (!epcs.length) return [];
+            try {
+                const res = await fetch('/api/lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ epcs }),
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                console.error('lookupEPCs:', err);
+                return epcs.map(epc => ({ epc, found: false, error: true }));
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Payload & summary builders
+        // ─────────────────────────────────────────────────────────────
+
+        /**
+         * Groups found EPCs by client → article with count + epc list.
+         * Used as the body for /api/recoleccion, /api/entrega, /api/repro.
+         */
+        function buildPayload(results, epcs) {
+            const payload = { timestamp: getTimestamp(), items: {} };
+            results.forEach((r, i) => {
+                if (!r.found || !r.client || !r.article) return;
+                const epc = epcs[i];
+                if (!epc) return;
+                if (!payload.items[r.client]) payload.items[r.client] = {};
+                if (!payload.items[r.client][r.article])
+                    payload.items[r.client][r.article] = { count: 0, epcs: [] };
+                payload.items[r.client][r.article].count++;
+                payload.items[r.client][r.article].epcs.push(epc);
+            });
+            return { payload, hasItems: Object.keys(payload.items).length > 0 };
+        }
+
+        /** Builds human-readable summary text from lookup results */
+        function buildSummaryText(results) {
+            const groups  = {};
+            const missing = [];
+
+            results.forEach(r => {
+                if (r.found && r.client && r.article) {
+                    if (!groups[r.client]) groups[r.client] = {};
+                    groups[r.client][r.article] = (groups[r.client][r.article] || 0) + 1;
+                } else if (r.epc) {
+                    missing.push(r.epc);
+                }
+            });
+
+            const lines = [];
+            for (const [client, articles] of Object.entries(groups)) {
+                for (const [article, count] of Object.entries(articles)) {
+                    let line = `${count} ${article}${count === 1 ? '' : 's'} · ${client}`;
+                    if (isReprocesado) line += ' — reprocesado';
+                    lines.push(line);
+                }
+            }
+
+            const ts = getTimestamp();
+            if (!lines.length) {
+                return missing.length
+                    ? `${ts}\n${missing.length} EPC(s) leídos — ninguno registrado en el sistema.`
+                    : 'No hay EPCs válidos (24 caracteres hexadecimales)…';
+            }
+
+            let header = `${ts}`;
+            if (isReprocesado) header += ' · Reprocesado';
+            return header + '\n\n' + lines.join('\n');
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  UI state helpers
+        // ─────────────────────────────────────────────────────────────
+        function setButtonsEnabled(enabled) {
+            el.btnRecoleccion.disabled = !enabled;
+            el.btnReprocesado.disabled = !enabled;
+            el.btnEntrega.disabled     = !enabled;
+            el.btnBodega.disabled      = !enabled;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Core update cycle — called on every textarea change
+        // ─────────────────────────────────────────────────────────────
+        async function updateEverything() {
+            const text       = el.textarea.value;
+            const validEPCs  = extractValidEPCs(text);
+            currentEPCs      = validEPCs;
+
+            // Show valid count pill + ignored warning
+            const rawLines = text.split(/[\r\n]+/).filter(Boolean).length;
+            const ignored  = rawLines - validEPCs.length;
+
+            el.uniqueCounter.textContent = `${validEPCs.length} ID${validEPCs.length !== 1 ? 's' : ''} único${validEPCs.length !== 1 ? 's' : ''} válido${validEPCs.length !== 1 ? 's' : ''}`;
+
+            if (ignored > 0 && validEPCs.length > 0) {
+                el.ignoredLabel.textContent  = `${ignored} ignorado${ignored !== 1 ? 's' : ''}`;
+                el.ignoredLabel.style.display = '';
+            } else {
+                el.ignoredLabel.style.display = 'none';
+            }
+
+            el.total.textContent = validEPCs.length;
+
+            if (!validEPCs.length) {
+                el.summary.innerHTML = '<span class="loading">No hay EPCs válidos (24 caracteres hexadecimales)…</span>';
+                el.found.textContent    = '0';
+                el.notfound.textContent = '0';
+                setButtonsEnabled(false);
+                return;
+            }
+
+            el.summary.innerHTML = '<span class="loading">Consultando base de datos…</span>';
+
+            const results  = await lookupEPCs(validEPCs);
+            currentResults = results;
+
+            const foundCount = results.filter(r => r.found && r.client && r.article).length;
+            el.found.textContent    = foundCount;
+            el.notfound.textContent = validEPCs.length - foundCount;
+            el.summary.textContent  = buildSummaryText(results);
+
+            setButtonsEnabled(foundCount > 0);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Operation dispatcher — sends data to the appropriate API
+        // ─────────────────────────────────────────────────────────────
+        async function createOperation(type) {
+            if (!currentEPCs.length) {
+                toast('error', 'Sin EPCs', 'No hay EPCs válidos para registrar.');
+                return;
+            }
+
+            const { payload, hasItems } = buildPayload(currentResults, currentEPCs);
+            if (!hasItems) {
+                toast('error', 'Sin artículos', 'Ninguno de los EPCs está registrado en el sistema.');
+                return;
+            }
+
+            const labels = {
+                recoleccion: 'Recolección',
+                entrega:     'Entrega',
+                repro:       'Reprocesado',
+            };
+
+            try {
+                const res = await fetch(`/api/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (res.ok) {
+                    toast('success', `${labels[type]} registrada`, `Operación guardada correctamente.`);
+                } else {
+                    const msg = await res.text().catch(() => 'Error desconocido');
+                    toast('error', 'Error al registrar', msg);
+                }
+            } catch (err) {
+                console.error(err);
+                toast('error', 'Error de conexión', 'No se pudo contactar al servidor.');
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Conteo de Bodega — updates status only, no transaction doc
+        // ─────────────────────────────────────────────────────────────
+        async function createConteoBodega() {
+            if (!currentEPCs.length) {
+                toast('error', 'Sin EPCs', 'No hay EPCs válidos.');
+                return;
+            }
+
+            // Only send EPCs that were actually found in the DB
+            const foundEPCs = currentResults
+                .map((r, i) => (r.found ? currentEPCs[i] : null))
+                .filter(Boolean);
+
+            if (!foundEPCs.length) {
+                toast('error', 'Sin artículos', 'Ninguno de los EPCs está registrado en el sistema.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/conteo-bodega', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ epcs: foundEPCs }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    toast('success', 'Conteo de Bodega', `${data.updated} EPC(s) actualizados.`);
+                } else {
+                    toast('error', 'Error', 'No se pudo registrar el conteo de bodega.');
+                }
+            } catch (err) {
+                console.error(err);
+                toast('error', 'Error de conexión', 'No se pudo contactar al servidor.');
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Event listeners
+        // ─────────────────────────────────────────────────────────────
+
+        el.reprocesadoSwitch.addEventListener('change', e => {
+            isReprocesado = e.target.checked;
+            if (currentResults.length) el.summary.textContent = buildSummaryText(currentResults);
+        });
+
+        el.btnRecoleccion.addEventListener('click', () => createOperation('recoleccion'));
+        el.btnEntrega.addEventListener('click',     () => createOperation('entrega'));
+        el.btnReprocesado.addEventListener('click', () => createOperation('repro'));
+        el.btnBodega.addEventListener('click',      () => createConteoBodega());
+
+        // Debounced textarea input
+        el.textarea.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updateEverything, 600);
+        });
+
+        // CSV file picker
+        el.csvFileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            el.csvFilename.textContent = file.name;
+            loadCSVFile(file);
+        });
+
+        // Drag-and-drop onto CSV zone
+        el.csvDropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            el.csvDropZone.classList.add('drag-over');
+        });
+        el.csvDropZone.addEventListener('dragleave', () => el.csvDropZone.classList.remove('drag-over'));
+        el.csvDropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            el.csvDropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+            el.csvFilename.textContent = file.name;
+            loadCSVFile(file);
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        //  Initial render
+        // ─────────────────────────────────────────────────────────────
+        updateEverything();
+
+        // ─────────────────────────────────────────────────────────────
+        //  Hamburger menu toggle
+        // ─────────────────────────────────────────────────────────────
+        const navToggle = document.getElementById('navToggle');
+        const navLinks  = document.getElementById('navLinks');
+        navToggle.addEventListener('click', () => {
+            navToggle.classList.toggle('open');
+            navLinks.classList.toggle('open');
+        });
+        navLinks.querySelectorAll('.nav-link').forEach(link =>
+            link.addEventListener('click', () => {
+                navToggle.classList.remove('open');
+                navLinks.classList.remove('open');
+            })
+        );
+    </script>
+</body>
+
+</html>

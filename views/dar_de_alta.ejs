@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Dar de Alta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ─── Design tokens (mirrors ui.ejs) ────────────────────────── */
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --surface-2:    #1c2333;
+            --border:       rgba(255,255,255,0.07);
+            --border-focus: rgba(62,207,142,0.35);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --red:          #ef4444;
+            --red-dim:      rgba(239,68,68,0.10);
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+
+        /* ─── Reset & base ──────────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 28px 20px;
+            padding-top: 92px;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(62,207,142,0.07) 0%, transparent 100%);
+        }
+
+        /* ─── Navbar ────────────────────────────────────────────────── */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 64px;
+            background: rgba(14,17,23,0.80);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--green) 0%, #22c55e 100%);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #0a1008;
+            box-shadow: 0 0 18px var(--green-glow); flex-shrink: 0;
+        }
+
+        .brand-text { display: flex; flex-direction: column; gap: 1px; }
+
+        .brand-name {
+            font-size: 14px; font-weight: 700;
+            color: var(--text); letter-spacing: -0.3px; line-height: 1;
+        }
+
+        .brand-sub {
+            font-size: 10px; font-weight: 500;
+            color: var(--text-3); letter-spacing: 0.4px; text-transform: uppercase;
+        }
+
+        .nav-links { display: flex; gap: 6px; align-items: center; }
+
+        .nav-link {
+            padding: 6px 14px;
+            font-size: 13px; font-weight: 500;
+            text-decoration: none; border-radius: 8px;
+            border: 1px solid transparent;
+            color: var(--text-2); transition: all 0.15s ease;
+        }
+
+        .nav-link:hover {
+            background: var(--surface); color: var(--text); border-color: var(--border);
+        }
+
+        .nav-link.accent {
+            background: var(--green-dim); color: var(--green);
+            border-color: rgba(62,207,142,0.18);
+        }
+
+        .nav-link.accent:hover {
+            background: rgba(62,207,142,0.18); border-color: rgba(62,207,142,0.35);
+        }
+
+        /* ─── Layout ────────────────────────────────────────────────── */
+        .container { max-width: 660px; margin: 0 auto; }
+
+        /* ─── Page header ───────────────────────────────────────────── */
+        .page-header {
+            text-align: center; margin-bottom: 28px;
+            animation: fadeUp 0.45s ease both;
+        }
+
+        .page-title {
+            font-size: 34px; font-weight: 800; letter-spacing: -1.2px;
+            line-height: 1.1; margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 20%, var(--green) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 14px; color: var(--text-2); line-height: 1.6;
+            max-width: 440px; margin: 0 auto;
+        }
+
+        /* ─── Cards ─────────────────────────────────────────────────── */
+        .card {
+            background: rgba(22,27,34,0.75);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .card + .card { margin-top: 14px; }
+
+        .card-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 12px; font-weight: 600;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px;
+        }
+
+        /* ─── Field rows ────────────────────────────────────────────── */
+        .field-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin-bottom: 0;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 7px; }
+
+        .field-label {
+            font-size: 11px; font-weight: 600;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px;
+        }
+
+        input[type="text"] {
+            width: 100%; padding: 11px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+        }
+
+        input[type="text"]::placeholder { color: var(--text-3); }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+
+        /* ─── Textarea ──────────────────────────────────────────────── */
+        textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 12.5px; color: var(--text);
+            resize: vertical; line-height: 1.7;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+        }
+
+        textarea::placeholder { color: var(--text-3); }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+
+        /* ─── Counter ───────────────────────────────────────────────── */
+        .counter-row {
+            display: flex; justify-content: flex-end; margin-top: 8px;
+        }
+
+        .pill {
+            font-size: 11px; font-weight: 600;
+            padding: 3px 10px; border-radius: 20px; border: 1px solid;
+        }
+
+        .pill-green {
+            background: var(--green-dim); color: var(--green);
+            border-color: rgba(62,207,142,0.15);
+        }
+
+        /* ─── Divider ───────────────────────────────────────────────── */
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 18px 0 14px;
+            font-size: 11px; font-weight: 600;
+            color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px;
+        }
+
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* ─── CSV drop zone ─────────────────────────────────────────── */
+        .csv-zone {
+            border: 1px dashed rgba(255,255,255,0.10);
+            border-radius: var(--radius);
+            padding: 18px; text-align: center;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+
+        .csv-zone:hover, .csv-zone.drag-over {
+            border-color: var(--border-focus); background: var(--green-dim);
+        }
+
+        .csv-zone label {
+            cursor: pointer; display: block;
+            color: var(--text-2); font-size: 13px; font-weight: 500;
+        }
+
+        .csv-zone input[type="file"] { display: none; }
+
+        .csv-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+
+        .csv-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+        .csv-filename { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 8px; }
+
+        /* ─── Submit button ─────────────────────────────────────────── */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            font-size: 14px; font-weight: 700;
+            background: var(--green); color: #091a12;
+            border: none; border-radius: var(--radius);
+            cursor: pointer;
+            box-shadow: 0 4px 16px var(--green-glow);
+            transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-submit:not(:disabled):hover {
+            background: #4ddfaa;
+            box-shadow: 0 6px 22px rgba(62,207,142,0.38);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none;
+        }
+
+        .btn-submit:not(:disabled):active { transform: scale(0.98); }
+
+        /* ─── Result box ────────────────────────────────────────────── */
+        .result-box {
+            margin-top: 14px;
+            padding: 16px 18px;
+            border-radius: var(--radius);
+            font-size: 13px; line-height: 1.7;
+            display: none;
+        }
+
+        .result-box.success {
+            background: rgba(10,24,14,0.8);
+            border: 1px solid rgba(62,207,142,0.25);
+            color: var(--green);
+        }
+
+        .result-box.error {
+            background: rgba(24,10,10,0.8);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+        }
+
+        .result-row { display: flex; align-items: baseline; gap: 8px; }
+
+        .result-count {
+            font-size: 24px; font-weight: 800; letter-spacing: -1px; line-height: 1;
+        }
+
+        .result-label { font-size: 12px; color: inherit; opacity: 0.7; }
+
+        .result-meta {
+            margin-top: 10px; font-size: 12px; opacity: 0.6;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding-top: 8px;
+        }
+
+        /* ─── Toast notifications ───────────────────────────────────── */
+        .toast-container {
+            position: fixed; bottom: 24px; right: 24px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 9999; pointer-events: none;
+        }
+
+        .toast {
+            padding: 13px 16px; border-radius: 12px;
+            font-size: 13px; font-weight: 500; max-width: 320px;
+            display: flex; align-items: flex-start; gap: 10px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            animation: toastIn 0.25s cubic-bezier(.34,1.56,.64,1) both;
+            pointer-events: all;
+        }
+
+        .toast.success {
+            background: rgba(10,24,14,0.96);
+            border: 1px solid rgba(62,207,142,0.28); color: var(--green);
+        }
+
+        .toast.error {
+            background: rgba(24,10,10,0.96);
+            border: 1px solid rgba(239,68,68,0.28); color: #f87171;
+        }
+
+        .toast-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+        .toast-title { font-weight: 700; margin-bottom: 2px; }
+        .toast-msg { opacity: 0.75; font-size: 12px; }
+
+        /* ─── Mobile hamburger ──────────────────────────────────────── */
+        .nav-toggle {
+            display: none; background: none;
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 7px 9px; cursor: pointer; color: var(--text-2);
+            flex-direction: column; gap: 4px; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+        }
+        .nav-toggle:hover { background: var(--surface); color: var(--text); }
+        .nav-toggle span { display: block; width: 18px; height: 1.5px; background: currentColor; border-radius: 2px; transition: transform 0.22s ease, opacity 0.15s; }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+        @media (max-width: 780px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(10,13,18,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px 16px; flex-direction: column; gap: 4px; z-index: 999; }
+            .nav-links.open { display: flex; animation: slideDown 0.18s ease; }
+            .nav-link { padding: 10px 14px; width: 100%; }
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ─── Keyframes ─────────────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(18px) scale(0.96); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes toastOut {
+            to   { opacity: 0; transform: translateX(18px) scale(0.96); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── Navbar ──────────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <div class="nav-logo">ON</div>
+            <div class="brand-text">
+                <span class="brand-name">Sistema de Inventario</span>
+                <span class="brand-sub">Dar de alta</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link accent" href="/">Conteo en Vivo</a>
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+            <a class="nav-link" href="/compare">Comparar</a>
+            <a class="nav-link" href="/tag-history">Historial Tag</a>
+            <a class="nav-link" href="/batch-status">Corrector</a>
+            <a class="nav-link" href="/create_defect">Reportar Daño</a>
+            <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+        </div>
+    </nav>
+
+    <!-- ─── Toast container ─────────────────────────────────────────── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title">Dar de Alta</h1>
+            <p class="page-subtitle">
+                Registra nuevos EPCs en el sistema asignando artículo y cliente
+            </p>
+        </div>
+
+        <!-- ─── Metadata card ─────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s ease both;">
+            <div class="card-header">
+                <span class="card-title">Datos del artículo</span>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label class="field-label" for="articuloInput">Artículo</label>
+                    <input type="text" id="articuloInput" placeholder="Ej. Sabana Queen" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label class="field-label" for="clienteInput">Cliente</label>
+                    <input type="text" id="clienteInput" placeholder="Ej. Holiday Inn San Jeronimo" autocomplete="off" />
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── EPC input card ────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s 0.05s ease both;">
+            <div class="card-header">
+                <span class="card-title">EPCs a registrar</span>
+            </div>
+
+            <textarea
+                id="epcInput"
+                placeholder="Pega EPCs aquí — uno por línea, separados por coma, espacio, etc."
+            ></textarea>
+
+            <div class="counter-row">
+                <span class="pill pill-green" id="epcCounter">0 EPCs válidos</span>
+            </div>
+
+            <div class="divider">o carga un CSV</div>
+
+            <div class="csv-zone" id="csvDropZone">
+                <span class="csv-icon">📄</span>
+                <label for="csvFileInput">
+                    Arrastra un CSV aquí o haz clic para seleccionar archivo
+                    <input type="file" id="csvFileInput" accept=".csv,.txt">
+                </label>
+                <div class="csv-hint">Acepta columna EPC o EPCs línea a línea</div>
+                <div class="csv-filename" id="csvFilename"></div>
+            </div>
+        </div>
+
+        <!-- ─── Action card ───────────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s 0.10s ease both;">
+            <button class="btn-submit" id="btnAlta" disabled>
+                + Dar de Alta
+            </button>
+            <div class="result-box" id="resultBox"></div>
+        </div>
+
+    </div><!-- /container -->
+
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        //  Constants
+        // ─────────────────────────────────────────────────────────────
+        const EPC_LEN   = 24;
+        const EPC_REGEX = /^[0-9A-Fa-f]{24}$/;
+
+        // ─────────────────────────────────────────────────────────────
+        //  DOM references
+        // ─────────────────────────────────────────────────────────────
+        const epcInput      = document.getElementById('epcInput');
+        const epcCounter    = document.getElementById('epcCounter');
+        const articuloInput = document.getElementById('articuloInput');
+        const clienteInput  = document.getElementById('clienteInput');
+        const btnAlta       = document.getElementById('btnAlta');
+        const resultBox     = document.getElementById('resultBox');
+        const csvFileInput  = document.getElementById('csvFileInput');
+        const csvFilename   = document.getElementById('csvFilename');
+        const csvDropZone   = document.getElementById('csvDropZone');
+        const toastCont     = document.getElementById('toastContainer');
+
+        // ─────────────────────────────────────────────────────────────
+        //  Toast system
+        // ─────────────────────────────────────────────────────────────
+        function toast(type, title, msg = '', duration = 4500) {
+            const icons = { success: '✓', error: '✕' };
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `
+                <span class="toast-icon">${icons[type] ?? 'ℹ'}</span>
+                <div>
+                    <div class="toast-title">${title}</div>
+                    ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+                </div>`;
+            toastCont.appendChild(t);
+            setTimeout(() => {
+                t.style.animation = 'toastOut 0.25s ease forwards';
+                setTimeout(() => t.remove(), 260);
+            }, duration);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  EPC validation helpers
+        // ─────────────────────────────────────────────────────────────
+
+        /** Extracts, validates, and deduplicates EPCs from free-form text */
+        function extractValidEPCs(text) {
+            const parts = text
+                .split(/[\r\n,;\s|]+/)
+                .map(s => s.trim().toUpperCase())
+                .filter(s => s.length === EPC_LEN && EPC_REGEX.test(s));
+            return [...new Set(parts)];
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  CSV parsing
+        //  Handles:
+        //    - Metadata rows before the real header (RFID reader exports)
+        //    - "TAG ID", "EPC", "TAGID", "TAG_ID" column names
+        //    - Quoted fields: "E280..."
+        //    - Plain EPC-per-line files with no header at all
+        // ─────────────────────────────────────────────────────────────
+
+        /** Splits one CSV line respecting double-quoted fields */
+        function splitCSVLine(line) {
+            const cols = [];
+            let cur = '', inQ = false;
+            for (const ch of line) {
+                if (ch === '"')                              { inQ = !inQ; }
+                else if ((ch === ',' || ch === ';' || ch === '\t') && !inQ) { cols.push(cur.trim()); cur = ''; }
+                else                                         { cur += ch; }
+            }
+            cols.push(cur.trim());
+            return cols;
+        }
+
+        // All recognised column names that contain the EPC / tag ID value
+        const EPC_HEADERS = new Set(['EPC', 'TAG ID', 'TAGID', 'TAG_ID', 'EPC ID', 'EPCID']);
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return [];
+
+            // Scan every line for a recognised header row — files from RFID
+            // readers often include metadata rows above the real column headers.
+            let headerIdx = -1, epcCol = -1;
+            for (let i = 0; i < lines.length; i++) {
+                const cols = splitCSVLine(lines[i]).map(h => h.toUpperCase());
+                const found = cols.findIndex(h => EPC_HEADERS.has(h));
+                if (found !== -1) { headerIdx = i; epcCol = found; break; }
+            }
+
+            const epcs = [];
+            if (headerIdx !== -1) {
+                // Structured: pull only the EPC column from every data row
+                for (let i = headerIdx + 1; i < lines.length; i++) {
+                    const val = (splitCSVLine(lines[i])[epcCol] ?? '').toUpperCase();
+                    if (val) epcs.push(val);
+                }
+            } else {
+                // Unstructured: every cell is a candidate — validation filters junk
+                for (const line of lines)
+                    for (const cell of splitCSVLine(line)) {
+                        const val = cell.toUpperCase();
+                        if (val) epcs.push(val);
+                    }
+            }
+
+            return [...new Set(epcs.filter(e => e.length === EPC_LEN && EPC_REGEX.test(e)))];
+        }
+
+        /** Reads a File, parses EPCs, and appends them to the textarea */
+        function loadCSVFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const epcs = parseCSV(e.target.result);
+                if (!epcs.length) {
+                    toast('error', 'Sin EPCs válidos', 'El archivo no contiene EPCs de 24 caracteres hex.');
+                    return;
+                }
+                const current = epcInput.value.trim();
+                epcInput.value = current ? `${current}\n${epcs.join('\n')}` : epcs.join('\n');
+                updateCounter();
+                toast('success', 'CSV cargado', `${epcs.length} EPC(s) agregados desde ${file.name}`);
+            };
+            reader.readAsText(file);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  UI state
+        // ─────────────────────────────────────────────────────────────
+        function updateCounter() {
+            const epcs = extractValidEPCs(epcInput.value);
+            epcCounter.textContent =
+                `${epcs.length} EPC${epcs.length !== 1 ? 's' : ''} válido${epcs.length !== 1 ? 's' : ''}`;
+            const ready = epcs.length > 0 && articuloInput.value.trim() && clienteInput.value.trim();
+            btnAlta.disabled = !ready;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Submit handler — sends EPCs to /api/dar-de-alta
+        // ─────────────────────────────────────────────────────────────
+        btnAlta.addEventListener('click', async () => {
+            const epcs     = extractValidEPCs(epcInput.value);
+            const articulo = articuloInput.value.trim();
+            const cliente  = clienteInput.value.trim();
+
+            if (!epcs.length || !articulo || !cliente) return;
+
+            btnAlta.disabled    = true;
+            btnAlta.textContent = 'Registrando…';
+            resultBox.style.display = 'none';
+
+            try {
+                const res  = await fetch('/api/dar-de-alta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ epcs, articulo, cliente }),
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    resultBox.className = 'result-box success';
+                    resultBox.innerHTML = `
+                        <div class="result-row">
+                            <span class="result-count">${data.inserted}</span>
+                            <span class="result-label">EPC${data.inserted !== 1 ? 's' : ''} registrado${data.inserted !== 1 ? 's' : ''} correctamente</span>
+                        </div>
+                        <div class="result-meta">
+                            ${data.skipped_duplicate} duplicado${data.skipped_duplicate !== 1 ? 's' : ''} omitido${data.skipped_duplicate !== 1 ? 's' : ''} &nbsp;·&nbsp;
+                            ${data.skipped_invalid} inválido${data.skipped_invalid !== 1 ? 's' : ''} omitido${data.skipped_invalid !== 1 ? 's' : ''}
+                        </div>`;
+                    if (data.inserted > 0) {
+                        epcInput.value = '';
+                        updateCounter();
+                        toast('success', 'Alta completada', `${data.inserted} EPC(s) registrados para ${cliente}.`);
+                    }
+                } else {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = data.error || 'Error al registrar los EPCs.';
+                    toast('error', 'Error al dar de alta', data.error || 'Respuesta inesperada del servidor.');
+                }
+            } catch (err) {
+                resultBox.className = 'result-box error';
+                resultBox.textContent = 'Error de conexión con el servidor.';
+                toast('error', 'Error de conexión', 'No se pudo contactar al servidor.');
+            }
+
+            resultBox.style.display = 'block';
+            btnAlta.textContent = '+ Dar de Alta';
+            updateCounter();
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        //  Event listeners
+        // ─────────────────────────────────────────────────────────────
+        epcInput.addEventListener('input', updateCounter);
+        articuloInput.addEventListener('input', updateCounter);
+        clienteInput.addEventListener('input', updateCounter);
+
+        csvFileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            csvFilename.textContent = file.name;
+            loadCSVFile(file);
+        });
+
+        csvDropZone.addEventListener('dragover', e => {
+            e.preventDefault(); csvDropZone.classList.add('drag-over');
+        });
+        csvDropZone.addEventListener('dragleave', () => csvDropZone.classList.remove('drag-over'));
+        csvDropZone.addEventListener('drop', e => {
+            e.preventDefault(); csvDropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+            csvFilename.textContent = file.name;
+            loadCSVFile(file);
+        });
+
+        // Hamburger toggle
+        const navToggle = document.getElementById('navToggle');
+        const navLinks  = document.getElementById('navLinks');
+        navToggle.addEventListener('click', () => { navToggle.classList.toggle('open'); navLinks.classList.toggle('open'); });
+        navLinks.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { navToggle.classList.remove('open'); navLinks.classList.remove('open'); }));
+    </script>
+</body>
+
+</html>

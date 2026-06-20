@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Reporte de Daño</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --border:       rgba(255,255,255,0.07);
+            --border-focus: rgba(62,207,142,0.35);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --red:          #ef4444;
+            --red-dim:      rgba(239,68,68,0.10);
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 28px 20px; padding-top: 92px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(239,68,68,0.05) 0%, transparent 100%);
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 64px;
+            background: rgba(14,17,23,0.80);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--green), #22c55e);
+            border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #0a1008;
+            box-shadow: 0 0 18px var(--green-glow); flex-shrink: 0;
+        }
+        .brand-text { display: flex; flex-direction: column; gap: 1px; }
+        .brand-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; line-height: 1; }
+        .brand-sub  { font-size: 10px; font-weight: 500; color: var(--text-3); letter-spacing: 0.4px; text-transform: uppercase; }
+        .nav-links  { display: flex; gap: 6px; align-items: center; }
+        .nav-link {
+            padding: 6px 14px; font-size: 13px; font-weight: 500;
+            text-decoration: none; border-radius: 8px; border: 1px solid transparent;
+            color: var(--text-2); transition: all 0.15s;
+        }
+        .nav-link:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+        .nav-link.active {
+            background: var(--red-dim); color: var(--red);
+            border-color: rgba(239,68,68,0.18);
+        }
+
+        /* ── Layout ── */
+        .container { max-width: 560px; margin: 0 auto; }
+
+        .page-header { text-align: center; margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+        .page-title {
+            font-size: 32px; font-weight: 800; letter-spacing: -1.2px; margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 20%, var(--red) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .page-subtitle { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+
+        /* ── Card ── */
+        .card {
+            background: rgba(22,27,34,0.75); border: 1px solid var(--border);
+            border-radius: 18px; padding: 28px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            animation: fadeUp 0.4s ease both;
+        }
+
+        /* ── Form fields ── */
+        .form-group { margin-bottom: 20px; }
+
+        .field-label {
+            display: block; font-size: 11px; font-weight: 600;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+        }
+        .field-label.required::after { content: ' *'; color: var(--red); }
+
+        input[type="text"],
+        textarea {
+            width: 100%; padding: 12px 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: var(--green);
+        }
+        input[type="text"]::placeholder,
+        textarea::placeholder { color: var(--text-3); }
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+        textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+
+        /* ── Upload area ── */
+        .upload-area {
+            border: 1px dashed rgba(255,255,255,0.12);
+            border-radius: var(--radius); padding: 24px;
+            text-align: center; cursor: pointer;
+            transition: all 0.2s; background: transparent;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: rgba(62,207,142,0.35); background: var(--green-dim);
+        }
+        .upload-area.invalid { border-color: rgba(239,68,68,0.40); }
+
+        .upload-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+        .upload-hint { font-size: 13px; color: var(--text-2); font-weight: 500; }
+        .upload-sub  { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+        .preview-img {
+            max-width: 100%; max-height: 200px; margin-top: 14px;
+            border-radius: 9px; display: none; object-fit: cover;
+            border: 1px solid var(--border);
+        }
+
+        /* ── Validation ── */
+        .field-error {
+            font-size: 12px; color: #f87171;
+            margin-top: 5px; display: none;
+        }
+        .form-group.invalid input,
+        .form-group.invalid textarea { border-color: rgba(239,68,68,0.4); }
+        .form-group.invalid .upload-area { border-color: rgba(239,68,68,0.4); }
+        .form-group.invalid .field-error { display: block; }
+
+        /* ── Submit ── */
+        .btn-submit {
+            width: 100%; padding: 13px;
+            font-size: 14px; font-weight: 700;
+            background: var(--red); color: #fff;
+            border: none; border-radius: var(--radius); cursor: pointer;
+            box-shadow: 0 4px 16px rgba(239,68,68,0.25); transition: all 0.15s;
+        }
+        .btn-submit:hover { background: #f87171; transform: translateY(-1px); }
+        .btn-submit:active { transform: scale(0.98); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .nav-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; cursor: pointer; color: var(--text-2); flex-direction: column; gap: 4px; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+        .nav-toggle:hover { background: var(--surface); color: var(--text); }
+        .nav-toggle span { display: block; width: 18px; height: 1.5px; background: currentColor; border-radius: 2px; transition: transform 0.22s ease, opacity 0.15s; }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+        @media (max-width: 780px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(10,13,18,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px 16px; flex-direction: column; gap: 4px; z-index: 999; }
+            .nav-links.open { display: flex; animation: slideDown 0.18s ease; }
+            .nav-link { padding: 10px 14px; width: 100%; }
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <div class="nav-logo">ON</div>
+            <div class="brand-text">
+                <span class="brand-name">Sistema de Inventario</span>
+                <span class="brand-sub">Reporte de Daño</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link" href="/">Conteo en Vivo</a>
+            <a class="nav-link" href="/dar-de-alta">Dar de Alta</a>
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+            <a class="nav-link" href="/compare">Comparar</a>
+            <a class="nav-link" href="/tag-history">Historial Tag</a>
+            <a class="nav-link" href="/batch-status">Corrector</a>
+            <a class="nav-link active" href="/create_defect">Reportar Daño</a>
+            <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title">Reporte de Daño</h1>
+            <p class="page-subtitle">Escanea el ID de la unidad, sube una foto del daño y describe el problema.</p>
+        </div>
+
+        <div class="card">
+            <form action="/report-damage" method="POST" enctype="multipart/form-data" id="damageForm">
+
+                <!-- Unit ID -->
+                <div class="form-group" id="group-unitId">
+                    <label class="field-label required" for="unitId">ID de la Unidad</label>
+                    <input type="text" id="unitId" name="unitId"
+                        placeholder="Escanea o escribe el código EPC" required autofocus />
+                    <div class="field-error">Este campo es obligatorio.</div>
+                </div>
+
+                <!-- Photo upload -->
+                <div class="form-group" id="group-photo">
+                    <label class="field-label required">Foto del Daño</label>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="photo" name="photo" accept="image/*" required style="display:none;" />
+                        <span class="upload-icon">📷</span>
+                        <div class="upload-hint">Arrastra una foto aquí o haz clic para seleccionar</div>
+                        <div class="upload-sub">JPG, PNG, WEBP — máx. 8 MB</div>
+                        <img class="preview-img" id="previewImg" alt="Vista previa" />
+                    </div>
+                    <div class="field-error">Debes subir una imagen del daño.</div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group" id="group-description">
+                    <label class="field-label required" for="description">Descripción del Daño</label>
+                    <textarea id="description" name="description"
+                        placeholder="Explica qué está dañado, ubicación, severidad…"
+                        required rows="4"></textarea>
+                    <div class="field-error">Este campo es obligatorio.</div>
+                </div>
+
+                <button type="submit" class="btn-submit">Enviar Reporte</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        const form       = document.getElementById('damageForm');
+        const fileInput  = document.getElementById('photo');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewImg = document.getElementById('previewImg');
+
+        // ── Drag & drop ──────────────────────────────────────────────
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(ev =>
+            uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.add('dragover'); })
+        );
+        ['dragleave', 'drop'].forEach(ev =>
+            uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.remove('dragover'); })
+        );
+        uploadArea.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length) { fileInput.files = files; showPreview(files[0]); }
+        });
+        fileInput.addEventListener('change', e => showPreview(e.target.files[0]));
+
+        function showPreview(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                previewImg.src = ev.target.result;
+                previewImg.style.display = 'block';
+                uploadArea.querySelector('.upload-hint').style.display = 'none';
+                uploadArea.querySelector('.upload-sub').style.display  = 'none';
+                uploadArea.querySelector('.upload-icon').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ── Client-side validation before submit ─────────────────────
+        form.addEventListener('submit', e => {
+            let valid = true;
+
+            ['unitId', 'description'].forEach(id => {
+                const input = document.getElementById(id);
+                const group = document.getElementById(`group-${id}`);
+                if (!input.value.trim()) {
+                    group.classList.add('invalid'); valid = false;
+                } else {
+                    group.classList.remove('invalid');
+                }
+            });
+
+            const photoGroup = document.getElementById('group-photo');
+            if (!fileInput.files.length) {
+                photoGroup.classList.add('invalid'); valid = false;
+            } else {
+                photoGroup.classList.remove('invalid');
+            }
+
+            if (!valid) e.preventDefault();
+        });
+
+        // Hamburger toggle
+        const t = document.getElementById('navToggle'), n = document.getElementById('navLinks');
+        t.addEventListener('click', () => { t.classList.toggle('open'); n.classList.toggle('open'); });
+        n.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { t.classList.remove('open'); n.classList.remove('open'); }));
+    </script>
+</body>
+</html>

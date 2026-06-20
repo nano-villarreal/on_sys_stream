@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Comparar Clientes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0e1117;--surface:#161b22;--surface-2:#1c2333;--border:rgba(255,255,255,0.07);--border-focus:rgba(62,207,142,0.35);--green:#3ecf8e;--green-dim:rgba(62,207,142,0.10);--green-glow:rgba(62,207,142,0.22);--red:#ef4444;--red-dim:rgba(239,68,68,0.10);--amber:#f59e0b;--blue:#3b82f6;--indigo:#6366f1;--text:#ededef;--text-2:#8b8fa8;--text-3:#4a4f62;--radius:13px;}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 20px;padding-top:92px;background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(62,207,142,0.05) 0%,transparent 100%);}
+        .navbar{position:fixed;top:0;left:0;right:0;height:64px;background:rgba(14,17,23,0.80);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:1000;}
+        .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+        .nav-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--green),#22c55e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0a1008;box-shadow:0 0 18px var(--green-glow);flex-shrink:0;}
+        .brand-text{display:flex;flex-direction:column;gap:1px;}
+        .brand-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.3px;line-height:1;}
+        .brand-sub{font-size:10px;font-weight:500;color:var(--text-3);letter-spacing:0.4px;text-transform:uppercase;}
+        .nav-links{display:flex;gap:6px;align-items:center;}
+        .nav-link{padding:6px 14px;font-size:13px;font-weight:500;text-decoration:none;border-radius:8px;border:1px solid transparent;color:var(--text-2);transition:all 0.15s;}
+        .nav-link:hover{background:var(--surface);color:var(--text);border-color:var(--border);}
+        .nav-link.active{background:var(--green-dim);color:var(--green);border-color:rgba(62,207,142,0.18);}
+        .container{max-width:1100px;margin:0 auto;}
+        .page-header{text-align:center;margin-bottom:28px;animation:fadeUp 0.4s ease both;}
+        .page-title{font-size:32px;font-weight:800;letter-spacing:-1.2px;margin-bottom:8px;background:linear-gradient(135deg,#fff 20%,var(--green) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .page-subtitle{font-size:14px;color:var(--text-2);}
+        .card{background:rgba(22,27,34,0.75);border:1px solid var(--border);border-radius:18px;padding:24px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+        .card+.card{margin-top:14px;}
+        .card-header{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+        .card-title{font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.8px;}
+        textarea{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:14px;color:var(--text);resize:vertical;min-height:100px;line-height:1.6;caret-color:var(--green);transition:border-color 0.2s,box-shadow 0.2s;}
+        textarea:focus{outline:none;border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(62,207,142,0.07);}
+        .btn-compare{padding:12px 28px;font-size:14px;font-weight:700;background:var(--green);color:#091a12;border:none;border-radius:var(--radius);cursor:pointer;box-shadow:0 4px 14px var(--green-glow);transition:all 0.15s;margin-top:12px;}
+        .btn-compare:hover{background:#4ddfaa;transform:translateY(-1px);}
+        .alert-error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:var(--radius);padding:14px 18px;font-size:13px;margin-top:14px;}
+        /* Comparison table */
+        .cmp-wrap{overflow-x:auto;}
+        table.cmp{width:100%;border-collapse:collapse;}
+        .cmp th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;border-bottom:1px solid var(--border);}
+        .cmp td{padding:14px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text-2);vertical-align:middle;}
+        .cmp tr:last-child td{border-bottom:none;}
+        .cmp tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+        .cmp td:first-child{font-weight:700;color:var(--text);}
+        .c-green{color:var(--green);font-weight:700;}
+        .c-blue{color:var(--blue);font-weight:700;}
+        .c-red{color:var(--red);font-weight:700;}
+        .c-amber{color:var(--amber);font-weight:700;}
+        .c-indigo{color:var(--indigo);font-weight:700;}
+        .rate-bar{height:6px;border-radius:3px;background:var(--surface-2);margin-top:4px;overflow:hidden;}
+        .rate-fill{height:100%;border-radius:3px;background:var(--green);transition:width 0.6s ease;}
+        /* Best badge */
+        .best{display:inline-block;font-size:9px;font-weight:700;background:var(--green-dim);color:var(--green);border:1px solid rgba(62,207,142,0.2);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+        .nav-toggle{display:none;background:none;border:1px solid var(--border);border-radius:8px;padding:7px 9px;cursor:pointer;color:var(--text-2);flex-direction:column;gap:4px;transition:background 0.15s,color 0.15s;flex-shrink:0;}
+        .nav-toggle:hover{background:var(--surface);color:var(--text);}
+        .nav-toggle span{display:block;width:18px;height:1.5px;background:currentColor;border-radius:2px;transition:transform 0.22s ease,opacity 0.15s;}
+        .nav-toggle.open span:nth-child(1){transform:translateY(5.5px) rotate(45deg);}
+        .nav-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+        .nav-toggle.open span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg);}
+        @media(max-width:780px){.nav-toggle{display:flex;}.nav-links{display:none;position:fixed;top:64px;left:0;right:0;background:rgba(10,13,18,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:10px 16px 16px;flex-direction:column;gap:4px;z-index:999;}.nav-links.open{display:flex;animation:slideDown 0.18s ease;}.nav-link{padding:10px 14px;width:100%;}}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a class="brand" href="/"><div class="nav-logo">ON</div><div class="brand-text"><span class="brand-name">Sistema de Inventario</span><span class="brand-sub">Comparar Clientes</span></div></a>
+    <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+        <a class="nav-link" href="/">Conteo en Vivo</a>
+        <a class="nav-link" href="/dar-de-alta">Dar de Alta</a>
+        <a class="nav-link" href="/dashboard">Dashboard</a>
+        <a class="nav-link active" href="/compare">Comparar</a>
+        <a class="nav-link" href="/tag-history">Historial Tag</a>
+        <a class="nav-link" href="/batch-status">Corrector</a>
+        <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Comparar Clientes</h1>
+        <p class="page-subtitle">Estadísticas side-by-side para hasta 8 cuentas</p>
+    </div>
+
+    <div class="card" style="animation:fadeUp 0.4s ease both;">
+        <div class="card-header"><span class="card-title">Clientes a comparar</span></div>
+        <form method="POST" action="/compare">
+            <textarea name="clients" placeholder="Club Country&#10;Hotel Regis&#10;Holiday Inn&#10;…uno por línea o separados por coma"><%= typeof raw !== 'undefined' ? raw : '' %></textarea>
+            <button type="submit" class="btn-compare">Comparar →</button>
+        </form>
+    </div>
+
+    <% if (error) { %><div class="alert-error"><%= error %></div><% } %>
+
+    <% if (searched && clients.length > 0) { %>
+    <%
+    const bestTotal   = Math.max(...clients.map(c => c.total));
+    const bestAvg     = Math.max(...clients.map(c => parseFloat(c.avgWashes)));
+    const bestRate    = Math.max(...clients.filter(c => c.returnRate !== null).map(c => c.returnRate));
+    const leastDmg    = Math.min(...clients.map(c => c.damaged));
+    const leastOut    = Math.min(...clients.map(c => c.currentlyOut));
+    %>
+    <div class="card" style="animation:fadeUp 0.4s 0.06s ease both;margin-top:14px;">
+        <div class="card-header"><span class="card-title">Resultados — <%= clients.length %> clientes</span></div>
+        <div class="cmp-wrap">
+        <table class="cmp">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Total Prendas</th>
+                    <th>Avg. Lavados</th>
+                    <th>En Circulación</th>
+                    <th>Prendas Dañadas</th>
+                    <th>Tasa Retorno (30d)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% clients.forEach(c => { %>
+                <tr>
+                    <td><a href="/dashboard" style="color:inherit;text-decoration:none;"><%= c.name %></a></td>
+                    <td class="c-green"><%= c.total %><%= c.total === bestTotal ? '<span class="best">MAYOR</span>' : '' %></td>
+                    <td class="c-indigo"><%= c.avgWashes %><%= parseFloat(c.avgWashes) === bestAvg ? '<span class="best">MAYOR</span>' : '' %></td>
+                    <td class="c-blue"><%= c.currentlyOut %><%= c.currentlyOut === leastOut ? '<span class="best">MENOR</span>' : '' %></td>
+                    <td class="<%= c.damaged === leastDmg ? 'c-green' : 'c-red' %>"><%= c.damaged %><%= c.damaged === leastDmg ? '<span class="best">MENOR</span>' : '' %></td>
+                    <td>
+                        <% if (c.returnRate !== null) { %>
+                        <span class="<%= c.returnRate >= 80 ? 'c-green' : c.returnRate >= 50 ? 'c-amber' : 'c-red' %>"><%= c.returnRate %>%<%= c.returnRate === bestRate ? '<span class="best">MAYOR</span>' : '' %></span>
+                        <div class="rate-bar"><div class="rate-fill" style="width:<%= Math.min(c.returnRate,100) %>%;background:<%= c.returnRate >= 80 ? '#3ecf8e' : c.returnRate >= 50 ? '#f59e0b' : '#ef4444' %>;"></div></div>
+                        <% } else { %><span style="color:var(--text-3);">—</span><% } %>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<script>
+const t=document.getElementById('navToggle'),n=document.getElementById('navLinks');
+t.addEventListener('click',()=>{t.classList.toggle('open');n.classList.toggle('open');});
+n.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',()=>{t.classList.remove('open');n.classList.remove('open');}));
+</script>
+</body>
+</html>

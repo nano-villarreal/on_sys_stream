@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ON Sistema — Restaurantes</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3ecf8e 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot span{color:#3ecf8e;font-weight:600}
+.g{color:#3ecf8e}.dim{color:#6b7280}.warn{color:#f59e0b}.red{color:#ef4444}.blue{color:#3b82f6}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:22pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+.slide-head{margin-bottom:6mm}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#132d1f;border:1px solid #1f5c38;border-radius:99px;padding:6px 18px;font-size:9pt;color:#3ecf8e;font-weight:500}
+.kpi-box{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.kpi-box .val{font-size:19pt;font-weight:800}
+.kpi-box .lbl{font-size:7pt;font-weight:600;letter-spacing:1px;color:#6b7280;text-transform:uppercase;margin-top:1mm}
+.problem-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.problem-card .icon{font-size:22pt;margin-bottom:3mm}
+.problem-card h3{font-size:11pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.problem-card p{font-size:8.5pt;color:#9ca3af;line-height:1.5}
+.client-chip{display:inline-flex;align-items:center;gap:5px;background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:2px 10px;font-size:7.5pt;color:#3ecf8e;font-weight:600}
+.dash-kpi{flex:1;background:#0e1117;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center}
+.dash-kpi .v{font-size:14pt;font-weight:800}
+.dash-kpi .l{font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5mm}
+.feat-item{display:flex;align-items:flex-start;gap:4mm;background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.feat-item .icon{font-size:14pt;min-width:8mm}
+.feat-item h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm}
+.feat-item p{font-size:7.5pt;color:#9ca3af;line-height:1.4}
+.badge-crit{background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.badge-warn{background:#2d1f00;color:#f59e0b;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.pct-bar{height:5px;border-radius:2px;background:#3ecf8e;margin-top:1mm}
+.pct-bar.warn{background:#f59e0b}.pct-bar.crit{background:#ef4444}
+.lc-info-card{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:5mm}
+.lc-info-card h4{font-size:9.5pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.lc-info-card p{font-size:8pt;color:#9ca3af;line-height:1.55}
+.type-badge{padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700;white-space:nowrap;margin-top:0.5mm}
+.badge-rec{background:#1a3a2a;color:#3ecf8e}.badge-ent{background:#1a2744;color:#60a5fa}.badge-rep{background:#2a1f44;color:#818cf8}
+.prop-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.prop-card .step{width:8mm;height:8mm;background:#3ecf8e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:800;color:#091a12;margin-bottom:3mm}
+.cta-bar{background:linear-gradient(90deg,#0d2b1c,#13381f);border:1px solid #1f5c38;border-radius:3mm;padding:6mm 9mm;display:flex;align-items:center;justify-content:space-between}
+
+/* Service scan visual */
+.scan-step{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;flex:1}
+.scan-step .num{width:8mm;height:8mm;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:800;margin-bottom:3mm}
+.scan-step h3{font-size:10pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.scan-step p{font-size:8pt;color:#9ca3af;line-height:1.5}
+.scan-readout{margin-top:3mm;background:#0e1117;border-radius:2mm;padding:2.5mm 3mm;font-size:7.5pt}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1 — COVER -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:16mm;height:16mm;background:#3ecf8e;border-radius:3mm;display:flex;align-items:center;justify-content:center;font-size:22pt;font-weight:900;color:#091a12">ON</div>
+    <div style="font-size:24pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+  </div>
+  <h1 style="font-size:32pt;font-weight:900;text-align:center;letter-spacing:-1px;line-height:1.1;margin-bottom:5mm;color:#f1f5f9">Control total de <span style="color:#3ecf8e">mantelería<br>y uniformes</span> de servicio</h1>
+  <p style="font-size:13pt;color:#9ca3af;text-align:center;margin-bottom:14mm">Tecnología RFID para restaurantes — sabe exactamente qué tienes,<br>dónde está, y cuándo reemplazarlo.</p>
+  <div class="pill"><span style="width:7px;height:7px;background:#3ecf8e;border-radius:50%;display:inline-block"></span>Propuesta para restaurante &nbsp;·&nbsp; Junio 2026</div>
+  <div style="font-size:8pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Confidencial · emiliano.villarreal99@gmail.com</div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>1 / 9</span></div>
+</div>
+
+<!-- SLIDE 2 — PROBLEMA -->
+<div class="slide" style="padding:14mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">El problema</div>
+    <div class="slide-title">Cada servicio, <span style="color:#ef4444">servilletas y manteles desaparecen</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="problem-card">
+      <div class="icon">🍽️</div>
+      <h3>Conteo manual antes de abrir</h3>
+      <p>El maître cuenta manteles y servilletas a mano antes de cada servicio. Es lento, propenso a error, y si falta ropa no hay tiempo de reaccionar.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🧺</div>
+      <h3>La lavandería "pierde" piezas</h3>
+      <p>Envías 300 servilletas y recibes 278. No hay evidencia de qué salió exactamente ni cuándo — el proveedor no reconoce los faltantes.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🎨</div>
+      <h3>Manteles desgastados en mesa</h3>
+      <p>Sin ciclos de lavado registrados, los manteles deteriorados permanecen en rotación. Un mantel amarillento o con agujeros daña la experiencia del comensal.</p>
+    </div>
+  </div>
+  <div style="background:linear-gradient(135deg,#1a0d0d,#2d1010);border:1px solid #7f1d1d44;border-radius:3mm;padding:5mm 8mm;display:flex;align-items:center;gap:5mm">
+    <div style="font-size:30pt;font-weight:900;color:#ef4444">12–18%</div>
+    <div style="font-size:9pt;color:#d1d5db;line-height:1.5">
+      <strong style="color:#f9fafb;display:block;font-size:11pt;margin-bottom:1mm">De la mantelería se pierde o deteriora cada año</strong>
+      Un restaurante de 40 mesas puede perder entre 80 y 120 manteles al año — sin identificar si se perdieron en lavandería, en el salón o simplemente se desgastaron sin control.
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>2 / 9</span></div>
+</div>
+
+<!-- SLIDE 3 — ESCANEO PRE/POST SERVICIO -->
+<div class="slide" style="padding:10mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Control por servicio</div>
+    <div class="slide-title">Sabe exactamente qué tienes <span style="color:#3ecf8e">antes y después</span> de cada servicio</div>
+  </div>
+  <div style="display:flex;gap:5mm;flex:1">
+    <div class="scan-step">
+      <div class="num" style="background:#f59e0b;color:#000">1</div>
+      <h3>Pre-servicio (apertura)</h3>
+      <p>El capitán pasa el lector por la estación de ropa. En segundos obtiene el conteo exacto de manteles, servilletas y uniformes disponibles para ese turno.</p>
+      <div class="scan-readout" style="color:#f59e0b">
+        <div style="margin-bottom:1mm;font-weight:600">📦 Inventario disponible — Servicio comida</div>
+        <div>Manteles: <strong style="color:#e2e8f0">42</strong> · Servilletas: <strong style="color:#e2e8f0">186</strong></div>
+        <div>Delantales: <strong style="color:#e2e8f0">12</strong> · Paños: <strong style="color:#e2e8f0">28</strong></div>
+        <div style="margin-top:1mm;color:#6b7280;font-size:6.5pt">Listo para servicio de 40 mesas · 9 jun 12:00</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:20pt;color:#3ecf8e;padding:0 2mm">→</div>
+    <div class="scan-step">
+      <div class="num" style="background:#3b82f6;color:#fff">2</div>
+      <h3>Despacho a lavandería</h3>
+      <p>Al finalizar el servicio, toda la ropa sucia se escanea antes de salir al proveedor. El sistema registra el conteo exacto por artículo con fecha y hora.</p>
+      <div class="scan-readout" style="color:#3b82f6">
+        <div style="margin-bottom:1mm;font-weight:600">🚚 Salida a lavandería — Post servicio</div>
+        <div>Manteles: <strong style="color:#e2e8f0">42</strong> · Servilletas: <strong style="color:#e2e8f0">186</strong></div>
+        <div>Delantales: <strong style="color:#e2e8f0">12</strong> · Paños: <strong style="color:#e2e8f0">28</strong></div>
+        <div style="margin-top:1mm;color:#6b7280;font-size:6.5pt">268 prendas registradas · 9 jun 17:30</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:20pt;color:#3ecf8e;padding:0 2mm">→</div>
+    <div class="scan-step">
+      <div class="num" style="background:#3ecf8e;color:#091a12">3</div>
+      <h3>Recepción de lavandería</h3>
+      <p>Al regresar la ropa lavada, se escanea la entrega. El sistema compara y detecta automáticamente cualquier faltante — con nombre de prenda y EPC individual.</p>
+      <div class="scan-readout" style="color:#3ecf8e">
+        <div style="margin-bottom:1mm;font-weight:600">✓ Recepción de lavandería — 10 jun</div>
+        <div>Manteles: <strong style="color:#e2e8f0">42</strong> · Servilletas: <strong style="color:#e2e8f0">182</strong></div>
+        <div>Delantales: <strong style="color:#e2e8f0">12</strong> · Paños: <strong style="color:#e2e8f0">27</strong></div>
+        <div style="margin-top:1mm;color:#ef4444;font-size:6.5pt">⚠ 5 faltantes detectados — alerta generada</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>3 / 9</span></div>
+</div>
+
+<!-- SLIDE 4 — DASHBOARD -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Dashboard del restaurante</div>
+    <div class="slide-title">Todo tu inventario de tela, <span style="color:#3ecf8e">en un vistazo</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1">
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column;gap:3mm">
+      <div class="client-chip">● Restaurante La Hacienda</div>
+      <div style="display:flex;gap:3mm">
+        <div class="dash-kpi"><div class="v" style="color:#e2e8f0">370</div><div class="l">Total</div></div>
+        <div class="dash-kpi"><div class="v g">11,840</div><div class="l">Lavados</div></div>
+        <div class="dash-kpi"><div class="v indigo">32.0</div><div class="l">Promedio</div></div>
+        <div class="dash-kpi"><div class="v warn">89</div><div class="l">Lavand.</div></div>
+        <div class="dash-kpi"><div class="v red">17</div><div class="l">Dañadas</div></div>
+      </div>
+      <div style="display:flex;gap:3mm;margin-top:1mm">
+        <div style="flex:1.6;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Lavados promedio por artículo</div>
+          <div style="position:relative;height:44mm"><canvas id="chartWash"></canvas></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Estado actual</div>
+          <div style="position:relative;height:44mm"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4mm">
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">96%</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Tasa de retorno de lavandería<br>últimos 30 días</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div class="feat-item"><div class="icon">🔢</div><div><h4>Conteo instantáneo antes de servicio</h4><p>En 30 segundos sabes exactamente cuántos manteles y servilletas limpios tienes disponibles — sin contar a mano ni buscar en bodega.</p></div></div>
+      <div class="feat-item"><div class="icon">🎯</div><div><h4>Trazabilidad individual por EPC</h4><p>Cada pieza tiene identidad única. Si una servilleta desaparece, sabes exactamente cuál fue, en qué servicio se usó y cuándo salió a lavandería.</p></div></div>
+      <div class="feat-item"><div class="icon">📊</div><div><h4>Análisis de uso por turno</h4><p>Compara el consumo de mantelería entre comida, cena y eventos privados. Identifica en qué turno se pierde más ropa.</p></div></div>
+      <div class="feat-item"><div class="icon">💡</div><div><h4>Planificación de lavandería</h4><p>Sabe cuándo se llena el ciclo y cuándo necesitas ropa limpia de regreso. Elimina la improvisación y los faltantes en servicio.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>4 / 9</span></div>
+</div>
+
+<!-- SLIDE 5 — BITÁCORA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Bitácora y trazabilidad</div>
+    <div class="slide-title">Cada movimiento de tu mantelería, <span style="color:#3ecf8e">registrado para siempre</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 72mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;align-items:center">
+        <span>● Restaurante La Hacienda</span>
+        <span style="margin-left:auto;color:#6b7280;font-weight:400">Filtrar · CSV · PDF</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">42× Mantel &nbsp; 186× Servilleta &nbsp; 12× Delantal &nbsp; 28× Paño</div><div style="font-size:7pt;color:#6b7280">268 prendas · Lavandería Sur · EPCs escaneados</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">9 jun<br>17:30</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a;background:#0b0e14">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">42× Mantel &nbsp; 181× Servilleta &nbsp; 12× Delantal &nbsp; 27× Paño</div><div style="font-size:7pt;color:#6b7280">262 recibidas · 6 faltantes detectados · Alerta generada</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">10 jun<br>09:00</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">40× Mantel &nbsp; 170× Servilleta &nbsp; 10× Delantal &nbsp; 22× Paño</div><div style="font-size:7pt;color:#6b7280">242 prendas · Lavandería Sur · EPCs escaneados</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">7 jun<br>18:00</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a;background:#0b0e14">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">40× Mantel &nbsp; 170× Servilleta &nbsp; 10× Delantal &nbsp; 22× Paño</div><div style="font-size:7pt;color:#6b7280">242 recibidas · Retorno completo</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">8 jun<br>10:00</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rep">Reproceso</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">3× Mantel banquete &nbsp; 5× Servilleta</div><div style="font-size:7pt;color:#6b7280">Manchas permanentes — reproceso con lavado especial</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">5 jun<br>16:00</div>
+      </div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563">Mostrando 5 de 48 eventos · Reportes automáticos semanales por WhatsApp</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:flex-start">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm">¿Qué es la Bitácora?</div>
+        <p style="font-size:7.5pt;color:#9ca3af;line-height:1.5">Registro cronológico de cada envío a lavandería, cada entrega recibida y cada reproceso. Incluye fecha, hora, artículos por tipo y EPC individual de cada pieza — evidencia lista para reclamar faltantes.</p>
+      </div>
+      <div style="display:flex;gap:2mm">
+        <div style="flex:1;background:#0d2b1c;border:1px solid #1f5c38;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3ecf8e">24</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Recolecciones</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3b82f6">23</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Entregas</div>
+        </div>
+      </div>
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:3mm 4mm;flex:1">
+        <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Actividad mensual</div>
+        <div style="position:relative;height:50mm"><canvas id="chartMonthlyRest"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>5 / 9</span></div>
+</div>
+
+<!-- SLIDE 5 — ACCOUNTABILITY LAVANDERÍA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Control de lavandería</div>
+    <div class="slide-title">Termina con los faltantes <span style="color:#3ecf8e">sin evidencia</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;align-items:center">
+        <span>● Restaurante La Hacienda · Historial de envíos</span>
+        <span style="margin-left:auto;color:#6b7280;font-weight:400">CSV · PDF</span>
+      </div>
+      <!-- Header row -->
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;background:#131820;border-bottom:1px solid #1e2431">
+        <div>Fecha</div><div>Enviadas</div><div>Recibidas</div><div>Faltantes</div><div>Estado</div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">5 jun</div><div style="color:#e2e8f0">268</div><div style="color:#3ecf8e">263</div><div style="color:#ef4444;font-weight:700">5</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">3 jun</div><div style="color:#e2e8f0">242</div><div style="color:#3ecf8e">242</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">31 may</div><div style="color:#e2e8f0">310</div><div style="color:#3ecf8e">307</div><div style="color:#ef4444;font-weight:700">3</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">28 may</div><div style="color:#e2e8f0">255</div><div style="color:#3ecf8e">255</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">26 may</div><div style="color:#e2e8f0">278</div><div style="color:#3ecf8e">271</div><div style="color:#ef4444;font-weight:700">7</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">23 may</div><div style="color:#e2e8f0">230</div><div style="color:#3ecf8e">230</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563">24 envíos registrados en 90 días · Tasa de retorno: 96.2%</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font-size:22pt;font-weight:800;color:#e2e8f0">7,183</div><div style="font-size:7.5pt;color:#9ca3af">Prendas enviadas</div></div>
+          <div><div style="font-size:18pt;font-weight:800;color:#3ecf8e">6,914</div><div style="font-size:7.5pt;color:#9ca3af">Recibidas</div></div>
+        </div>
+      </div>
+      <div style="background:#1a0d0d;border:1px solid #7f1d1d44;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:8pt;font-weight:600;color:#ef4444;margin-bottom:1.5mm">269 prendas faltantes (90 días)</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Evidencia documentada por envío, con EPCs individuales, lista para presentar al proveedor.</div>
+      </div>
+      <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:8pt;font-weight:600;color:#3ecf8e;margin-bottom:1.5mm">Valor recuperable estimado</div>
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">$13,450 MXN</div>
+        <div style="font-size:7pt;color:#9ca3af;margin-top:1mm">269 piezas × $50 prom.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>6 / 9</span></div>
+</div>
+
+<!-- SLIDE 6 — CICLO DE VIDA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Ciclo de vida</div>
+    <div class="slide-title">Reemplaza manteles <span style="color:#3ecf8e">antes de que el comensal lo note</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="background:#131820;padding:3mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #1e2431">
+        <div>Artículo</div><div>Prom. lavados</div><div>Límite</div><div>Estado</div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Mantel banquete</div><div style="color:#ef4444;font-weight:700">64</div><div class="dim">60</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Servilleta bistró</div><div style="color:#ef4444;font-weight:700">92</div><div class="dim">90</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Mantel redondo</div><div style="color:#f59e0b;font-weight:700">52</div><div class="dim">60</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:87%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Delantal chef</div><div style="color:#f59e0b;font-weight:700">68</div><div class="dim">80</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:85%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Cubre-mantel</div><div style="color:#f59e0b;font-weight:700">42</div><div class="dim">50</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:84%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Paño de servicio</div><div style="color:#9ca3af">34</div><div class="dim">60</div><div><div class="pct-bar" style="width:57%;background:#3ecf8e"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Delantal mesero</div><div style="color:#9ca3af">28</div><div class="dim">80</div><div><div class="pct-bar" style="width:35%;background:#3ecf8e"></div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4mm;justify-content:center">
+      <div class="lc-info-card"><h4>Umbrales por tipo de pieza</h4><p>Una servilleta de bistró y una de banquete tienen diferente vida útil y estándar. Configura umbrales distintos para cada categoría.</p></div>
+      <div class="lc-info-card" style="border-color:#7f1d1d44;background:#1a0d0d"><h4 style="color:#ef4444">Impacto en la experiencia</h4><p>Un mantel con manchas o pilling que no fue detectado a tiempo afecta directamente la percepción del restaurante — y las reseñas.</p></div>
+      <div class="lc-info-card" style="border-color:#1f5c38;background:#0d2b1c"><h4 style="color:#3ecf8e">Alertas y planificación</h4><p>El sistema avisa cuando artículos alcanzan el 80% de vida útil — con tiempo para cotizar y reponer antes del siguiente evento o temporada alta.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>7 / 9</span></div>
+</div>
+
+<!-- SLIDE 7 — REPORTES -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Reportes automáticos</div>
+    <div class="slide-title">De la hoja de conteo al <span style="color:#3ecf8e">reporte profesional</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 65mm;gap:8mm;flex:1">
+    <div style="background:#fff;border-radius:3mm;overflow:hidden;border:1px solid #d1d5db;display:flex;flex-direction:column">
+      <div style="background:#3ecf8e;padding:4mm 6mm;display:flex;align-items:center;gap:5mm">
+        <div style="width:8mm;height:8mm;background:#091a12;border-radius:1mm;display:flex;align-items:center;justify-content:center;font-size:6pt;font-weight:900;color:#fff">ON</div>
+        <div><div style="font-size:8pt;font-weight:700;color:#091a12">ON Sistema de Inventario</div><div style="font-size:6pt;color:#1a6644">REPORTE SEMANAL — RESTAURANTE LA HACIENDA</div></div>
+      </div>
+      <div style="padding:4mm 6mm;flex:1;background:#fff">
+        <div style="font-size:14pt;font-weight:800;color:#0e1117;margin-bottom:1mm">Restaurante La Hacienda</div>
+        <div style="font-size:7pt;color:#6b7280;margin-bottom:3mm">Período: 2 jun 2026 — 9 jun 2026</div>
+        <div style="display:flex;gap:2mm;margin-bottom:3mm">
+          <div style="flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center"><div style="font-size:11pt;font-weight:800;color:#0e1117">370</div><div style="font-size:5pt;color:#9ca3af;text-transform:uppercase">Total piezas</div></div>
+          <div style="flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center"><div style="font-size:11pt;font-weight:800;color:#3ecf8e">11,840</div><div style="font-size:5pt;color:#9ca3af;text-transform:uppercase">Lavados totales</div></div>
+          <div style="flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center"><div style="font-size:11pt;font-weight:800;color:#818cf8">32.0</div><div style="font-size:5pt;color:#9ca3af;text-transform:uppercase">Promedio</div></div>
+          <div style="flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center"><div style="font-size:11pt;font-weight:800;color:#f59e0b">89</div><div style="font-size:5pt;color:#9ca3af;text-transform:uppercase">En lavand.</div></div>
+          <div style="flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center"><div style="font-size:11pt;font-weight:800;color:#ef4444">17</div><div style="font-size:5pt;color:#9ca3af;text-transform:uppercase">Dañadas</div></div>
+        </div>
+        <div style="font-size:7pt;font-weight:700;color:#0e1117;margin-bottom:1.5mm;text-transform:uppercase">Uso diario por artículo</div>
+        <div style="height:18mm;border:1px solid #e5e7eb;border-radius:1.5mm;display:flex;align-items:flex-end;gap:1mm;padding:2mm;margin-bottom:3mm;background:#f8fafc">
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:60%;background:#3ecf8e;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:80%;background:#3ecf8e;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:45%;background:#3b82f6;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:90%;background:#3b82f6;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:55%;background:#f59e0b;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:70%;background:#f59e0b;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:40%;background:#818cf8;width:5mm"></div>
+          <div style="border-radius:0.5mm 0.5mm 0 0;height:65%;background:#818cf8;width:5mm"></div>
+        </div>
+        <div style="font-size:7pt;font-weight:700;color:#0e1117;margin-bottom:1.5mm;text-transform:uppercase">Desglose por artículo</div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;background:#0e1117;padding:1.5mm 2mm;border-radius:1mm 1mm 0 0;font-size:5.5pt;font-weight:700;color:#fff"><div>Artículo</div><div style="text-align:right">Cantidad</div><div style="text-align:right">Lav.</div><div style="text-align:right">Prom.</div></div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:1.5mm 2mm;font-size:6.5pt;color:#374151;border-bottom:1px solid #e5e7eb"><div>Mantel redondo</div><div style="text-align:right">60</div><div style="text-align:right">3,120</div><div style="text-align:right">52.0</div></div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:1.5mm 2mm;font-size:6.5pt;color:#374151;border-bottom:1px solid #e5e7eb;background:#f8fafc"><div>Servilleta</div><div style="text-align:right">200</div><div style="text-align:right">6,400</div><div style="text-align:right">32.0</div></div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:1.5mm 2mm;font-size:6.5pt;color:#374151;border-bottom:1px solid #e5e7eb"><div>Delantal</div><div style="text-align:right">30</div><div style="text-align:right">2,040</div><div style="text-align:right">68.0</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm"><h4 style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1.5mm">Reporte semanal automático</h4><p style="font-size:7.5pt;color:#9ca3af;line-height:1.45">Cada lunes el gerente de A&B recibe el resumen: movimientos, faltantes de lavandería y alertas de ciclo de vida.</p></div>
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm"><h4 style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1.5mm">Reporte por evento</h4><p style="font-size:7.5pt;color:#9ca3af;line-height:1.45">Genera un PDF específico por boda, evento corporativo o temporada. Útil para calcular el costo de mantelería por cobertura.</p></div>
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm"><h4 style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1.5mm">Gráfica de uso diario</h4><p style="font-size:7.5pt;color:#9ca3af;line-height:1.45">Visualiza picos de uso por día y por artículo — perfecto para ajustar los ciclos de lavandería en temporada alta.</p></div>
+      <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:2.5mm;padding:4mm"><h4 style="font-size:9pt;font-weight:700;color:#3ecf8e;margin-bottom:1.5mm">Evidencia de faltantes incluida</h4><p style="font-size:7.5pt;color:#9ca3af;line-height:1.45">El PDF incluye historial de envíos vs recepciones — respaldo listo para presentar al proveedor de lavandería.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>8 / 9</span></div>
+</div>
+
+<!-- SLIDE 8 — PROPUESTA -->
+<div class="slide" style="padding:14mm 16mm 10mm;justify-content:center">
+  <div class="accent-bar"></div>
+  <div style="font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:3mm">Próximos pasos</div>
+  <h2 style="font-size:26pt;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;margin-bottom:2mm">Operando en <span style="color:#3ecf8e">tres días</span></h2>
+  <p style="font-size:10pt;color:#9ca3af;margin-bottom:9mm">Para un restaurante de 20–60 mesas, el sistema está operando antes del siguiente servicio del fin de semana.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="prop-card"><div class="step">1</div><h4>Día 1: Etiquetado</h4><p>Etiquetamos cada mantel, servilleta, delantal y paño. Para 400–600 piezas, el proceso se completa en un día.</p></div>
+    <div class="prop-card"><div class="step">2</div><h4>Día 2: Configuración</h4><p>Alta en el sistema, umbrales por tipo de prenda, configuración de alertas y WhatsApp del gerente de A&B.</p></div>
+    <div class="prop-card"><div class="step">3</div><h4>Día 3: Primera operación</h4><p>Primer pre-escaneo de servicio en vivo. El equipo aprende el flujo en menos de 30 minutos.</p></div>
+  </div>
+  <div class="cta-bar">
+    <div><h4 style="font-size:12pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm">¿Listos para ver el sistema en acción?</h4><p style="font-size:8.5pt;color:#9ca3af">Agenda una demo en vivo — conectamos en tiempo real con datos reales de tu restaurante.</p></div>
+    <div style="font-size:11pt;font-weight:700;color:#3ecf8e;padding-left:20mm">emiliano.villarreal99@gmail.com</div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>9 / 9</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+(function () {
+  const avgs = [52, 42, 34, 30, 26, 20];
+  const labels = ['Delantal', 'Mantel', 'Servilleta', 'Paño', 'Cubre-m.', 'Banquete'];
+  new Chart(document.getElementById('chartWash'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: avgs, backgroundColor: avgs.map(v => v >= 40 ? '#f59e0b' : '#3ecf8e'), borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 8 }, color: '#6b7280' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 4 }, suggestedMin: 0, suggestedMax: 70 } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels: ['En lavandería', 'En servicio', 'Bodega', 'Dañadas'], datasets: [{ data: [89, 124, 140, 17], backgroundColor: ['#f59e0b', '#3ecf8e', '#3b82f6', '#ef4444'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 5, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartMonthlyRest'), {
+    type: 'bar',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [
+        { label: 'Recolecciones', data: [3, 4, 4, 5, 6, 2], backgroundColor: '#3ecf8e55', borderColor: '#3ecf8e', borderWidth: 1.5, borderRadius: 3 },
+        { label: 'Entregas',      data: [3, 4, 4, 5, 5, 3], backgroundColor: '#3b82f655', borderColor: '#3b82f6', borderWidth: 1.5, borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 8, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 7.5 }, color: '#6b7280' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7.5 }, color: '#6b7280', maxTicksLimit: 4, stepSize: 2 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

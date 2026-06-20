@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ON Sistema — Propuesta Hospitalaria</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+
+/* ── Slide shell ── */
+.slide{
+  width:297mm;height:210mm;
+  page-break-after:always;page-break-inside:avoid;
+  overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+  background:#0e1117;color:#e2e8f0;
+}
+.slide:last-child{page-break-after:auto}
+
+/* ── Global accent bar (top) ── */
+.accent-bar{
+  position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,#3ecf8e 0%,#27ae74 60%,#1a6644 100%);
+}
+
+/* ── Footer strip ── */
+.foot{
+  position:absolute;bottom:0;left:0;right:0;height:7mm;
+  background:#0a0d11;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 10mm;font-size:7pt;color:#4b5563;
+}
+.foot span{color:#3ecf8e;font-weight:600}
+
+/* ── Typography helpers ── */
+.g{color:#3ecf8e}
+.dim{color:#6b7280}
+.warn{color:#f59e0b}
+.red{color:#ef4444}
+.blue{color:#3b82f6}
+.indigo{color:#818cf8}
+
+/* ═══════════════════════════════════ SLIDE 1 — COVER ═══════════════════════════════════ */
+#s1{justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)}
+#s1 .logo-box{
+  display:flex;align-items:center;gap:10px;margin-bottom:12mm;
+}
+#s1 .logo-sq{
+  width:16mm;height:16mm;background:#3ecf8e;border-radius:3mm;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22pt;font-weight:900;color:#091a12;letter-spacing:-1px;
+}
+#s1 .logo-text{font-size:24pt;font-weight:800;color:#e2e8f0;letter-spacing:-0.5px}
+#s1 h1{font-size:32pt;font-weight:900;text-align:center;letter-spacing:-1px;line-height:1.1;margin-bottom:5mm}
+#s1 .tagline{font-size:13pt;color:#9ca3af;text-align:center;font-weight:400;margin-bottom:14mm;letter-spacing:0.2px}
+#s1 .pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#132d1f;border:1px solid #1f5c38;border-radius:99px;
+  padding:6px 18px;font-size:9pt;color:#3ecf8e;font-weight:500;
+}
+#s1 .date-note{font-size:8pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm}
+
+/* ═══════════════════════════════════ SLIDE 2 — PROBLEMA ═══════════════════════════════ */
+#s2{padding:14mm 14mm 10mm}
+#s2 .slide-head{margin-bottom:8mm}
+#s2 .slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+#s2 .slide-title{font-size:24pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+#s2 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm}
+.problem-card{
+  background:#13181f;border:1px solid #1e2431;border-radius:3mm;
+  padding:6mm 7mm;
+}
+.problem-card .icon{font-size:22pt;margin-bottom:3mm}
+.problem-card h3{font-size:11pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.problem-card p{font-size:8.5pt;color:#9ca3af;line-height:1.5}
+.stat-highlight{
+  background:linear-gradient(135deg,#1a0d0d 0%,#2d1010 100%);
+  border:1px solid #7f1d1d44;border-radius:3mm;
+  padding:5mm 8mm;display:flex;align-items:center;gap:5mm;
+}
+.stat-highlight .big{font-size:30pt;font-weight:900;color:#ef4444}
+.stat-highlight .text{font-size:9pt;color:#d1d5db;line-height:1.5}
+.stat-highlight .text strong{color:#f9fafb;display:block;font-size:11pt;margin-bottom:1mm}
+
+/* ═══════════════════════════════════ SLIDE 3 — TERMINAL ═══════════════════════════════ */
+#s3{padding:10mm 12mm 10mm}
+#s3 .two-col{display:grid;grid-template-columns:58mm 1fr;gap:8mm;flex:1}
+#s3 .left-panel{display:flex;flex-direction:column;gap:4mm}
+#s3 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:3mm}
+.kpi-box{
+  background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;
+  padding:4mm;
+}
+.kpi-box .val{font-size:19pt;font-weight:800}
+.kpi-box .lbl{font-size:7pt;font-weight:600;letter-spacing:1px;color:#6b7280;text-transform:uppercase;margin-top:1mm}
+
+.terminal-mock{
+  background:#080b0f;border:1px solid #1e2431;border-radius:3mm;
+  overflow:hidden;flex:1;
+}
+.term-header{
+  background:#131820;padding:3mm 5mm;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;
+  gap:2mm;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;
+  color:#4b5563;text-transform:uppercase;border-bottom:1px solid #1e2431;
+}
+.term-row{
+  padding:2.2mm 5mm;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;
+  gap:2mm;font-size:7.5pt;border-bottom:1px solid #0f141a;
+  align-items:center;
+}
+.term-row:nth-child(even){background:#0b0e14}
+.term-row .hosp{font-weight:600;color:#e2e8f0}
+.term-row .circ{color:#f59e0b;font-weight:700}
+.term-row .ent{color:#3ecf8e;font-weight:700}
+.term-row .bod{color:#9ca3af}
+.term-row .rep{color:#818cf8}
+.term-row .tot{color:#e2e8f0;font-weight:600}
+
+.bar-mini{
+  height:4px;border-radius:2px;margin-top:1mm;
+  background:linear-gradient(90deg,#3ecf8e,#3b82f6,#f59e0b);
+}
+
+/* ═══════════════════════════════════ SLIDE 4 — DASHBOARD ══════════════════════════════ */
+#s4{padding:12mm 14mm 10mm}
+#s4 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1}
+.dash-mock{
+  background:#13181f;border:1px solid #1e2431;border-radius:3mm;
+  padding:5mm;display:flex;flex-direction:column;gap:4mm;
+}
+.dash-mock .client-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;
+  padding:2px 10px;font-size:7.5pt;color:#3ecf8e;font-weight:600;
+}
+.dash-mock .kpi-row{display:flex;gap:3mm}
+.dash-kpi{
+  flex:1;background:#0e1117;border:1px solid #1e2431;border-radius:2mm;
+  padding:3mm;text-align:center;
+}
+.dash-kpi .v{font-size:14pt;font-weight:800}
+.dash-kpi .l{font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5mm}
+
+.mini-bar-chart{display:flex;align-items:flex-end;gap:3mm;height:28mm;margin-top:2mm}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:1mm;flex:1}
+.bar-col .bar{width:100%;border-radius:1.5mm 1.5mm 0 0}
+.bar-col .bl{font-size:5.5pt;color:#6b7280}
+
+.feature-list{display:flex;flex-direction:column;gap:3mm;justify-content:center}
+.feat-item{
+  display:flex;align-items:flex-start;gap:4mm;
+  background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm;
+}
+.feat-item .icon{font-size:14pt;min-width:8mm}
+.feat-item h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm}
+.feat-item p{font-size:7.5pt;color:#9ca3af;line-height:1.4}
+
+/* ═══════════════════════════════════ SLIDE 5 — BITÁCORA ═══════════════════════════════ */
+#s5{padding:12mm 14mm 10mm}
+#s5 .content{display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1}
+.log-mock{
+  background:#080b0f;border:1px solid #1e2431;border-radius:3mm;
+  overflow:hidden;flex:1;
+}
+.log-entry{
+  display:flex;align-items:flex-start;gap:4mm;
+  padding:3mm 5mm;border-bottom:1px solid #0f141a;
+}
+.log-entry:nth-child(even){background:#0b0e14}
+.log-entry .type-badge{
+  padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700;
+  white-space:nowrap;margin-top:0.5mm;
+}
+.badge-rec{background:#1a3a2a;color:#3ecf8e}
+.badge-ent{background:#1a2744;color:#60a5fa}
+.badge-rep{background:#2a1f44;color:#818cf8}
+.log-entry .info h4{font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm}
+.log-entry .info p{font-size:7pt;color:#6b7280}
+.log-entry .date{font-size:6.5pt;color:#4b5563;margin-left:auto;white-space:nowrap}
+
+.stats-side{display:flex;flex-direction:column;gap:3mm;justify-content:center}
+.stat-row-box{
+  background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm;
+}
+.stat-row-box .big{font-size:22pt;font-weight:800}
+.stat-row-box .sub{font-size:7.5pt;color:#9ca3af;margin-top:0.5mm}
+
+/* ═══════════════════════════════════ SLIDE 6 — LIFECYCLE ══════════════════════════════ */
+#s6{padding:12mm 14mm 10mm}
+#s6 .content{display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1}
+.alert-table{
+  background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;
+}
+.alert-header{
+  background:#131820;padding:3mm 5mm;
+  display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
+  font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;
+  border-bottom:1px solid #1e2431;
+}
+.alert-row{
+  padding:2.5mm 5mm;
+  display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
+  font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;
+}
+.alert-row:nth-child(even){background:#0b0e14}
+.pct-bar{height:5px;border-radius:2px;background:#3ecf8e;margin-top:1mm}
+.pct-bar.warn{background:#f59e0b}
+.pct-bar.crit{background:#ef4444}
+.badge-crit{background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.badge-warn{background:#2d1f00;color:#f59e0b;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+
+.lifecycle-right{display:flex;flex-direction:column;gap:4mm;justify-content:center}
+.lc-info-card{
+  background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:5mm;
+}
+.lc-info-card h4{font-size:9.5pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.lc-info-card p{font-size:8pt;color:#9ca3af;line-height:1.55}
+
+/* ═══════════════════════════════════ SLIDE 7 — PDF ════════════════════════════════════ */
+#s7{padding:12mm 14mm 10mm}
+#s7 .content{display:grid;grid-template-columns:1fr 65mm;gap:8mm;flex:1}
+.pdf-mock{
+  background:#fff;border-radius:3mm;overflow:hidden;
+  border:1px solid #d1d5db;display:flex;flex-direction:column;
+}
+.pdf-mock .pdf-header{
+  background:#3ecf8e;padding:4mm 6mm;
+  display:flex;align-items:center;gap:5mm;
+}
+.pdf-mock .pdf-logo-sq{
+  width:8mm;height:8mm;background:#091a12;border-radius:1mm;
+  display:flex;align-items:center;justify-content:center;
+  font-size:6pt;font-weight:900;color:#fff;
+}
+.pdf-mock .pdf-header-text{font-size:8pt;font-weight:700;color:#091a12}
+.pdf-mock .pdf-header-sub{font-size:6pt;color:#1a6644}
+.pdf-mock .pdf-body{padding:4mm 6mm;flex:1;background:#fff}
+.pdf-mock .pdf-client{font-size:14pt;font-weight:800;color:#0e1117;margin-bottom:1mm}
+.pdf-mock .pdf-period{font-size:7pt;color:#6b7280;margin-bottom:3mm}
+.pdf-mock .pdf-kpi-row{display:flex;gap:2mm;margin-bottom:3mm}
+.pdf-kpi-item{
+  flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center;
+}
+.pdf-kpi-item .pv{font-size:11pt;font-weight:800;color:#0e1117}
+.pdf-kpi-item .pl{font-size:5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px}
+.pdf-mock .pdf-section{font-size:7pt;font-weight:700;color:#0e1117;margin-bottom:1.5mm;text-transform:uppercase;letter-spacing:0.3px}
+
+.mini-chart-area{
+  height:18mm;border:1px solid #e5e7eb;border-radius:1.5mm;
+  display:flex;align-items:flex-end;gap:1mm;padding:2mm;margin-bottom:3mm;
+  background:#f8fafc;
+}
+.mc-bar{border-radius:0.5mm 0.5mm 0 0;min-width:3mm}
+
+.pdf-table-head{
+  display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
+  background:#0e1117;padding:1.5mm 2mm;border-radius:1mm 1mm 0 0;
+  font-size:5.5pt;font-weight:700;color:#fff;
+}
+.pdf-table-row{
+  display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
+  padding:1.5mm 2mm;font-size:6.5pt;color:#374151;border-bottom:1px solid #e5e7eb;
+}
+.pdf-table-row:nth-child(even){background:#f8fafc}
+
+.pdf-right{display:flex;flex-direction:column;gap:3mm;justify-content:center}
+.pdf-feature{
+  background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm;
+}
+.pdf-feature h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1.5mm}
+.pdf-feature p{font-size:7.5pt;color:#9ca3af;line-height:1.45}
+
+/* ═══════════════════════════════════ SLIDE 8 — PROPUESTA ══════════════════════════════ */
+#s8{padding:14mm 16mm 10mm;justify-content:center}
+#s8 .label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:3mm}
+#s8 h2{font-size:26pt;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;margin-bottom:2mm}
+#s8 .sub{font-size:10pt;color:#9ca3af;margin-bottom:9mm;max-width:140mm}
+#s8 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm}
+.prop-card{
+  background:#13181f;border:1px solid #1e2431;border-radius:3mm;
+  padding:6mm 7mm;
+}
+.prop-card .step{
+  width:8mm;height:8mm;background:#3ecf8e;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9pt;font-weight:800;color:#091a12;margin-bottom:3mm;
+}
+.prop-card h4{font-size:10pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.prop-card p{font-size:8pt;color:#9ca3af;line-height:1.5}
+#s8 .cta-bar{
+  background:linear-gradient(90deg,#0d2b1c,#13381f);
+  border:1px solid #1f5c38;border-radius:3mm;
+  padding:6mm 9mm;
+  display:flex;align-items:center;justify-content:space-between;
+}
+#s8 .cta-bar .left h4{font-size:12pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm}
+#s8 .cta-bar .left p{font-size:8.5pt;color:#9ca3af}
+#s8 .cta-bar .right{font-size:11pt;font-weight:700;color:#3ecf8e;white-space:nowrap;padding-left:20mm}
+
+/* ═══════════════════════════════════ Shared ════════════════════════════════════════════ */
+.slide-head{margin-bottom:6mm}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:22pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+.slide-title span{color:#3ecf8e}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ SLIDE 1 — COVER ═══════════════════ -->
+<div class="slide" id="s1">
+  <div class="accent-bar"></div>
+
+  <div class="logo-box">
+    <div class="logo-sq">ON</div>
+    <div class="logo-text">Sistema de Inventario</div>
+  </div>
+
+  <h1 style="color:#f1f5f9">Trazabilidad total de<br><span style="color:#3ecf8e">ropa hospitalaria</span><br>prenda por prenda</h1>
+  <p class="tagline">Tecnología RFID para cadenas hospitalarias — control completo,<br>sin pérdidas, sin incertidumbre.</p>
+
+  <div class="pill">
+    <span style="width:7px;height:7px;background:#3ecf8e;border-radius:50%;display:inline-block"></span>
+    Propuesta para cadena hospitalaria &nbsp;·&nbsp; Junio 2026
+  </div>
+
+  <div class="date-note">Confidencial · emiliano.villarreal99@gmail.com</div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>1 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 2 — EL PROBLEMA ═══════════════════ -->
+<div class="slide" id="s2">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">El problema</div>
+    <div class="slide-title">Los hospitales pierden <span style="color:#ef4444">millones</span> en ropa cada año</div>
+  </div>
+
+  <div class="grid">
+    <div class="problem-card">
+      <div class="icon">📦</div>
+      <h3>Sin visibilidad</h3>
+      <p>¿Cuántas batas están en lavandería hoy? ¿Cuántas sábanas salieron del hospital? Nadie lo sabe con certeza.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🔄</div>
+      <h3>Sin trazabilidad de ciclos</h3>
+      <p>Una prenda que excede sus ciclos de lavado pierde resistencia e incrementa el riesgo de infección cruzada.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🏥</div>
+      <h3>Sin visión multi-sede</h3>
+      <p>Con múltiples hospitales, es imposible saber qué hay en cada sede, quién tiene qué, y cuándo regresará.</p>
+    </div>
+  </div>
+
+  <div class="stat-highlight">
+    <div class="big">20–30%</div>
+    <div class="text">
+      <strong>Pérdida anual de ropa hospitalaria en promedio</strong>
+      Un hospital con 5,000 prendas puede perder entre 1,000 y 1,500 prendas al año —
+      sin poder identificar dónde, cuándo, ni por qué.
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>2 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 3 — TERMINAL EN VIVO ═══════════════════ -->
+<div class="slide" id="s3">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Terminal en vivo</div>
+    <div class="slide-title">Una pantalla. <span style="color:#3ecf8e">Todos tus hospitales.</span></div>
+  </div>
+
+  <div class="two-col" style="flex:1">
+    <div class="left-panel">
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <div class="val" style="color:#e2e8f0">2,847</div>
+          <div class="lbl">Total prendas</div>
+        </div>
+        <div class="kpi-box">
+          <div class="val" style="color:#f59e0b">312</div>
+          <div class="lbl">En circulación</div>
+        </div>
+        <div class="kpi-box">
+          <div class="val" style="color:#3ecf8e">1,204</div>
+          <div class="lbl">Entregadas</div>
+        </div>
+        <div class="kpi-box">
+          <div class="val" style="color:#ef4444">47</div>
+          <div class="lbl">Dañadas</div>
+        </div>
+      </div>
+      <div class="kpi-box" style="background:#1a0d0d;border-color:#7f1d1d44">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div class="val warn">23</div>
+          <div style="font-size:8pt;color:#f59e0b">alertas EOL</div>
+        </div>
+        <div class="lbl">Prendas al límite de vida útil</div>
+      </div>
+      <div class="kpi-box">
+        <div style="font-size:7.5pt;color:#9ca3af;margin-bottom:2mm">Actividad hoy</div>
+        <div style="display:flex;justify-content:space-between">
+          <div>
+            <div class="val g" style="font-size:16pt">14</div>
+            <div class="lbl">recolecciones</div>
+          </div>
+          <div>
+            <div class="val blue" style="font-size:16pt">8</div>
+            <div class="lbl">entregas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div class="terminal-mock" style="flex:1">
+        <div class="term-header">
+          <div>Hospital</div><div>Total</div><div>Circ.</div><div>Entregadas</div><div>Bodega</div><div>Reprocesadas</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Central</div><div class="tot">687</div><div class="circ">84</div><div class="ent">312</div><div class="bod">201</div><div class="rep">42</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Norte</div><div class="tot">456</div><div class="circ">61</div><div class="ent">183</div><div class="bod">124</div><div class="rep">38</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Sur</div><div class="tot">423</div><div class="circ">57</div><div class="ent">198</div><div class="bod">109</div><div class="rep">21</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Occidente</div><div class="tot">398</div><div class="circ">43</div><div class="ent">176</div><div class="bod">98</div><div class="rep">29</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Satélite</div><div class="tot">341</div><div class="circ">29</div><div class="ent">154</div><div class="bod">87</div><div class="rep">31</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Santa Fe</div><div class="tot">289</div><div class="circ">28</div><div class="ent">121</div><div class="bod">82</div><div class="rep">18</div>
+        </div>
+        <div class="term-row">
+          <div class="hosp">Hospital Polanco</div><div class="tot">253</div><div class="circ">10</div><div class="ent">60</div><div class="bod">146</div><div class="rep">14</div>
+        </div>
+      </div>
+      <div style="padding:3mm 5mm;background:#080b0f;border:1px solid #1e2431;border-top:none;border-radius:0 0 3mm 3mm;font-size:7pt;color:#4b5563">
+        Actualización en tiempo real · Filtrable por sede · Exportable a CSV
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>3 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 4 — DASHBOARD POR SEDE ═══════════════════ -->
+<div class="slide" id="s4">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Dashboard por sede</div>
+    <div class="slide-title">Diagnóstico instantáneo de <span style="color:#3ecf8e">cada hospital</span></div>
+  </div>
+
+  <div class="two-col" style="flex:1">
+    <div class="dash-mock">
+      <div class="client-chip">● Hospital Central</div>
+      <div class="dash-kpi-row" style="display:flex;gap:3mm">
+        <div class="dash-kpi"><div class="v" style="color:#e2e8f0">687</div><div class="l">Total</div></div>
+        <div class="dash-kpi"><div class="v g">1,204</div><div class="l">Lavados</div></div>
+        <div class="dash-kpi"><div class="v indigo">43.5</div><div class="l">Promedio</div></div>
+        <div class="dash-kpi"><div class="v" style="color:#3b82f6">84</div><div class="l">Circ.</div></div>
+        <div class="dash-kpi"><div class="v red">10</div><div class="l">Dañadas</div></div>
+      </div>
+
+      <!-- Charts row -->
+      <div style="display:flex;gap:3mm;margin-top:1mm">
+        <div style="flex:1.6;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Lavados promedio por artículo</div>
+          <div style="position:relative;height:44mm"><canvas id="chartWash"></canvas></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Estado actual</div>
+          <div style="position:relative;height:44mm"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+
+      <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:1mm">Tasa de retorno (últimos 30 días)</div>
+      <div style="display:flex;align-items:center;gap:4mm;margin-top:2mm">
+        <div style="font-size:22pt;font-weight:800;color:#3ecf8e">125%</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Entregas vs recolecciones.<br>Por encima del 100% indica<br>retorno de inventario acumulado.</div>
+      </div>
+    </div>
+
+    <div class="feature-list">
+      <div class="feat-item">
+        <div class="icon">📊</div>
+        <div>
+          <h4>Ciclos de lavado por artículo</h4>
+          <p>Sábanas, batas, cobertores, fundas — cada tipo de prenda tiene su propio historial de lavados y umbral de reemplazo configurable.</p>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="icon">🔵</div>
+        <div>
+          <h4>Estado en tiempo real</h4>
+          <p>Visualiza cuántas prendas están en circulación (lavandería), entregadas (en piso) o en bodega en cualquier momento.</p>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="icon">⚡</div>
+        <div>
+          <h4>Alertas de ciclo de vida</h4>
+          <p>El sistema avisa automáticamente cuando una prenda se acerca o supera su límite de vida útil — antes de que sea un riesgo.</p>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="icon">🔗</div>
+        <div>
+          <h4>Enlace público por sede</h4>
+          <p>Comparte un resumen de inventario de solo lectura con el gerente de cada hospital — sin acceso al sistema completo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>4 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 5 — BITÁCORA ═══════════════════ -->
+<div class="slide" id="s5">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Bitácora y trazabilidad</div>
+    <div class="slide-title">Cada movimiento, <span style="color:#3ecf8e">registrado y auditable</span></div>
+  </div>
+
+  <div class="content" style="flex:1">
+    <div class="log-mock">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;gap:5mm;align-items:center">
+        <span>● Hospital Central</span>
+        <span style="margin-left:auto;color:#6b7280;font-weight:400">Filtrar por fecha &nbsp;·&nbsp; Exportar CSV</span>
+      </div>
+      <div class="log-entry">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div class="info"><h4>13× Bata &nbsp; 11× Sábana &nbsp; 8× Cobertor &nbsp; 5× Toalla</h4><p>44 prendas recogidas · EPCs escaneados</p></div>
+        <div class="date">9 jun 2026<br>12:24</div>
+      </div>
+      <div class="log-entry">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div class="info"><h4>10× Bata &nbsp; 9× Sábana &nbsp; 6× Cobertor &nbsp; 4× Toalla</h4><p>29 prendas entregadas · EPCs escaneados</p></div>
+        <div class="date">8 jun 2026<br>10:15</div>
+      </div>
+      <div class="log-entry">
+        <span class="type-badge badge-rep">Reproceso</span>
+        <div class="info"><h4>3× Sábana &nbsp; 2× Bata</h4><p>5 prendas enviadas a reproceso por observación de calidad</p></div>
+        <div class="date">7 jun 2026<br>16:30</div>
+      </div>
+      <div class="log-entry">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div class="info"><h4>15× Bata &nbsp; 12× Sábana &nbsp; 10× Cobertor &nbsp; 6× Funda</h4><p>43 prendas recogidas · EPCs escaneados</p></div>
+        <div class="date">5 jun 2026<br>09:40</div>
+      </div>
+      <div class="log-entry">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div class="info"><h4>14× Bata &nbsp; 11× Sábana &nbsp; 8× Funda &nbsp; 5× Toalla</h4><p>38 prendas entregadas · EPCs escaneados</p></div>
+        <div class="date">3 jun 2026<br>11:05</div>
+      </div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563;border-top:1px solid #1e2431">
+        Mostrando 5 de 54 eventos · Historial completo exportable
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:flex-start">
+      <!-- Explanation -->
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm">¿Qué es la Bitácora?</div>
+        <p style="font-size:7.5pt;color:#9ca3af;line-height:1.5">Registro cronológico completo de cada movimiento: recolecciones (salida a lavandería), entregas (regreso limpio) y reprocesos. Cada entrada incluye fecha, hora, artículos por tipo y los códigos EPC individuales de cada prenda.</p>
+      </div>
+      <!-- Stat row -->
+      <div style="display:flex;gap:2mm">
+        <div style="flex:1;background:#0d2b1c;border:1px solid #1f5c38;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3ecf8e">28</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Recolecciones</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3b82f6">26</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Entregas</div>
+        </div>
+      </div>
+      <!-- Monthly activity chart -->
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:3mm 4mm;flex:1">
+        <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Actividad mensual</div>
+        <div style="position:relative;height:52mm"><canvas id="chartMonthlyHosp"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>5 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 6 — CICLO DE VIDA ═══════════════════ -->
+<div class="slide" id="s6">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Gestión de ciclo de vida</div>
+    <div class="slide-title">Reemplaza <span style="color:#3ecf8e">antes</span> de que se convierta en riesgo</div>
+  </div>
+
+  <div class="content" style="flex:1">
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div class="alert-table" style="flex:1">
+        <div class="alert-header">
+          <div>Artículo · Hospital</div><div>Prom. lavados</div><div>Límite</div><div>Estado</div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Bata · Hospital Norte</div>
+          <div style="color:#ef4444;font-weight:700">89</div>
+          <div class="dim">80</div>
+          <div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Cobertor · H. Central</div>
+          <div style="color:#ef4444;font-weight:700">87</div>
+          <div class="dim">80</div>
+          <div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Funda · H. Central</div>
+          <div style="color:#f59e0b;font-weight:700">86</div>
+          <div class="dim">100</div>
+          <div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:86%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Mantel · H. Norte</div>
+          <div style="color:#f59e0b;font-weight:700">85</div>
+          <div class="dim">100</div>
+          <div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:85%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Sábana · H. Santa Fe</div>
+          <div style="color:#f59e0b;font-weight:700">80</div>
+          <div class="dim">100</div>
+          <div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:80%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Cobertor · H. Sur</div>
+          <div style="color:#9ca3af">76</div>
+          <div class="dim">80</div>
+          <div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:95%"></div></div>
+        </div>
+        <div class="alert-row">
+          <div style="color:#e2e8f0;font-weight:600">Bata · H. Satélite</div>
+          <div style="color:#9ca3af">75</div>
+          <div class="dim">80</div>
+          <div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:94%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lifecycle-right">
+      <div class="lc-info-card">
+        <h4>Umbrales configurables por artículo</h4>
+        <p>Cada tipo de prenda tiene un límite de ciclos distinto. Batas de paciente, sábanas, cobertores — todos se pueden configurar por separado según sus fichas técnicas.</p>
+      </div>
+      <div class="lc-info-card" style="border-color:#7f1d1d44;background:#1a0d0d">
+        <h4 style="color:#ef4444">¿Por qué importa en hospitales?</h4>
+        <p>Una prenda desgastada compromete la barrera de contención. Las normas de control de infecciones exigen saber exactamente en qué ciclo está cada prenda de cama y ropa de paciente.</p>
+      </div>
+      <div class="lc-info-card" style="border-color:#1f5c38;background:#0d2b1c">
+        <h4 style="color:#3ecf8e">Alertas automáticas</h4>
+        <p>El sistema envía alertas por WhatsApp cuando artículos alcanzan el 80% de su vida útil — anticipando la compra de reemplazo con tiempo suficiente.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>6 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 7 — REPORTES PDF ═══════════════════ -->
+<div class="slide" id="s7">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Reportes automáticos</div>
+    <div class="slide-title">Informes listos para <span style="color:#3ecf8e">auditoría y dirección</span></div>
+  </div>
+
+  <div class="content" style="flex:1">
+    <div class="pdf-mock">
+      <div class="pdf-header">
+        <div class="pdf-logo-sq">ON</div>
+        <div>
+          <div class="pdf-header-text">ON Sistema de Inventario</div>
+          <div class="pdf-header-sub">REPORTE DE INVENTARIO — HOSPITAL CENTRAL</div>
+        </div>
+      </div>
+      <div class="pdf-body">
+        <div class="pdf-client">Hospital Central</div>
+        <div class="pdf-period">Período: 2 jun 2026 — 9 jun 2026</div>
+        <div class="pdf-kpi-row">
+          <div class="pdf-kpi-item"><div class="pv">687</div><div class="pl">Total prendas</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#3ecf8e">29,418</div><div class="pl">Lavados totales</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#818cf8">42.8</div><div class="pl">Promedio</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#3b82f6">84</div><div class="pl">En circ.</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#ef4444">10</div><div class="pl">Dañadas</div></div>
+        </div>
+
+        <div class="pdf-section">Actividad diaria por artículo</div>
+        <div class="mini-chart-area">
+          <div class="mc-bar" style="height:40%;background:#3ecf8e;width:5mm"></div>
+          <div class="mc-bar" style="height:55%;background:#3ecf8e;width:5mm"></div>
+          <div class="mc-bar" style="height:30%;background:#3ecf8e;width:5mm"></div>
+          <div class="mc-bar" style="height:70%;background:#3b82f6;width:5mm"></div>
+          <div class="mc-bar" style="height:45%;background:#3b82f6;width:5mm"></div>
+          <div class="mc-bar" style="height:60%;background:#f59e0b;width:5mm"></div>
+          <div class="mc-bar" style="height:80%;background:#f59e0b;width:5mm"></div>
+          <div class="mc-bar" style="height:35%;background:#ef4444;width:5mm"></div>
+          <div class="mc-bar" style="height:50%;background:#ef4444;width:5mm"></div>
+          <div class="mc-bar" style="height:65%;background:#818cf8;width:5mm"></div>
+        </div>
+
+        <div class="pdf-section">Desglose por artículo</div>
+        <div class="pdf-table-head"><div>Artículo</div><div style="text-align:right">Cantidad</div><div style="text-align:right">Lav. totales</div><div style="text-align:right">Promedio</div></div>
+        <div class="pdf-table-row"><div>Bata</div><div style="text-align:right">120</div><div style="text-align:right">6,240</div><div style="text-align:right">52.0</div></div>
+        <div class="pdf-table-row"><div>Sábana</div><div style="text-align:right">180</div><div style="text-align:right">8,100</div><div style="text-align:right">45.0</div></div>
+        <div class="pdf-table-row"><div>Cobertor</div><div style="text-align:right">150</div><div style="text-align:right">6,450</div><div style="text-align:right">43.0</div></div>
+        <div class="pdf-table-row"><div>Toalla</div><div style="text-align:right">237</div><div style="text-align:right">8,628</div><div style="text-align:right">36.4</div></div>
+      </div>
+    </div>
+
+    <div class="pdf-right">
+      <div class="pdf-feature">
+        <h4>Reportes semanales y mensuales</h4>
+        <p>Se generan automáticamente cada lunes y el 1° de cada mes. Se envían por WhatsApp al responsable de cada sede.</p>
+      </div>
+      <div class="pdf-feature">
+        <h4>Rango de fechas personalizable</h4>
+        <p>Genera un PDF de cualquier período desde el dashboard: día a día, por semana, por mes o cualquier rango personalizado.</p>
+      </div>
+      <div class="pdf-feature">
+        <h4>Gráfica de actividad diaria incluida</h4>
+        <p>El reporte incluye la curva de uso diario por tipo de prenda — útil para auditorías, compras y planeación de lavandería.</p>
+      </div>
+      <div class="pdf-feature" style="border-color:#1f5c38;background:#0d2b1c">
+        <h4 style="color:#3ecf8e">Listo para cumplimiento normativo</h4>
+        <p>Evidencia documentada de ciclos de lavado y estado de prendas para cumplir con normas de control de infecciones (NOM-087, etc.).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>7 / 8</span></div>
+</div>
+
+<!-- ═══════════════════ SLIDE 8 — PROPUESTA / CTA ═══════════════════ -->
+<div class="slide" id="s8">
+  <div class="accent-bar"></div>
+  <div class="label">Próximos pasos</div>
+  <h2>Implementación para tu<br><span style="color:#3ecf8e">cadena hospitalaria</span></h2>
+  <p class="sub">Un proceso en tres pasos — desde el etiquetado de prendas hasta visibilidad total en producción.</p>
+
+  <div class="three-col">
+    <div class="prop-card">
+      <div class="step">1</div>
+      <h4>Inventario y etiquetado RFID</h4>
+      <p>Cada prenda recibe un tag RFID único. Levantamos el inventario inicial de cada sede y capturamos tipo de artículo, ciclos iniciales y estado.</p>
+    </div>
+    <div class="prop-card">
+      <div class="step">2</div>
+      <h4>Configuración del sistema</h4>
+      <p>Damos de alta cada hospital como cliente independiente en el sistema. Configuramos umbrales, alertas y accesos por sede.</p>
+    </div>
+    <div class="prop-card">
+      <div class="step">3</div>
+      <h4>Capacitación y go-live</h4>
+      <p>Sesión de entrenamiento con el equipo de lavandería y administración. La terminal queda operando en tiempo real desde el primer día.</p>
+    </div>
+  </div>
+
+  <div class="cta-bar">
+    <div class="left">
+      <h4>¿Listos para ver el sistema en acción?</h4>
+      <p>Agenda una demo en vivo — conectamos en tiempo real con datos reales de tu lavandería.</p>
+    </div>
+    <div class="right">emiliano.villarreal99@gmail.com</div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>8 / 8</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+// ── Wash averages bar chart ───────────────────────────────────────────────────
+(function () {
+  const avgs   = [52, 47, 45, 43, 39, 36];
+  const labels = ['Bata', 'Cobertor', 'Funda', 'Sábana', 'Toalla', 'Servilleta'];
+  new Chart(document.getElementById('chartWash'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: avgs,
+        backgroundColor: avgs.map(v => v >= 45 ? '#f59e0b' : '#3ecf8e'),
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 8 }, color: '#6b7280' }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 4 },
+          suggestedMin: 0,
+          suggestedMax: 80
+        }
+      }
+    }
+  });
+})();
+
+// ── Status donut chart ────────────────────────────────────────────────────────
+(function () {
+  new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: {
+      labels: ['En circulación', 'Entregado', 'Bodega', 'Reprocesado', 'Sin actualiz.'],
+      datasets: [{
+        data: [84, 312, 201, 42, 48],
+        backgroundColor: ['#f59e0b', '#3ecf8e', '#3b82f6', '#818cf8', '#4b5563'],
+        borderWidth: 0,
+        hoverOffset: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { size: 7 },
+            color: '#9ca3af',
+            padding: 5,
+            boxWidth: 8,
+            boxHeight: 8
+          }
+        },
+        tooltip: { enabled: false }
+      }
+    }
+  });
+})();
+
+// ── Bitácora monthly activity chart ──────────────────────────────────────────
+(function () {
+  new Chart(document.getElementById('chartMonthlyHosp'), {
+    type: 'bar',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [
+        { label: 'Recolecciones', data: [3, 4, 5, 6, 7, 3], backgroundColor: '#3ecf8e55', borderColor: '#3ecf8e', borderWidth: 1.5, borderRadius: 3 },
+        { label: 'Entregas',      data: [2, 4, 5, 5, 6, 4], backgroundColor: '#3b82f655', borderColor: '#3b82f6', borderWidth: 1.5, borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 8, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 7.5 }, color: '#6b7280' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7.5 }, color: '#6b7280', maxTicksLimit: 4, stepSize: 2 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

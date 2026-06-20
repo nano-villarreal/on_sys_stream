@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Sistema — Bitácora · <%= client || '' %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --bg:           #0e1117;
+            --surface:      #161b22;
+            --surface-2:    #1c2333;
+            --border:       rgba(255,255,255,0.07);
+            --green:        #3ecf8e;
+            --green-dim:    rgba(62,207,142,0.10);
+            --green-glow:   rgba(62,207,142,0.22);
+            --blue:         #3b82f6;
+            --blue-dim:     rgba(59,130,246,0.10);
+            --text:         #ededef;
+            --text-2:       #8b8fa8;
+            --text-3:       #4a4f62;
+            --radius:       13px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 28px 20px; padding-top: 92px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(62,207,142,0.06) 0%, transparent 100%);
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 64px;
+            background: rgba(14,17,23,0.80);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--green), #22c55e);
+            border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #0a1008;
+            box-shadow: 0 0 18px var(--green-glow); flex-shrink: 0;
+        }
+        .brand-text { display: flex; flex-direction: column; gap: 1px; }
+        .brand-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; line-height: 1; }
+        .brand-sub  { font-size: 10px; font-weight: 500; color: var(--text-3); letter-spacing: 0.4px; text-transform: uppercase; }
+        .nav-links  { display: flex; gap: 6px; align-items: center; }
+        .nav-link {
+            padding: 6px 14px; font-size: 13px; font-weight: 500;
+            text-decoration: none; border-radius: 8px; border: 1px solid transparent;
+            color: var(--text-2); transition: all 0.15s;
+        }
+        .nav-link:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+        .nav-link.active { background: var(--green-dim); color: var(--green); border-color: rgba(62,207,142,0.18); }
+
+        /* ── Layout ── */
+        .container { max-width: 900px; margin: 0 auto; }
+
+        .page-header { text-align: center; margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+        .page-title {
+            font-size: 32px; font-weight: 800; letter-spacing: -1.2px; margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 20%, var(--green) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .page-subtitle { font-size: 14px; color: var(--text-2); }
+
+        /* ── Cards ── */
+        .card {
+            background: rgba(22,27,34,0.75); border: 1px solid var(--border);
+            border-radius: 18px; padding: 24px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        }
+        .card + .card { margin-top: 14px; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+        .card-title { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px; }
+        .card-actions { display: flex; gap: 8px; align-items: center; }
+
+        /* ── Action buttons ── */
+        .btn-action {
+            padding: 6px 14px; font-size: 12px; font-weight: 600;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-2); cursor: pointer;
+            transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-action:hover { color: var(--text); border-color: rgba(255,255,255,0.12); }
+
+        /* ── Summary stats ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        @media (max-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 12px; text-align: center;
+        }
+        .stat-value { font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 5px; }
+        .stat-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px; }
+        .c-green { color: var(--green); }
+        .c-blue  { color: var(--blue); }
+        .c-text  { color: var(--text); }
+
+        /* ── Client badge ── */
+        .client-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--green-dim); border: 1px solid rgba(62,207,142,0.18);
+            border-radius: 20px; padding: 4px 14px 4px 10px;
+            font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 20px;
+        }
+        .client-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+        /* ── Date range filter ── */
+        .filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; }
+        input[type="date"] {
+            padding: 8px 12px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); font-family: 'Inter', sans-serif;
+            font-size: 13px; color: var(--text); cursor: pointer;
+            transition: border-color 0.2s; color-scheme: dark;
+        }
+        input[type="date"]:focus { outline: none; border-color: rgba(62,207,142,0.35); }
+        .filter-clear { font-size: 11px; color: var(--text-3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color 0.15s; }
+        .filter-clear:hover { color: var(--text-2); }
+
+        /* ── Charts ── */
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 700px) { .chart-grid { grid-template-columns: 1fr; } }
+        .chart-wrap { position: relative; height: 240px; }
+        .chart-wrap-tall { position: relative; height: 300px; }
+        .chart-loading { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-3); font-size: 13px; }
+
+        /* ── Timeline ── */
+        .timeline { display: flex; flex-direction: column; gap: 10px; }
+
+        .event {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color 0.2s;
+        }
+        .event:hover { border-color: rgba(255,255,255,0.12); }
+        .event.recoleccion { border-left: 3px solid var(--blue); }
+        .event.entrega      { border-left: 3px solid var(--green); }
+        .event.hidden-event { display: none; }
+
+        .event-main {
+            padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start;
+            cursor: pointer; user-select: none;
+        }
+
+        .event-icon {
+            width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700;
+        }
+        .event.recoleccion .event-icon { background: var(--blue-dim); color: var(--blue); }
+        .event.entrega      .event-icon { background: var(--green-dim); color: var(--green); }
+
+        .event-body { flex: 1; min-width: 0; }
+
+        .event-top {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 10px; gap: 12px; flex-wrap: wrap;
+        }
+
+        .event-type { font-size: 13px; font-weight: 700; letter-spacing: -0.1px; }
+        .event.recoleccion .event-type { color: var(--blue); }
+        .event.entrega      .event-type { color: var(--green); }
+
+        .event-meta { display: flex; align-items: center; gap: 12px; }
+        .event-date { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+        .event-toggle { font-size: 10px; color: var(--text-3); transition: color 0.15s; }
+        .event-main:hover .event-toggle { color: var(--text-2); }
+
+        .event-articles { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .article-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 12px; font-weight: 500; color: var(--text-2);
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 3px 10px;
+        }
+
+        /* ── EPC expandable panel ── */
+        .epc-panel {
+            display: none; padding: 0 20px 16px 72px;
+            border-top: 1px solid var(--border);
+        }
+        .epc-panel.open { display: block; }
+        .epc-panel-title { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; padding-top: 14px; }
+        .epc-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .epc-chip {
+            font-size: 10px; font-family: 'Courier New', monospace;
+            color: var(--text-3); background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px;
+        }
+
+        /* ── Error / empty states ── */
+        .alert-error {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+            color: #f87171; border-radius: var(--radius); padding: 14px 18px; font-size: 13px;
+        }
+        .empty-state { text-align: center; padding: 48px 0; font-size: 14px; color: var(--text-3); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; cursor: pointer; color: var(--text-2); flex-direction: column; gap: 4px; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+        .nav-toggle:hover { background: var(--surface); color: var(--text); }
+        .nav-toggle span { display: block; width: 18px; height: 1.5px; background: currentColor; border-radius: 2px; transition: transform 0.22s ease, opacity 0.15s; }
+        .nav-toggle.open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .nav-toggle.open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+        @media (max-width: 780px) {
+            .nav-toggle { display: flex; }
+            .nav-links { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(10,13,18,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px 16px; flex-direction: column; gap: 4px; z-index: 999; }
+            .nav-links.open { display: flex; animation: slideDown 0.18s ease; }
+            .nav-link { padding: 10px 14px; width: 100%; }
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── PDF Panel ── */
+        .pdf-date-row {
+            display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+            background: var(--surface-2, #1c2333); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 10px 12px; margin-top: 10px;
+        }
+        .pdf-date-row.open { display: flex; }
+        input[type="date"].pdf-date {
+            padding: 6px 10px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 12px;
+            color: var(--text); cursor: pointer; color-scheme: dark; transition: border-color 0.2s;
+        }
+        input[type="date"].pdf-date:focus { outline: none; border-color: rgba(62,207,142,0.35); }
+        .btn-pdf-gen {
+            padding: 6px 14px; font-size: 12px; font-weight: 700;
+            background: var(--green); color: #091a12;
+            border: none; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-pdf-gen:hover { background: #4ddfaa; }
+        .btn-pdf-gen:disabled { opacity: 0.55; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <div class="nav-logo">ON</div>
+            <div class="brand-text">
+                <span class="brand-name">Sistema de Inventario</span>
+                <span class="brand-sub">Bitácora</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link" href="/">Conteo en Vivo</a>
+            <a class="nav-link" href="/dar-de-alta">Dar de Alta</a>
+            <a class="nav-link" href="/dashboard?client=<%= encodeURIComponent(client || '') %>">Dashboard</a>
+            <a class="nav-link" href="/damage-breakdown?client=<%= encodeURIComponent(client || '') %>">Daños</a>
+            <a class="nav-link" href="/compare">Comparar</a>
+            <a class="nav-link" href="/lost-tags?client=<%= encodeURIComponent(client || '') %>">Perdidos</a>
+            <a class="nav-link active" href="/log?client=<%= encodeURIComponent(client || '') %>">Bitácora</a>
+            <a class="nav-link" href="/logout" style="color:var(--text-3);">Salir</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title">Bitácora</h1>
+            <p class="page-subtitle">Historial de recolecciones y entregas</p>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert-error"><%= error %></div>
+        <% } else if (typeof allEvents !== 'undefined' && allEvents.length === 0) { %>
+            <div class="card" style="animation: fadeUp 0.4s ease both;">
+                <div class="empty-state">No hay registros de recolección o entrega para este cliente aún.</div>
+            </div>
+        <% } else if (typeof allEvents !== 'undefined') { %>
+
+            <!-- Summary stats -->
+            <div class="card" style="animation: fadeUp 0.4s ease both;">
+                <div class="client-badge"><span class="client-dot"></span><%= client %></div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value c-blue"><%= totalRecolecciones %></div>
+                        <div class="stat-label">Recolecciones</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-green"><%= totalEntregas %></div>
+                        <div class="stat-label">Entregas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-text"><%= Number(totalPrendasRecogidas).toLocaleString('es-MX') %></div>
+                        <div class="stat-label">Prendas recogidas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value c-text"><%= Number(totalPrendasEntregadas).toLocaleString('es-MX') %></div>
+                        <div class="stat-label">Prendas entregadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts: monthly activity + daily usage line -->
+            <div class="chart-grid" style="animation: fadeUp 0.4s 0.04s ease both; margin-top: 14px;">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Actividad mensual</span></div>
+                    <div class="chart-wrap">
+                        <canvas id="monthlyChart" style="display:none;"></canvas>
+                        <div class="chart-loading" id="monthlyLoading">Cargando…</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Uso diario por artículo</span>
+                        <button id="downloadDailyChart" class="btn-action">↓</button>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="dailyChart" style="display:none;"></canvas>
+                        <div class="chart-loading" id="dailyLoading">Cargando…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date filter + timeline -->
+            <div class="card" style="animation: fadeUp 0.4s 0.08s ease both; margin-top: 14px;">
+                <div class="card-header">
+                    <span class="card-title">Historial completo</span>
+                    <div class="card-actions">
+                        <button id="exportCSV" class="btn-action">↓ CSV</button>
+                        <button class="btn-action" id="btnTogglePDF">↓ PDF</button>
+                    </div>
+                </div>
+                <div class="pdf-date-row" id="pdfDateRow">
+                    <span style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;">Período:</span>
+                    <input type="date" class="pdf-date" id="pdfFrom" title="Desde" />
+                    <span style="font-size:11px;color:var(--text-3);">—</span>
+                    <input type="date" class="pdf-date" id="pdfTo" title="Hasta" />
+                    <button class="btn-pdf-gen" id="btnGeneratePDF">Generar PDF</button>
+                </div>
+
+                <!-- Date range filter -->
+                <div class="filter-row" style="margin-bottom: 18px;">
+                    <span class="filter-label">Filtrar:</span>
+                    <input type="date" id="filterFrom" title="Desde" />
+                    <span class="filter-label" style="margin: 0 2px;">—</span>
+                    <input type="date" id="filterTo" title="Hasta" />
+                    <button class="filter-clear" id="filterClear">Limpiar</button>
+                    <span id="filterCount" style="font-size:11px;color:var(--text-3);margin-left:4px;"></span>
+                </div>
+
+                <div class="timeline" id="timeline">
+                    <% allEvents.forEach(event => { %>
+                    <div class="event <%= event.type %>" data-date="<%= new Date(event.date).toISOString().slice(0,10) %>">
+                        <div class="event-main" onclick="toggleEPC(this)">
+                            <div class="event-icon">
+                                <%= event.type === 'recoleccion' ? '↓' : '↑' %>
+                            </div>
+                            <div class="event-body">
+                                <div class="event-top">
+                                    <span class="event-type"><%= event.typeLabel %></span>
+                                    <div class="event-meta">
+                                        <span class="event-date">
+                                            <%= new Date(event.date).toLocaleDateString('es-MX', {
+                                                year: 'numeric', month: 'short', day: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            }) %>
+                                        </span>
+                                        <% if (event.EPCs && event.EPCs.length > 0) { %>
+                                        <span class="event-toggle"><%= event.EPCs.length %> EPCs ▾</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <div class="event-articles">
+                                    <% Object.entries(event.articles || {}).forEach(([article, count]) => { %>
+                                    <span class="article-pill">
+                                        <strong style="color:var(--text)"><%= count %></strong> <%= article %>
+                                    </span>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        </div>
+                        <% if (event.EPCs && event.EPCs.length > 0) { %>
+                        <div class="epc-panel">
+                            <div class="epc-panel-title">EPCs (<%= event.EPCs.length %>)</div>
+                            <div class="epc-list">
+                                <% event.EPCs.forEach(epc => { %>
+                                <span class="epc-chip"><%= epc %></span>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% }) %>
+                </div>
+                <div id="noResults" style="display:none; text-align:center; padding:32px 0; font-size:13px; color:var(--text-3);">
+                    Sin eventos en el rango seleccionado.
+                </div>
+            </div>
+
+        <% } %>
+
+    </div>
+
+    <script>
+    // ── Hamburger nav ────────────────────────────────────────────────────────
+    const t = document.getElementById('navToggle'), n = document.getElementById('navLinks');
+    t.addEventListener('click', () => { t.classList.toggle('open'); n.classList.toggle('open'); });
+    n.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { t.classList.remove('open'); n.classList.remove('open'); }));
+
+    <% if (typeof allEvents !== 'undefined' && allEvents.length > 0) { %>
+    const CLIENT_NAME = '<%- (client || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") %>';
+
+    // ── EPC panel toggle ─────────────────────────────────────────────────────
+    function toggleEPC(mainEl) {
+        const panel = mainEl.closest('.event').querySelector('.epc-panel');
+        if (!panel) return;
+        panel.classList.toggle('open');
+    }
+
+    // ── Date range filter ────────────────────────────────────────────────────
+    const filterFrom  = document.getElementById('filterFrom');
+    const filterTo    = document.getElementById('filterTo');
+    const filterClear = document.getElementById('filterClear');
+    const filterCount = document.getElementById('filterCount');
+    const events      = document.querySelectorAll('#timeline .event');
+
+    function applyFilter() {
+        const from = filterFrom.value;
+        const to   = filterTo.value;
+        let visible = 0;
+        events.forEach(ev => {
+            const d = ev.dataset.date;
+            const show = (!from || d >= from) && (!to || d <= to);
+            ev.classList.toggle('hidden-event', !show);
+            if (show) visible++;
+        });
+        const noRes = document.getElementById('noResults');
+        noRes.style.display = visible === 0 ? 'block' : 'none';
+        filterCount.textContent = (from || to) ? `${visible} evento${visible !== 1 ? 's' : ''}` : '';
+    }
+
+    filterFrom.addEventListener('change', applyFilter);
+    filterTo.addEventListener('change', applyFilter);
+    filterClear.addEventListener('click', () => {
+        filterFrom.value = ''; filterTo.value = ''; applyFilter();
+    });
+
+    // ── CSV export ───────────────────────────────────────────────────────────
+    const allEventsData = <%- JSON.stringify(allEvents.map(e => ({
+        date: e.date,
+        type: e.typeLabel,
+        articles: Object.entries(e.articles || {}).map(([a, c]) => `${c}x ${a}`).join(' + '),
+        epcCount: (e.EPCs || []).length
+    }))) %>;
+
+    document.getElementById('exportCSV').addEventListener('click', () => {
+        const rows = [['Fecha', 'Tipo', 'Artículos', 'EPCs']];
+        allEventsData.forEach(e => {
+            const d = new Date(e.date).toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            rows.push([`"${d}"`, e.type, `"${e.articles}"`, e.epcCount]);
+        });
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `bitacora-${CLIENT_NAME}.csv`;
+        link.click();
+    });
+
+    // ── Charts (async from analytics API) ───────────────────────────────────
+    Chart.defaults.color = '#8b8fa8';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+    const PALETTE = ['#3ecf8e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#a3e635'];
+    let dailyChartInstance = null;
+
+    (async function() {
+        try {
+            const resp = await fetch(`/api/analytics?client=${encodeURIComponent(CLIENT_NAME)}`);
+            if (!resp.ok) throw new Error('analytics failed');
+            const data = await resp.json();
+
+            // ── Monthly activity bar chart ────────────────────────────────
+            const monthlyCanvas  = document.getElementById('monthlyChart');
+            const monthlyLoading = document.getElementById('monthlyLoading');
+
+            if (data.monthlyActivity && data.monthlyActivity.length > 0) {
+                monthlyLoading.style.display = 'none';
+                monthlyCanvas.style.display  = 'block';
+
+                new Chart(monthlyCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: data.monthlyActivity.map(m => m.month),
+                        datasets: [
+                            {
+                                label: 'Recolecciones',
+                                data: data.monthlyActivity.map(m => m.recolecciones || 0),
+                                backgroundColor: '#3b82f644',
+                                borderColor: '#3b82f6',
+                                borderWidth: 2, borderRadius: 5
+                            },
+                            {
+                                label: 'Entregas',
+                                data: data.monthlyActivity.map(m => m.entregas || 0),
+                                backgroundColor: '#3ecf8e44',
+                                borderColor: '#3ecf8e',
+                                borderWidth: 2, borderRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#8b8fa8', padding: 10, font: { size: 11 } } } },
+                        scales: {
+                            x: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            y: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                monthlyLoading.textContent = 'Sin datos mensuales';
+            }
+
+            // ── Daily usage line chart ────────────────────────────────────
+            const dailyCanvas  = document.getElementById('dailyChart');
+            const dailyLoading = document.getElementById('dailyLoading');
+
+            if (data.dailyUsage && data.dailyUsage.length > 0 && data.articles.length > 0) {
+                dailyLoading.style.display = 'none';
+                dailyCanvas.style.display  = 'block';
+
+                const dates    = data.dailyUsage.map(d => d.date);
+                const datasets = data.articles.map((article, i) => ({
+                    label: article,
+                    data: data.dailyUsage.map(d => d[article] || 0),
+                    borderColor: PALETTE[i % PALETTE.length],
+                    backgroundColor: PALETTE[i % PALETTE.length] + '22',
+                    borderWidth: 2, pointRadius: 3, pointHoverRadius: 5,
+                    tension: 0.35, fill: false
+                }));
+
+                dailyChartInstance = new Chart(dailyCanvas, {
+                    type: 'line',
+                    data: { labels: dates, datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#8b8fa8', padding: 10, font: { size: 11 } },
+                                onClick(e, item, legend) {
+                                    const meta = legend.chart.getDatasetMeta(item.datasetIndex);
+                                    meta.hidden = meta.hidden === null
+                                        ? !legend.chart.data.datasets[item.datasetIndex].hidden
+                                        : !meta.hidden;
+                                    legend.chart.update();
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#4a4f62', maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            y: { ticks: { color: '#4a4f62' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                dailyLoading.textContent = 'Sin entregas registradas';
+            }
+
+        } catch (err) {
+            console.error('Analytics error:', err);
+            document.getElementById('monthlyLoading').textContent = 'Error al cargar';
+            document.getElementById('dailyLoading').textContent   = 'Error al cargar';
+        }
+    })();
+
+    // ── Download daily chart ─────────────────────────────────────────────────
+    document.getElementById('downloadDailyChart').addEventListener('click', () => {
+        if (!dailyChartInstance) return;
+        const link = document.createElement('a');
+        link.download = `uso-diario-${CLIENT_NAME}.png`;
+        link.href = dailyChartInstance.toBase64Image('image/png', 1);
+        link.click();
+    });
+
+    // ── Offscreen chart → base64 ─────────────────────────────────────────────
+    function renderUsageChartToBase64(dailyUsage, articles) {
+        return new Promise((resolve) => {
+            if (!dailyUsage || dailyUsage.length === 0 || !articles || articles.length === 0) {
+                return resolve(null);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width  = 880;
+            canvas.height = 300;
+            canvas.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+            document.body.appendChild(canvas);
+
+            const PALETTE = ['#27ae74','#2563eb','#d97706','#dc2626','#7c3aed','#db2777','#0891b2','#65a30d'];
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: dailyUsage.map(d => d.date),
+                    datasets: articles.map((article, i) => ({
+                        label: article,
+                        data: dailyUsage.map(d => d[article] || 0),
+                        borderColor: PALETTE[i % PALETTE.length],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        tension: 0.3
+                    }))
+                },
+                options: {
+                    responsive: false,
+                    animation: false,
+                    scales: {
+                        x: { ticks: { color: '#555', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.07)' } },
+                        y: { beginAtZero: true, ticks: { color: '#555', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.07)' } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#333', font: { size: 11 }, padding: 14 } }
+                    }
+                },
+                plugins: [{
+                    id: 'pdfBg',
+                    beforeDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, chart.width, chart.height);
+                        ctx.restore();
+                    }
+                }]
+            });
+
+            requestAnimationFrame(() => {
+                const img = canvas.toDataURL('image/png');
+                document.body.removeChild(canvas);
+                resolve(img);
+            });
+        });
+    }
+
+    // ── PDF download ─────────────────────────────────────────────────────────
+    (function() {
+        const toggleBtn   = document.getElementById('btnTogglePDF');
+        const dateRow     = document.getElementById('pdfDateRow');
+        const fromInput   = document.getElementById('pdfFrom');
+        const toInput     = document.getElementById('pdfTo');
+        const generateBtn = document.getElementById('btnGeneratePDF');
+        if (!toggleBtn) return;
+
+        const today = new Date();
+        const week  = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        toInput.value   = today.toISOString().slice(0, 10);
+        fromInput.value = week.toISOString().slice(0, 10);
+
+        toggleBtn.addEventListener('click', () => {
+            dateRow.classList.toggle('open');
+            toggleBtn.textContent = dateRow.classList.contains('open') ? '✕ Cerrar' : '↓ PDF';
+        });
+
+        generateBtn.addEventListener('click', () => downloadLogPDF(fromInput.value, toInput.value));
+    })();
+
+    async function downloadLogPDF(from, to) {
+        const btn = document.getElementById('btnGeneratePDF');
+        btn.textContent = 'Generando…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`/api/pdf-data?client=${encodeURIComponent(CLIENT_NAME)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+            if (!resp.ok) throw new Error('pdf-data fetch failed');
+            const data = await resp.json();
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const W = doc.internal.pageSize.getWidth();
+            const H = doc.internal.pageSize.getHeight();
+            const GREEN = [62, 207, 142];
+            const DARK  = [14, 17, 23];
+            const BLUE  = [59, 130, 246];
+            const GRAY  = [100, 106, 128];
+            const LIGHT = [248, 250, 252];
+
+            // ── Header bar ──────────────────────────────────────────────
+            doc.setFillColor(...DARK);
+            doc.rect(0, 0, W, 22, 'F');
+
+            doc.setFillColor(...GREEN);
+            doc.roundedRect(8, 5, 12, 12, 2, 2, 'F');
+            doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(5, 30, 15);
+            doc.text('ON', 14, 13, { align: 'center' });
+
+            doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+            doc.text('ON Sistema de Inventario', 24, 11);
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GREEN);
+            doc.text('BITÁCORA — HISTORIAL DE RECOLECCIONES Y ENTREGAS', 24, 17);
+
+            let y = 32;
+
+            // ── Client + date range ──────────────────────────────────────
+            doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+            doc.text(data.client, 14, y); y += 7;
+
+            const fmtDate = (iso) => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+            doc.text(`Período: ${fmtDate(data.from)} — ${fmtDate(data.to)}`, 14, y); y += 14;
+
+            // ── Activity stats ───────────────────────────────────────────
+            const statsBoxes = [
+                { label: 'RECOLECCIONES',      value: data.summary.totalRecolecciones,    color: BLUE },
+                { label: 'ENTREGAS',           value: data.summary.totalEntregas,         color: GREEN },
+                { label: 'PRENDAS RECOGIDAS',  value: data.summary.totalPrendasRecogidas, color: DARK },
+                { label: 'PRENDAS ENTREGADAS', value: data.summary.totalPrendasEntregadas,color: DARK }
+            ];
+            const boxW = (W - 28 - 3 * 3) / 4;
+            statsBoxes.forEach((s, i) => {
+                const x = 14 + i * (boxW + 3);
+                doc.setFillColor(...LIGHT);
+                doc.roundedRect(x, y, boxW, 22, 2, 2, 'F');
+                doc.setFontSize(17); doc.setFont('helvetica', 'bold'); doc.setTextColor(...s.color);
+                doc.text(String(s.value), x + boxW / 2, y + 12, { align: 'center' });
+                doc.setFontSize(6); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+                doc.text(s.label, x + boxW / 2, y + 18.5, { align: 'center' });
+            });
+            y += 30;
+
+            // Tasa de retorno
+            if (data.returnRate !== null) {
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+                doc.text(`Tasa de retorno en el período: ${data.returnRate}%`, 14, y); y += 10;
+            }
+
+            // ── Daily wash chart ─────────────────────────────────────────
+            const chartImg = await renderUsageChartToBase64(data.dailyUsage, data.dailyArticles);
+            if (chartImg) {
+                if (y + 74 > H - 20) { doc.addPage(); y = 20; }
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+                doc.text('LAVADOS DIARIOS POR ARTÍCULO', 14, y); y += 4;
+                const chartW = W - 28;
+                const chartH = Math.round((300 / 880) * chartW);
+                doc.addImage(chartImg, 'PNG', 14, y, chartW, chartH);
+                y += chartH + 10;
+            }
+
+            // ── Events table ─────────────────────────────────────────────
+            if (data.events && data.events.length > 0) {
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+                doc.text(`EVENTOS EN EL PERÍODO (${data.events.length})`, 14, y); y += 3;
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Fecha', 'Tipo', 'Artículos', 'EPCs']],
+                    body: data.events.map(e => [
+                        new Date(e.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                        e.type,
+                        e.articles || '—',
+                        e.epcCount
+                    ]),
+                    styles: { font: 'helvetica', fontSize: 8, cellPadding: 3 },
+                    headStyles: { fillColor: DARK, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
+                    alternateRowStyles: { fillColor: LIGHT },
+                    columnStyles: {
+                        0: { cellWidth: 36 },
+                        1: { cellWidth: 24, fontStyle: 'bold' },
+                        2: { cellWidth: 'auto' },
+                        3: { cellWidth: 14, halign: 'right' }
+                    },
+                    didDrawCell: (hookData) => {
+                        if (hookData.section === 'body' && hookData.column.index === 1) {
+                            const val = hookData.cell.raw;
+                            hookData.cell.styles.textColor = val === 'Entrega' ? GREEN : BLUE;
+                        }
+                    },
+                    margin: { left: 14, right: 14 },
+                    tableLineColor: [220, 225, 235], tableLineWidth: 0.1
+                });
+                y = doc.lastAutoTable.finalY + 10;
+            } else {
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+                doc.text('Sin eventos registrados en este período.', 14, y); y += 10;
+            }
+
+            // ── Article breakdown (all-time) ─────────────────────────────
+            if (data.articleBreakdown && data.articleBreakdown.length > 0) {
+                if (y > H - 60) { doc.addPage(); y = 20; }
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
+                doc.text('INVENTARIO TOTAL POR ARTÍCULO', 14, y); y += 3;
+                doc.autoTable({
+                    startY: y,
+                    head: [['Artículo', 'Cantidad', 'Lavados Totales', 'Promedio']],
+                    body: data.articleBreakdown.map(a => [a.article, a.count, a.totalWashes, a.avgWashes]),
+                    styles: { font: 'helvetica', fontSize: 9, cellPadding: 3.5 },
+                    headStyles: { fillColor: GREEN, textColor: [5, 30, 15], fontStyle: 'bold', fontSize: 8 },
+                    alternateRowStyles: { fillColor: LIGHT },
+                    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+                    margin: { left: 14, right: 14 },
+                    tableLineColor: [220, 225, 235], tableLineWidth: 0.1
+                });
+            }
+
+            // ── Footer (all pages) ────────────────────────────────────────
+            const totalPages = doc.internal.getNumberOfPages();
+            const generated  = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            for (let p = 1; p <= totalPages; p++) {
+                doc.setPage(p);
+                doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
+                doc.text(`Generado el ${generated} · ON Sistema de Inventario`, 14, H - 10);
+                doc.text(`Página ${p} de ${totalPages}`, W - 14, H - 10, { align: 'right' });
+            }
+
+            doc.save(`bitacora-${CLIENT_NAME.replace(/\s+/g, '-')}-${from}.pdf`);
+        } catch (err) {
+            console.error('PDF error:', err);
+            alert('Error al generar el PDF. Intenta de nuevo.');
+        } finally {
+            btn.textContent = 'Generar PDF';
+            btn.disabled = false;
+        }
+    }
+    <% } %>
+    </script>
+</body>
+</html>

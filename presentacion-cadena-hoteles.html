@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ON Sistema — Cadenas de Hoteles</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3ecf8e 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot span{color:#3ecf8e;font-weight:600}
+.g{color:#3ecf8e}.dim{color:#6b7280}.warn{color:#f59e0b}.red{color:#ef4444}.blue{color:#3b82f6}.indigo{color:#818cf8}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:22pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+.slide-head{margin-bottom:6mm}
+
+/* S1 cover */
+#s1{justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)}
+#s1 .logo-sq{width:16mm;height:16mm;background:#3ecf8e;border-radius:3mm;display:flex;align-items:center;justify-content:center;font-size:22pt;font-weight:900;color:#091a12;letter-spacing:-1px}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#132d1f;border:1px solid #1f5c38;border-radius:99px;padding:6px 18px;font-size:9pt;color:#3ecf8e;font-weight:500}
+
+/* S2 problema */
+.problem-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.problem-card .icon{font-size:22pt;margin-bottom:3mm}
+.problem-card h3{font-size:11pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.problem-card p{font-size:8.5pt;color:#9ca3af;line-height:1.5}
+.stat-highlight{background:linear-gradient(135deg,#1a0d0d 0%,#2d1010 100%);border:1px solid #7f1d1d44;border-radius:3mm;padding:5mm 8mm;display:flex;align-items:center;gap:5mm}
+.stat-highlight .big{font-size:30pt;font-weight:900;color:#ef4444}
+.stat-highlight .text{font-size:9pt;color:#d1d5db;line-height:1.5}
+.stat-highlight .text strong{color:#f9fafb;display:block;font-size:11pt;margin-bottom:1mm}
+
+/* S3 terminal */
+.kpi-box{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.kpi-box .val{font-size:19pt;font-weight:800}
+.kpi-box .lbl{font-size:7pt;font-weight:600;letter-spacing:1px;color:#6b7280;text-transform:uppercase;margin-top:1mm}
+.term-header{background:#131820;padding:3mm 5mm;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:2mm;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #1e2431}
+.term-row{padding:2.2mm 5mm;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:2mm;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center}
+.term-row:nth-child(even){background:#0b0e14}
+
+/* S4 dashboard */
+.dash-mock{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column;gap:3mm}
+.client-chip{display:inline-flex;align-items:center;gap:5px;background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:2px 10px;font-size:7.5pt;color:#3ecf8e;font-weight:600}
+.dash-kpi{flex:1;background:#0e1117;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center}
+.dash-kpi .v{font-size:14pt;font-weight:800}
+.dash-kpi .l{font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5mm}
+.feat-item{display:flex;align-items:flex-start;gap:4mm;background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.feat-item .icon{font-size:14pt;min-width:8mm}
+.feat-item h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm}
+.feat-item p{font-size:7.5pt;color:#9ca3af;line-height:1.4}
+
+/* S5 bitácora */
+.log-mock{background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1}
+.log-entry{display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a}
+.log-entry:nth-child(even){background:#0b0e14}
+.type-badge{padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700;white-space:nowrap;margin-top:0.5mm}
+.badge-rec{background:#1a3a2a;color:#3ecf8e}.badge-ent{background:#1a2744;color:#60a5fa}.badge-rep{background:#2a1f44;color:#818cf8}
+.log-entry .info h4{font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm}
+.log-entry .info p{font-size:7pt;color:#6b7280}
+.log-entry .date{font-size:6.5pt;color:#4b5563;margin-left:auto;white-space:nowrap}
+.stat-row-box{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.stat-row-box .big{font-size:22pt;font-weight:800}
+.stat-row-box .sub{font-size:7.5pt;color:#9ca3af;margin-top:0.5mm}
+
+/* S6 lifecycle */
+.alert-header{background:#131820;padding:3mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #1e2431}
+.alert-row{padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center}
+.alert-row:nth-child(even){background:#0b0e14}
+.pct-bar{height:5px;border-radius:2px;background:#3ecf8e;margin-top:1mm}
+.pct-bar.warn{background:#f59e0b}.pct-bar.crit{background:#ef4444}
+.badge-crit{background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.badge-warn{background:#2d1f00;color:#f59e0b;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.lc-info-card{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:5mm}
+.lc-info-card h4{font-size:9.5pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.lc-info-card p{font-size:8pt;color:#9ca3af;line-height:1.55}
+
+/* S7 pdf */
+.pdf-mock{background:#fff;border-radius:3mm;overflow:hidden;border:1px solid #d1d5db;display:flex;flex-direction:column}
+.pdf-header{background:#3ecf8e;padding:4mm 6mm;display:flex;align-items:center;gap:5mm}
+.pdf-logo-sq{width:8mm;height:8mm;background:#091a12;border-radius:1mm;display:flex;align-items:center;justify-content:center;font-size:6pt;font-weight:900;color:#fff}
+.pdf-body{padding:4mm 6mm;flex:1;background:#fff}
+.pdf-client{font-size:14pt;font-weight:800;color:#0e1117;margin-bottom:1mm}
+.pdf-period{font-size:7pt;color:#6b7280;margin-bottom:3mm}
+.pdf-kpi-item{flex:1;background:#f8fafc;border-radius:1.5mm;padding:2mm;text-align:center}
+.pdf-kpi-item .pv{font-size:11pt;font-weight:800;color:#0e1117}
+.pdf-kpi-item .pl{font-size:5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px}
+.pdf-section{font-size:7pt;font-weight:700;color:#0e1117;margin-bottom:1.5mm;text-transform:uppercase;letter-spacing:0.3px}
+.mini-chart-area{height:18mm;border:1px solid #e5e7eb;border-radius:1.5mm;display:flex;align-items:flex-end;gap:1mm;padding:2mm;margin-bottom:3mm;background:#f8fafc}
+.mc-bar{border-radius:0.5mm 0.5mm 0 0;min-width:3mm}
+.pdf-table-head{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;background:#0e1117;padding:1.5mm 2mm;border-radius:1mm 1mm 0 0;font-size:5.5pt;font-weight:700;color:#fff}
+.pdf-table-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:1.5mm 2mm;font-size:6.5pt;color:#374151;border-bottom:1px solid #e5e7eb}
+.pdf-table-row:nth-child(even){background:#f8fafc}
+.pdf-feature{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.pdf-feature h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1.5mm}
+.pdf-feature p{font-size:7.5pt;color:#9ca3af;line-height:1.45}
+
+/* S8 propuesta */
+.prop-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.prop-card .step{width:8mm;height:8mm;background:#3ecf8e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:800;color:#091a12;margin-bottom:3mm}
+.prop-card h4{font-size:10pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.prop-card p{font-size:8pt;color:#9ca3af;line-height:1.5}
+.cta-bar{background:linear-gradient(90deg,#0d2b1c,#13381f);border:1px solid #1f5c38;border-radius:3mm;padding:6mm 9mm;display:flex;align-items:center;justify-content:space-between}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1 — COVER -->
+<div class="slide" id="s1">
+  <div class="accent-bar"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div class="logo-sq">ON</div>
+    <div style="font-size:24pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+  </div>
+  <h1 style="font-size:32pt;font-weight:900;text-align:center;letter-spacing:-1px;line-height:1.1;margin-bottom:5mm;color:#f1f5f9">Control total de <span style="color:#3ecf8e">blancos y lencería</span><br>en toda tu cadena</h1>
+  <p style="font-size:13pt;color:#9ca3af;text-align:center;margin-bottom:14mm">Tecnología RFID para cadenas hoteleras — visibilidad en tiempo real,<br>sin pérdidas, sin disputas con lavandería.</p>
+  <div class="pill"><span style="width:7px;height:7px;background:#3ecf8e;border-radius:50%;display:inline-block"></span>Propuesta para cadena hotelera &nbsp;·&nbsp; Junio 2026</div>
+  <div style="font-size:8pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Confidencial · emiliano.villarreal99@gmail.com</div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>1 / 8</span></div>
+</div>
+
+<!-- SLIDE 2 — PROBLEMA -->
+<div class="slide" style="padding:14mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">El problema</div>
+    <div class="slide-title">Las cadenas hoteleras pierden <span style="color:#ef4444">fortunas</span> en lencería cada año</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="problem-card">
+      <div class="icon">🏨</div>
+      <h3>Sin visión multi-propiedad</h3>
+      <p>¿Cuántas toallas tiene el hotel Reforma hoy? ¿Y el de Polanco? Cada propiedad opera como una isla sin información compartida.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🧺</div>
+      <h3>Disputas con lavandería</h3>
+      <p>La ropa sale, parte no regresa. Sin evidencia de qué se envió y qué se recibió, las disputas con el proveedor de lavandería son imposibles de ganar.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">📋</div>
+      <h3>Inventarios manuales</h3>
+      <p>Contar toallas y sábanas a mano es lento, impreciso y costoso. Los errores de conteo generan compras innecesarias o faltantes en temporada alta.</p>
+    </div>
+  </div>
+  <div class="stat-highlight">
+    <div class="big">15–25%</div>
+    <div class="text">
+      <strong>Pérdida anual de lencería en hoteles latinoamericanos</strong>
+      Un hotel con 1,000 habitaciones puede perder entre $80,000 y $150,000 USD en blancos al año — sin poder determinar dónde, cuándo ni por qué.
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>2 / 8</span></div>
+</div>
+
+<!-- SLIDE 3 — TERMINAL EN VIVO -->
+<div class="slide" style="padding:10mm 12mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Terminal en vivo</div>
+    <div class="slide-title">Una pantalla. <span style="color:#3ecf8e">Toda tu cadena.</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:58mm 1fr;gap:8mm;flex:1">
+    <div style="display:flex;flex-direction:column;gap:4mm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm">
+        <div class="kpi-box"><div class="val" style="color:#e2e8f0">2,847</div><div class="lbl">Total prendas</div></div>
+        <div class="kpi-box"><div class="val warn">312</div><div class="lbl">En lavandería</div></div>
+        <div class="kpi-box"><div class="val g">1,204</div><div class="lbl">En habitaciones</div></div>
+        <div class="kpi-box"><div class="val red">47</div><div class="lbl">Dañadas</div></div>
+      </div>
+      <div class="kpi-box" style="background:#1a0d0d;border-color:#7f1d1d44">
+        <div style="display:flex;align-items:baseline;gap:6px"><div class="val warn">23</div><div style="font-size:8pt;color:#f59e0b">alertas EOL</div></div>
+        <div class="lbl">Prendas al límite de vida útil</div>
+      </div>
+      <div class="kpi-box">
+        <div style="font-size:7.5pt;color:#9ca3af;margin-bottom:2mm">Actividad hoy</div>
+        <div style="display:flex;justify-content:space-between">
+          <div><div class="val g" style="font-size:16pt">14</div><div class="lbl">recolecciones</div></div>
+          <div><div class="val blue" style="font-size:16pt">8</div><div class="lbl">entregas</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm 3mm 0 0;flex:1;overflow:hidden">
+        <div class="term-header"><div>Propiedad</div><div>Total</div><div>Lavand.</div><div>Habitac.</div><div>Bodega</div><div>Reproceso</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Reforma</div><div style="color:#e2e8f0;font-weight:600">687</div><div style="color:#f59e0b;font-weight:700">84</div><div style="color:#3ecf8e;font-weight:700">312</div><div style="color:#9ca3af">201</div><div style="color:#818cf8">42</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Polanco</div><div style="color:#e2e8f0;font-weight:600">456</div><div style="color:#f59e0b;font-weight:700">61</div><div style="color:#3ecf8e;font-weight:700">183</div><div style="color:#9ca3af">124</div><div style="color:#818cf8">38</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Santa Fe</div><div style="color:#e2e8f0;font-weight:600">423</div><div style="color:#f59e0b;font-weight:700">57</div><div style="color:#3ecf8e;font-weight:700">198</div><div style="color:#9ca3af">109</div><div style="color:#818cf8">21</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Pedregal</div><div style="color:#e2e8f0;font-weight:600">398</div><div style="color:#f59e0b;font-weight:700">43</div><div style="color:#3ecf8e;font-weight:700">176</div><div style="color:#9ca3af">98</div><div style="color:#818cf8">29</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Aeropuerto</div><div style="color:#e2e8f0;font-weight:600">341</div><div style="color:#f59e0b;font-weight:700">29</div><div style="color:#3ecf8e;font-weight:700">154</div><div style="color:#9ca3af">87</div><div style="color:#818cf8">31</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Satélite</div><div style="color:#e2e8f0;font-weight:600">289</div><div style="color:#f59e0b;font-weight:700">28</div><div style="color:#3ecf8e;font-weight:700">121</div><div style="color:#9ca3af">82</div><div style="color:#818cf8">18</div></div>
+        <div class="term-row"><div style="color:#e2e8f0;font-weight:600">Hotel Vallejo</div><div style="color:#e2e8f0;font-weight:600">253</div><div style="color:#f59e0b;font-weight:700">10</div><div style="color:#3ecf8e;font-weight:700">60</div><div style="color:#9ca3af">146</div><div style="color:#818cf8">14</div></div>
+      </div>
+      <div style="padding:3mm 5mm;background:#080b0f;border:1px solid #1e2431;border-top:none;border-radius:0 0 3mm 3mm;font-size:7pt;color:#4b5563">Actualización en tiempo real · Filtrable por propiedad · Exportable a CSV</div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>3 / 8</span></div>
+</div>
+
+<!-- SLIDE 4 — DASHBOARD POR PROPIEDAD -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Dashboard por propiedad</div>
+    <div class="slide-title">Diagnóstico instantáneo de <span style="color:#3ecf8e">cada hotel</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1">
+    <div class="dash-mock">
+      <div class="client-chip">● Hotel Reforma</div>
+      <div style="display:flex;gap:3mm">
+        <div class="dash-kpi"><div class="v" style="color:#e2e8f0">687</div><div class="l">Total</div></div>
+        <div class="dash-kpi"><div class="v g">28,340</div><div class="l">Lavados</div></div>
+        <div class="dash-kpi"><div class="v indigo">41.2</div><div class="l">Promedio</div></div>
+        <div class="dash-kpi"><div class="v" style="color:#3b82f6">84</div><div class="l">Lavand.</div></div>
+        <div class="dash-kpi"><div class="v red">8</div><div class="l">Dañadas</div></div>
+      </div>
+      <div style="display:flex;gap:3mm;margin-top:1mm">
+        <div style="flex:1.6;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Lavados promedio por artículo</div>
+          <div style="position:relative;height:44mm"><canvas id="chartWash"></canvas></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Estado actual</div>
+          <div style="position:relative;height:44mm"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+      <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:1mm">Tasa de retorno (últimos 30 días)</div>
+      <div style="display:flex;align-items:center;gap:4mm;margin-top:2mm">
+        <div style="font-size:22pt;font-weight:800;color:#3ecf8e">118%</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Prendas entregadas vs recogidas.<br>Retorno positivo indica recuperación<br>de inventario acumulado.</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div class="feat-item"><div class="icon">🛏️</div><div><h4>Trazabilidad por tipo de habitación</h4><p>Diferencia entre lencería de habitación estándar, suite y presidencial — cada una con su propio umbral de lavados y estándar de calidad.</p></div></div>
+      <div class="feat-item"><div class="icon">🏭</div><div><h4>Control de lavandería externa</h4><p>Escanea todo lo que sale al proveedor de lavandería. El sistema compara lo enviado vs lo recibido — evidencia objetiva en caso de faltantes.</p></div></div>
+      <div class="feat-item"><div class="icon">⚡</div><div><h4>Alertas de ciclo de vida</h4><p>Toallas y sábanas cerca de su límite aparecen automáticamente. Planifica compras con anticipación y evita compras de emergencia.</p></div></div>
+      <div class="feat-item"><div class="icon">📊</div><div><h4>Comparación entre propiedades</h4><p>Identifica qué hotel tiene el mayor índice de pérdidas o daños, y toma decisiones operativas basadas en datos reales.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>4 / 8</span></div>
+</div>
+
+<!-- SLIDE 5 — BITÁCORA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Bitácora y trazabilidad</div>
+    <div class="slide-title">Cada movimiento, <span style="color:#3ecf8e">registrado y auditable</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div class="log-mock">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;gap:5mm;align-items:center">
+        <span>● Hotel Reforma</span><span style="margin-left:auto;color:#6b7280;font-weight:400">Filtrar por fecha &nbsp;·&nbsp; Exportar CSV &nbsp;·&nbsp; Exportar PDF</span>
+      </div>
+      <div class="log-entry"><span class="type-badge badge-rec">Recolección</span><div class="info"><h4>18× Toalla de baño &nbsp; 14× Sábana queen &nbsp; 10× Funda &nbsp; 8× Albornoz</h4><p>50 prendas enviadas a lavandería · EPCs escaneados · Lavandería Central Norte</p></div><div class="date">9 jun 2026<br>07:30</div></div>
+      <div class="log-entry"><span class="type-badge badge-ent">Entrega</span><div class="info"><h4>16× Toalla de baño &nbsp; 12× Sábana queen &nbsp; 9× Funda &nbsp; 7× Albornoz</h4><p>44 prendas recibidas de lavandería · 6 prendas faltantes detectadas</p></div><div class="date">8 jun 2026<br>14:15</div></div>
+      <div class="log-entry"><span class="type-badge badge-rep">Reproceso</span><div class="info"><h4>4× Sábana king &nbsp; 2× Albornoz</h4><p>6 prendas con manchas enviadas a reproceso especial</p></div><div class="date">7 jun 2026<br>16:00</div></div>
+      <div class="log-entry"><span class="type-badge badge-rec">Recolección</span><div class="info"><h4>20× Toalla de baño &nbsp; 15× Sábana king &nbsp; 12× Cobertor &nbsp; 8× Toalla de mano</h4><p>55 prendas enviadas a lavandería · EPCs escaneados</p></div><div class="date">5 jun 2026<br>08:00</div></div>
+      <div class="log-entry"><span class="type-badge badge-ent">Entrega</span><div class="info"><h4>19× Toalla de baño &nbsp; 15× Sábana king &nbsp; 12× Cobertor &nbsp; 8× Toalla de mano</h4><p>54 prendas recibidas · Tasa de retorno 98.2%</p></div><div class="date">3 jun 2026<br>11:30</div></div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563;border-top:1px solid #1e2431">Mostrando 5 de 62 eventos · Reportes automáticos cada lunes por WhatsApp</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:flex-start">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm">¿Qué es la Bitácora?</div>
+        <p style="font-size:7.5pt;color:#9ca3af;line-height:1.5">Registro cronológico completo de cada movimiento en cada propiedad: salidas a lavandería, entregas recibidas y reprocesos. Cada entrada registra fecha, hora, artículos por tipo y los EPCs individuales de cada prenda.</p>
+      </div>
+      <div style="display:flex;gap:2mm">
+        <div style="flex:1;background:#0d2b1c;border:1px solid #1f5c38;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3ecf8e">28</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Recolecciones</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3b82f6">26</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Entregas</div>
+        </div>
+      </div>
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:3mm 4mm;flex:1">
+        <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Actividad mensual — Hotel Reforma</div>
+        <div style="position:relative;height:52mm"><canvas id="chartMonthlyCadena"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>5 / 8</span></div>
+</div>
+
+<!-- SLIDE 6 — CICLO DE VIDA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Gestión de ciclo de vida</div>
+    <div class="slide-title">Reemplaza <span style="color:#3ecf8e">antes</span> de que el huésped lo note</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div class="alert-header"><div>Artículo · Propiedad</div><div>Prom. lavados</div><div>Límite</div><div>Estado</div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Albornoz · Hotel Reforma</div><div style="color:#ef4444;font-weight:700">64</div><div class="dim">60</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Albornoz · Hotel Polanco</div><div style="color:#ef4444;font-weight:700">61</div><div class="dim">60</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Toalla de baño · H. Reforma</div><div style="color:#f59e0b;font-weight:700">69</div><div class="dim">80</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:86%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Sábana king · H. Santa Fe</div><div style="color:#f59e0b;font-weight:700">87</div><div class="dim">100</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:87%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Sábana queen · H. Polanco</div><div style="color:#f59e0b;font-weight:700">83</div><div class="dim">100</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:83%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Cobertor · H. Aeropuerto</div><div style="color:#9ca3af">98</div><div class="dim">120</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:82%"></div></div></div>
+      <div class="alert-row"><div style="color:#e2e8f0;font-weight:600">Funda · H. Satélite</div><div style="color:#9ca3af">66</div><div class="dim">80</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:83%"></div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4mm;justify-content:center">
+      <div class="lc-info-card"><h4>Umbrales por categoría de habitación</h4><p>Una toalla de suite y una de habitación estándar no tienen el mismo límite. Configura umbrales distintos por tipo de prenda y categoría.</p></div>
+      <div class="lc-info-card" style="border-color:#1f5c38;background:#0d2b1c"><h4 style="color:#3ecf8e">Impacto en la experiencia del huésped</h4><p>Una toalla desgastada o un albornoz con pilling afecta directamente las reseñas. El sistema anticipa reemplazos antes de que lleguen a manos del huésped.</p></div>
+      <div class="lc-info-card"><h4>Alertas automáticas por WhatsApp</h4><p>El área de compras recibe aviso cuando prendas alcanzan el 80% de vida útil — con tiempo suficiente para licitación y reposición.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>6 / 8</span></div>
+</div>
+
+<!-- SLIDE 7 — REPORTES PDF -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Reportes automáticos</div>
+    <div class="slide-title">Informes listos para <span style="color:#3ecf8e">gerencia y dirección de operaciones</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 65mm;gap:8mm;flex:1">
+    <div class="pdf-mock">
+      <div class="pdf-header">
+        <div class="pdf-logo-sq">ON</div>
+        <div><div style="font-size:8pt;font-weight:700;color:#091a12">ON Sistema de Inventario</div><div style="font-size:6pt;color:#1a6644">REPORTE DE INVENTARIO — HOTEL REFORMA</div></div>
+      </div>
+      <div class="pdf-body">
+        <div class="pdf-client">Hotel Reforma</div>
+        <div class="pdf-period">Período: 2 jun 2026 — 9 jun 2026</div>
+        <div style="display:flex;gap:2mm;margin-bottom:3mm">
+          <div class="pdf-kpi-item"><div class="pv">687</div><div class="pl">Total prendas</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#3ecf8e">28,340</div><div class="pl">Lavados totales</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#818cf8">41.2</div><div class="pl">Promedio</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#3b82f6">84</div><div class="pl">En lavand.</div></div>
+          <div class="pdf-kpi-item"><div class="pv" style="color:#ef4444">8</div><div class="pl">Dañadas</div></div>
+        </div>
+        <div class="pdf-section">Actividad diaria por artículo</div>
+        <div class="mini-chart-area">
+          <div class="mc-bar" style="height:45%;background:#3ecf8e;width:5mm"></div>
+          <div class="mc-bar" style="height:60%;background:#3ecf8e;width:5mm"></div>
+          <div class="mc-bar" style="height:35%;background:#3b82f6;width:5mm"></div>
+          <div class="mc-bar" style="height:75%;background:#3b82f6;width:5mm"></div>
+          <div class="mc-bar" style="height:50%;background:#f59e0b;width:5mm"></div>
+          <div class="mc-bar" style="height:65%;background:#f59e0b;width:5mm"></div>
+          <div class="mc-bar" style="height:80%;background:#ef4444;width:5mm"></div>
+          <div class="mc-bar" style="height:40%;background:#ef4444;width:5mm"></div>
+          <div class="mc-bar" style="height:55%;background:#818cf8;width:5mm"></div>
+          <div class="mc-bar" style="height:70%;background:#818cf8;width:5mm"></div>
+        </div>
+        <div class="pdf-section">Desglose por artículo</div>
+        <div class="pdf-table-head"><div>Artículo</div><div style="text-align:right">Cantidad</div><div style="text-align:right">Lav. totales</div><div style="text-align:right">Promedio</div></div>
+        <div class="pdf-table-row"><div>Toalla de baño</div><div style="text-align:right">220</div><div style="text-align:right">9,460</div><div style="text-align:right">43.0</div></div>
+        <div class="pdf-table-row"><div>Sábana queen</div><div style="text-align:right">180</div><div style="text-align:right">7,740</div><div style="text-align:right">43.0</div></div>
+        <div class="pdf-table-row"><div>Albornoz</div><div style="text-align:right">80</div><div style="text-align:right">3,040</div><div style="text-align:right">38.0</div></div>
+        <div class="pdf-table-row"><div>Cobertor</div><div style="text-align:right">207</div><div style="text-align:right">8,100</div><div style="text-align:right">39.1</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div class="pdf-feature"><h4>Reporte semanal automático</h4><p>Cada lunes el gerente de operaciones recibe por WhatsApp el resumen de la semana: movimientos, faltantes de lavandería y alertas de ciclo de vida.</p></div>
+      <div class="pdf-feature"><h4>Reporte mensual de cadena</h4><p>El 1° de cada mes, dirección corporativa recibe un PDF consolidado con métricas de todas las propiedades — en un solo documento.</p></div>
+      <div class="pdf-feature"><h4>Gráfica de uso diario incluida</h4><p>Visualiza picos de actividad por fecha y por artículo. Útil para correlacionar con ocupación hotelera y planear ciclos de lavandería.</p></div>
+      <div class="pdf-feature" style="border-color:#1f5c38;background:#0d2b1c"><h4 style="color:#3ecf8e">Evidencia para disputas con lavandería</h4><p>Cada PDF incluye conteos exactos de salida y entrada con timestamps — respaldo legal ante faltantes de proveedor.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>7 / 8</span></div>
+</div>
+
+<!-- SLIDE 8 — PROPUESTA -->
+<div class="slide" style="padding:14mm 16mm 10mm;justify-content:center">
+  <div class="accent-bar"></div>
+  <div class="slide-label">Próximos pasos</div>
+  <h2 style="font-size:26pt;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;margin-bottom:2mm">Implementación para tu <span style="color:#3ecf8e">cadena hotelera</span></h2>
+  <p style="font-size:10pt;color:#9ca3af;margin-bottom:9mm;max-width:140mm">Desde el etiquetado inicial hasta visibilidad completa en todas las propiedades — en tres semanas.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="prop-card"><div class="step">1</div><h4>Inventario y etiquetado RFID</h4><p>Etiquetamos cada prenda con un tag RFID único. Levantamos el inventario inicial de cada propiedad con tipo de artículo y ciclos de lavado actuales.</p></div>
+    <div class="prop-card"><div class="step">2</div><h4>Configuración de propiedades</h4><p>Damos de alta cada hotel como propiedad independiente. Configuramos umbrales por tipo de habitación, alertas y acceso para cada gerente.</p></div>
+    <div class="prop-card"><div class="step">3</div><h4>Integración con lavandería</h4><p>Capacitamos al equipo de housekeeping para escanear al enviar y recibir ropa. La terminal corporativa queda activa en tiempo real desde el primer día.</p></div>
+  </div>
+  <div class="cta-bar">
+    <div><h4 style="font-size:12pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm">¿Listos para ver el sistema en acción?</h4><p style="font-size:8.5pt;color:#9ca3af">Agenda una demo en vivo con datos reales de tu cadena.</p></div>
+    <div style="font-size:11pt;font-weight:700;color:#3ecf8e;padding-left:20mm">emiliano.villarreal99@gmail.com</div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>8 / 8</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+(function () {
+  const avgs = [48, 45, 43, 40, 38, 32];
+  const labels = ['Albornoz', 'Sáb. doble', 'Sáb. queen', 'Funda', 'Toalla', 'Cobertor'];
+  new Chart(document.getElementById('chartWash'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: avgs, backgroundColor: avgs.map(v => v >= 43 ? '#f59e0b' : '#3ecf8e'), borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 8 }, color: '#6b7280' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 4 }, suggestedMin: 0, suggestedMax: 80 } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels: ['En lavandería', 'Habitaciones', 'Bodega', 'Reproceso', 'Sin actualiz.'], datasets: [{ data: [84, 312, 201, 42, 48], backgroundColor: ['#f59e0b', '#3ecf8e', '#3b82f6', '#818cf8', '#4b5563'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 5, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartMonthlyCadena'), {
+    type: 'bar',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [
+        { label: 'Recolecciones', data: [4, 5, 6, 7, 8, 4], backgroundColor: '#3ecf8e55', borderColor: '#3ecf8e', borderWidth: 1.5, borderRadius: 3 },
+        { label: 'Entregas',      data: [3, 5, 6, 6, 7, 5], backgroundColor: '#3b82f655', borderColor: '#3b82f6', borderWidth: 1.5, borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 8, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 7.5 }, color: '#6b7280' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7.5 }, color: '#6b7280', maxTicksLimit: 4, stepSize: 2 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
