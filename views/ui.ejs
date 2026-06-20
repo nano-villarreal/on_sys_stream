@@ -331,7 +331,6 @@
             border-radius: var(--radius);
             padding: 18px;
             min-height: 96px;
-            white-space: pre-line;
             font-size: 13px; line-height: 1.85;
             color: var(--text-2);
             margin-bottom: 0;
@@ -340,6 +339,120 @@
         .summary .loading {
             color: var(--text-3); font-style: italic;
         }
+
+        .summary-ts { font-size: 11px; color: var(--text-3); margin-bottom: 10px; }
+
+        .summary-client-label {
+            font-size: 10px; font-weight: 700;
+            color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px;
+            margin: 10px 0 4px;
+        }
+        .summary-client-label:first-of-type { margin-top: 0; }
+
+        .summary-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .summary-row:last-child { border-bottom: none; }
+
+        .summary-article-name { flex: 1; font-size: 13px; color: var(--text); }
+
+        .count-control {
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .cnt-btn {
+            width: 26px; height: 26px;
+            background: var(--surface-2, #1c2333);
+            border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text-2);
+            font-size: 15px; line-height: 1;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        .cnt-btn:hover { background: var(--green-dim); color: var(--green); border-color: rgba(62,207,142,0.3); }
+
+        .cnt-input {
+            width: 52px; height: 26px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text); font-size: 13px; font-weight: 700;
+            text-align: center; padding: 0;
+            -moz-appearance: textfield;
+        }
+        .cnt-input::-webkit-inner-spin-button,
+        .cnt-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+        .cnt-input:focus { outline: none; border-color: var(--border-focus); }
+        .cnt-input.overridden { color: var(--green); border-color: rgba(62,207,142,0.35); }
+
+        .scanned-badge {
+            font-size: 10px; color: var(--text-3);
+            white-space: nowrap; display: none;
+        }
+
+        .summary-missing {
+            margin-top: 8px; font-size: 11px; color: var(--text-3); font-style: italic;
+        }
+
+        /* ─── Manual entry card ─────────────────────────────────────── */
+        .manual-toggle-btn {
+            background: none; border: none;
+            font-size: 11px; font-weight: 600;
+            color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px;
+            cursor: pointer; padding: 0; display: flex; align-items: center; gap: 6px;
+            transition: color 0.15s;
+        }
+        .manual-toggle-btn:hover { color: var(--text-2); }
+        .manual-toggle-btn .chevron { transition: transform 0.2s; font-style: normal; }
+        .manual-toggle-btn.open .chevron { transform: rotate(90deg); }
+
+        .manual-panel { margin-top: 14px; display: none; }
+        .manual-panel.open { display: block; }
+
+        .manual-fields {
+            display: grid; grid-template-columns: 1fr 1fr 80px; gap: 10px; margin-bottom: 12px;
+        }
+        @media (max-width: 540px) { .manual-fields { grid-template-columns: 1fr; } }
+
+        .manual-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .field-label-sm {
+            font-size: 10px; font-weight: 600;
+            color: var(--text-3); text-transform: uppercase; letter-spacing: 0.7px;
+            display: block; margin-bottom: 5px;
+        }
+
+        input[type="number"].field-input {
+            width: 100%; padding: 9px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text);
+            transition: border-color 0.2s;
+            caret-color: var(--green);
+            -moz-appearance: textfield;
+        }
+        input[type="number"].field-input::-webkit-inner-spin-button,
+        input[type="number"].field-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type="number"].field-input:focus,
+        input[type="text"].field-input:focus {
+            outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(62,207,142,0.07);
+        }
+        input[type="text"].field-input {
+            width: 100%; padding: 9px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; color: var(--text);
+            transition: border-color 0.2s;
+            caret-color: var(--green);
+        }
+        input[type="text"].field-input::placeholder,
+        input[type="number"].field-input::placeholder { color: var(--text-3); }
 
         /* ─── Actions ───────────────────────────────────────────────── */
         .actions-section { animation: fadeUp 0.45s 0.08s ease both; }
@@ -699,6 +812,33 @@
             </div>
         </div>
 
+        <!-- ─── Manual entry card ──────────────────────────────────── -->
+        <div class="card" style="animation: fadeUp 0.4s 0.12s ease both;">
+            <button class="manual-toggle-btn" id="manualToggleBtn">
+                <i class="chevron">›</i> Registro manual (sin escáner)
+            </button>
+            <div class="manual-panel" id="manualPanel">
+                <div class="manual-fields">
+                    <div>
+                        <label class="field-label-sm" for="manualClient">Cliente</label>
+                        <input type="text" class="field-input" id="manualClient" placeholder="Nombre del cliente" autocomplete="off">
+                    </div>
+                    <div>
+                        <label class="field-label-sm" for="manualArticle">Artículo</label>
+                        <input type="text" class="field-input" id="manualArticle" placeholder="Ej. sabana" autocomplete="off">
+                    </div>
+                    <div>
+                        <label class="field-label-sm" for="manualCount">Cantidad</label>
+                        <input type="number" class="field-input" id="manualCount" value="1" min="1">
+                    </div>
+                </div>
+                <div class="manual-actions">
+                    <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
+                    <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /container -->
 
     <script>
@@ -731,6 +871,7 @@
         let currentEPCs    = [];   // validated unique EPCs from textarea
         let currentResults = [];   // last lookup response from /api/lookup
         let isReprocesado  = false;
+        let countOverrides = {};   // "client::article" → declared count
 
         // ─────────────────────────────────────────────────────────────
         //  Constants
@@ -884,7 +1025,7 @@
 
         /**
          * Groups found EPCs by client → article with count + epc list.
-         * Used as the body for /api/recoleccion, /api/entrega, /api/repro.
+         * Applies any manual count overrides before sending.
          */
         function buildPayload(results, epcs) {
             const payload = { timestamp: getTimestamp(), items: {} };
@@ -898,11 +1039,18 @@
                 payload.items[r.client][r.article].count++;
                 payload.items[r.client][r.article].epcs.push(epc);
             });
+            // Apply count overrides: EPCs stay as scanned, declared count may differ
+            for (const [key, declared] of Object.entries(countOverrides)) {
+                const [client, article] = key.split('::');
+                if (payload.items[client]?.[article]) {
+                    payload.items[client][article].declared_count = declared;
+                }
+            }
             return { payload, hasItems: Object.keys(payload.items).length > 0 };
         }
 
-        /** Builds human-readable summary text from lookup results */
-        function buildSummaryText(results) {
+        /** Renders interactive summary HTML with per-article count controls */
+        function renderSummary(results) {
             const groups  = {};
             const missing = [];
 
@@ -915,25 +1063,43 @@
                 }
             });
 
-            const lines = [];
-            for (const [client, articles] of Object.entries(groups)) {
-                for (const [article, count] of Object.entries(articles)) {
-                    let line = `${count} ${article}${count === 1 ? '' : 's'} · ${client}`;
-                    if (isReprocesado) line += ' — reprocesado';
-                    lines.push(line);
-                }
+            if (!Object.keys(groups).length && !missing.length) {
+                return missing.length
+                    ? `<span class="loading">${getTimestamp()} — ${missing.length} EPC(s) leídos, ninguno registrado.</span>`
+                    : '<span class="loading">No hay EPCs válidos (24 caracteres hexadecimales)…</span>';
             }
 
             const ts = getTimestamp();
-            if (!lines.length) {
-                return missing.length
-                    ? `${ts}\n${missing.length} EPC(s) leídos — ninguno registrado en el sistema.`
-                    : 'No hay EPCs válidos (24 caracteres hexadecimales)…';
+            let html = `<div class="summary-ts">${ts}${isReprocesado ? ' · Reprocesado' : ''}</div>`;
+
+            for (const [client, articles] of Object.entries(groups)) {
+                html += `<div class="summary-client-label">${client}</div>`;
+                for (const [article, scanned] of Object.entries(articles)) {
+                    const key = `${client}::${article}`;
+                    const declared = countOverrides[key] ?? scanned;
+                    const isOver = declared !== scanned;
+                    html += `
+                        <div class="summary-row">
+                            <span class="summary-article-name">${article}</span>
+                            <div class="count-control">
+                                <button class="cnt-btn" data-key="${key}" data-delta="-1">−</button>
+                                <input class="cnt-input${isOver ? ' overridden' : ''}" type="number"
+                                    value="${declared}" min="0"
+                                    data-key="${key}" data-scanned="${scanned}">
+                                <button class="cnt-btn" data-key="${key}" data-delta="1">+</button>
+                            </div>
+                            <span class="scanned-badge" data-key="${key}" style="${isOver ? '' : 'display:none'}">
+                                (${scanned} escaneados)
+                            </span>
+                        </div>`;
+                }
             }
 
-            let header = `${ts}`;
-            if (isReprocesado) header += ' · Reprocesado';
-            return header + '\n\n' + lines.join('\n');
+            if (missing.length) {
+                html += `<div class="summary-missing">${missing.length} EPC(s) no registrados en el sistema</div>`;
+            }
+
+            return html;
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -953,6 +1119,7 @@
             const text       = el.textarea.value;
             const validEPCs  = extractValidEPCs(text);
             currentEPCs      = validEPCs;
+            countOverrides   = {};  // reset overrides when EPC list changes
 
             // Show valid count pill + ignored warning
             const rawLines = text.split(/[\r\n]+/).filter(Boolean).length;
@@ -985,9 +1152,46 @@
             const foundCount = results.filter(r => r.found && r.client && r.article).length;
             el.found.textContent    = foundCount;
             el.notfound.textContent = validEPCs.length - foundCount;
-            el.summary.textContent  = buildSummaryText(results);
+            el.summary.innerHTML    = renderSummary(results);
 
             setButtonsEnabled(foundCount > 0);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Count override — event delegation on summary card
+        // ─────────────────────────────────────────────────────────────
+        el.summary.addEventListener('click', e => {
+            const btn = e.target.closest('.cnt-btn');
+            if (!btn) return;
+            const key   = btn.dataset.key;
+            const input = el.summary.querySelector(`.cnt-input[data-key="${key}"]`);
+            if (!input) return;
+            const newVal = Math.max(0, (parseInt(input.value) || 0) + parseInt(btn.dataset.delta));
+            input.value = newVal;
+            applyOverride(key, newVal, parseInt(input.dataset.scanned));
+        });
+
+        el.summary.addEventListener('change', e => {
+            const input = e.target.closest('.cnt-input');
+            if (!input) return;
+            const key    = input.dataset.key;
+            const newVal = Math.max(0, parseInt(input.value) || 0);
+            input.value  = newVal;
+            applyOverride(key, newVal, parseInt(input.dataset.scanned));
+        });
+
+        function applyOverride(key, declared, scanned) {
+            const input = el.summary.querySelector(`.cnt-input[data-key="${key}"]`);
+            const badge = el.summary.querySelector(`.scanned-badge[data-key="${key}"]`);
+            if (declared !== scanned) {
+                countOverrides[key] = declared;
+                if (input) input.classList.add('overridden');
+                if (badge) { badge.style.display = ''; badge.textContent = `(${scanned} escaneados)`; }
+            } else {
+                delete countOverrides[key];
+                if (input) input.classList.remove('overridden');
+                if (badge) badge.style.display = 'none';
+            }
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1074,7 +1278,7 @@
 
         el.reprocesadoSwitch.addEventListener('change', e => {
             isReprocesado = e.target.checked;
-            if (currentResults.length) el.summary.textContent = buildSummaryText(currentResults);
+            if (currentResults.length) el.summary.innerHTML = renderSummary(currentResults);
         });
 
         el.btnRecoleccion.addEventListener('click', () => createOperation('recoleccion'));
@@ -1150,6 +1354,60 @@
             if (!text) return;
             handlePastedCSV(text);
         });
+
+        // ─────────────────────────────────────────────────────────────
+        //  Manual entry panel
+        // ─────────────────────────────────────────────────────────────
+        const manualToggleBtn = document.getElementById('manualToggleBtn');
+        const manualPanel     = document.getElementById('manualPanel');
+
+        manualToggleBtn.addEventListener('click', () => {
+            manualToggleBtn.classList.toggle('open');
+            manualPanel.classList.toggle('open');
+        });
+
+        async function submitManual(type) {
+            const client  = document.getElementById('manualClient').value.trim();
+            const article = document.getElementById('manualArticle').value.trim();
+            const count   = parseInt(document.getElementById('manualCount').value) || 0;
+
+            if (!client || !article || count <= 0) {
+                toast('error', 'Datos incompletos', 'Ingresa cliente, artículo y cantidad mayor a 0.');
+                return;
+            }
+
+            const payload = {
+                timestamp: getTimestamp(),
+                items: {
+                    [client]: {
+                        [article]: { count, epcs: [], declared_count: count }
+                    }
+                }
+            };
+
+            const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual' };
+
+            try {
+                const res = await fetch(`/api/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (res.ok) {
+                    toast('success', labels[type], `${count} ${article}(s) registrados para ${client}.`);
+                    document.getElementById('manualCount').value = '1';
+                } else {
+                    const msg = await res.text().catch(() => 'Error desconocido');
+                    toast('error', 'Error al registrar', msg);
+                }
+            } catch (err) {
+                console.error(err);
+                toast('error', 'Error de conexión', 'No se pudo contactar al servidor.');
+            }
+        }
+
+        document.getElementById('btnManualRec').addEventListener('click', () => submitManual('recoleccion'));
+        document.getElementById('btnManualEnt').addEventListener('click', () => submitManual('entrega'));
 
         // ─────────────────────────────────────────────────────────────
         //  Initial render

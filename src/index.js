@@ -385,12 +385,12 @@ webApp.post('/api/recoleccion', async (req, res) => {
             const things_in = {};   // articles → count
 
             for (const [article, data] of Object.entries(articles)) {
-                const { count, epcs } = data;
+                const { count, epcs = [], declared_count } = data;
                 totalProcessed += epcs.length;
 
-                console.log(`  ${count} ${article}`);
-                things_in[article] = count;
-                console.log(`  Procesando ${epcs.length} EPCs...`);
+                // Use declared_count if operator overrode the scanned count
+                things_in[article] = declared_count !== undefined ? declared_count : count;
+                console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
@@ -398,14 +398,13 @@ webApp.post('/api/recoleccion', async (req, res) => {
 
                     const updatedTag = await Tags.findOneAndUpdate(
                         { scanId: trimmedEpc },
-                        { $set: { last_seen: new Date() } },
-                        { $set: { status: "Recoleccion" } },
+                        { $set: { last_seen: new Date(), status: "Recoleccion" } },
                         { new: true, upsert: false }
                     );
 
                     if (updatedTag) {
                         totalUpdated++;
-                        console.log(`    ✓ EPC ${trimmedEpc} actualizado → wash_count: ${updatedTag.wash_count}`);
+                        console.log(`    ✓ EPC ${trimmedEpc} actualizado`);
                     } else {
                         console.log(`    ⚠ EPC ${trimmedEpc} no encontrado`);
                     }
@@ -418,8 +417,7 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 client: client,
                 date: new Date(),
                 EPCs: EPCList,
-                // Puedes agregar más campos útiles aquí si los necesitas
-                // ej: createdBy, location, notes, ...
+                manual: EPCList.length === 0,
             };
 
             recoleccion_final = newRecoleccion
@@ -517,12 +515,12 @@ webApp.post('/api/entrega', async (req, res) => {
             const things_in = {};   // artículo → cantidad
 
             for (const [article, data] of Object.entries(articles)) {
-                const { count, epcs } = data;
+                const { count, epcs = [], declared_count } = data;
                 totalProcessed += epcs.length;
 
-                console.log(`  ${count} ${article}`);
-                things_in[article] = count;
-                console.log(`  Procesando ${epcs.length} EPCs...`);
+                // Use declared_count if operator overrode the scanned count
+                things_in[article] = declared_count !== undefined ? declared_count : count;
+                console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
@@ -532,9 +530,7 @@ webApp.post('/api/entrega', async (req, res) => {
                         { scanId: trimmedEpc },
                         {
                             $inc: { wash_count: 1 },
-                            $set: { last_seen: new Date() },
-                            $set: { status: "Entregado" }
-
+                            $set: { last_seen: new Date(), status: "Entregado" },
                         },
                         { new: true, upsert: false }
                     );
@@ -554,8 +550,7 @@ webApp.post('/api/entrega', async (req, res) => {
                 client: client,
                 date: new Date(),
                 EPCs: EPCList,
-                // Opcional: puedes agregar más campos útiles
-                // ej: entregadoPor, ubicacion, notas, numeroGuia, ...
+                manual: EPCList.length === 0,
             };
             entrega_final = newEntrega
             const insertResult = await Entrega.insertOne(newEntrega);
