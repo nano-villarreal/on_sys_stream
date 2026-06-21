@@ -349,6 +349,27 @@
         }
         .summary-client-label:first-of-type { margin-top: 0; }
 
+        .client-group { margin-bottom: 6px; transition: opacity 0.2s; }
+        .client-group + .client-group { margin-top: 12px; }
+        .client-group.deselected { opacity: 0.35; }
+        .client-group.deselected .cnt-btn,
+        .client-group.deselected .cnt-input { pointer-events: none; }
+
+        .client-check-label {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; margin-bottom: 6px; user-select: none;
+        }
+
+        .client-checkbox {
+            width: 15px; height: 15px; accent-color: var(--green);
+            cursor: pointer; flex-shrink: 0;
+        }
+
+        .client-name {
+            font-size: 10px; font-weight: 700;
+            color: var(--text-2); text-transform: uppercase; letter-spacing: 0.8px;
+        }
+
         .summary-row {
             display: flex; align-items: center; gap: 10px;
             padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -871,7 +892,8 @@
         let currentEPCs    = [];   // validated unique EPCs from textarea
         let currentResults = [];   // last lookup response from /api/lookup
         let isReprocesado  = false;
-        let countOverrides = {};   // "client::article" → declared count
+        let countOverrides  = {};   // "client::article" → declared count
+        let selectedClients = new Set(); // clients currently checked for operations
 
         // ─────────────────────────────────────────────────────────────
         //  Constants
@@ -1031,6 +1053,7 @@
             const payload = { timestamp: getTimestamp(), items: {} };
             results.forEach((r, i) => {
                 if (!r.found || !r.client || !r.article) return;
+                if (!selectedClients.has(r.client)) return; // skip deselected clients
                 const epc = epcs[i];
                 if (!epc) return;
                 if (!payload.items[r.client]) payload.items[r.client] = {};
@@ -1042,14 +1065,14 @@
             // Apply count overrides: EPCs stay as scanned, declared count may differ
             for (const [key, declared] of Object.entries(countOverrides)) {
                 const [client, article] = key.split('::');
-                if (payload.items[client]?.[article]) {
+                if (selectedClients.has(client) && payload.items[client]?.[article]) {
                     payload.items[client][article].declared_count = declared;
                 }
             }
             return { payload, hasItems: Object.keys(payload.items).length > 0 };
         }
 
-        /** Renders interactive summary HTML with per-article count controls */
+        /** Renders interactive summary HTML with per-client checkboxes and per-article count controls */
         function renderSummary(results) {
             const groups  = {};
             const missing = [];
@@ -1063,21 +1086,37 @@
                 }
             });
 
-            if (!Object.keys(groups).length && !missing.length) {
-                return missing.length
-                    ? `<span class="loading">${getTimestamp()} — ${missing.length} EPC(s) leídos, ninguno registrado.</span>`
-                    : '<span class="loading">No hay EPCs válidos (24 caracteres hexadecimales)…</span>';
+            const clientNames = Object.keys(groups);
+
+            if (!clientNames.length && !missing.length) {
+                return '<span class="loading">No hay EPCs válidos (24 caracteres hexadecimales)…</span>';
             }
 
+            // All clients start selected
+            selectedClients = new Set(clientNames);
+
             const ts = getTimestamp();
+            const multiClient = clientNames.length > 1;
             let html = `<div class="summary-ts">${ts}${isReprocesado ? ' · Reprocesado' : ''}</div>`;
 
             for (const [client, articles] of Object.entries(groups)) {
-                html += `<div class="summary-client-label">${client}</div>`;
+                html += `<div class="client-group" data-client="${client}">`;
+
+                // Client header — always show label; show checkbox only if multiple clients
+                if (multiClient) {
+                    html += `
+                        <label class="client-check-label">
+                            <input type="checkbox" class="client-checkbox" data-client="${client}" checked>
+                            <span class="client-name">${client}</span>
+                        </label>`;
+                } else {
+                    html += `<div class="summary-client-label">${client}</div>`;
+                }
+
                 for (const [article, scanned] of Object.entries(articles)) {
                     const key = `${client}::${article}`;
                     const declared = countOverrides[key] ?? scanned;
-                    const isOver = declared !== scanned;
+                    const isOver   = declared !== scanned;
                     html += `
                         <div class="summary-row">
                             <span class="summary-article-name">${article}</span>
@@ -1093,6 +1132,8 @@
                             </span>
                         </div>`;
                 }
+
+                html += `</div>`; // .client-group
             }
 
             if (missing.length) {
@@ -1119,7 +1160,8 @@
             const text       = el.textarea.value;
             const validEPCs  = extractValidEPCs(text);
             currentEPCs      = validEPCs;
-            countOverrides   = {};  // reset overrides when EPC list changes
+            countOverrides   = {};        // reset overrides when EPC list changes
+            selectedClients  = new Set(); // reset selection when EPC list changes
 
             // Show valid count pill + ignored warning
             const rawLines = text.split(/[\r\n]+/).filter(Boolean).length;
@@ -1172,6 +1214,22 @@
         });
 
         el.summary.addEventListener('change', e => {
+            // Client checkbox toggle
+            const chk = e.target.closest('.client-checkbox');
+            if (chk) {
+                const client = chk.dataset.client;
+                const group  = el.summary.querySelector(`.client-group[data-client="${client}"]`);
+                if (chk.checked) {
+                    selectedClients.add(client);
+                    if (group) group.classList.remove('deselected');
+                } else {
+                    selectedClients.delete(client);
+                    if (group) group.classList.add('deselected');
+                }
+                return;
+            }
+
+            // Count override input
             const input = e.target.closest('.cnt-input');
             if (!input) return;
             const key    = input.dataset.key;
