@@ -401,6 +401,7 @@ webApp.post('/api/recoleccion', async (req, res) => {
                         console.log(`    ⚠ EPC ${trimmedEpc} no encontrado`);
                     }
                 }
+
             }
 
             // 1. Guardar la recolección y obtener su _id
@@ -534,6 +535,7 @@ webApp.post('/api/entrega', async (req, res) => {
                         console.log(`    ⚠ EPC ${trimmedEpc} no encontrado`);
                     }
                 }
+
             }
 
             // 1. Guardar la entrega y obtener su _id
