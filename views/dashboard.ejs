@@ -460,10 +460,8 @@
             <% } %>
 
             <%
-            // Show recent entregas card for manual-only clients (no RFID tags but have delivery records)
-            const _hasNoTags = !articleAverages || articleAverages.length === 0;
             const _hasEntregas = typeof recentEntregas !== 'undefined' && recentEntregas && recentEntregas.length > 0;
-            if (_hasNoTags && _hasEntregas) {
+            if (_hasEntregas) {
             %>
             <div class="card" style="animation: fadeUp 0.4s 0.13s ease both; margin-top: 14px; border-color: rgba(62,207,142,0.2);">
                 <div class="card-header">
