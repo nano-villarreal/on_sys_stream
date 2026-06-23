@@ -7,20 +7,27 @@
 require('dotenv').config();
 const { MongoClient, ObjectId } = require('mongodb');
 
-const MONGO_URI = process.env.MONGO_LINK;
-const DB_NAME   = 'on';
+const MONGO_URI   = process.env.MONGO_LINK;
+const DB_NAME     = 'on';
 const CLIENT_NAME = 'demo';
 
-// Article types and their realistic pool sizes
+// ── Article catalog ─────────────────────────────────────────────────────────
+//   highWash: true → skew wash counts toward threshold (triggers lifecycle alerts)
 const ARTICLES = [
-    { name: 'toalla',      count: 60, threshold: 80  },
-    { name: 'mantel',      count: 40, threshold: 100 },
-    { name: 'servilleta',  count: 50, threshold: 90  },
-    { name: 'bata',        count: 20, threshold: 60  },
-    { name: 'sabana',      count: 30, threshold: 70  },
+    { name: 'Toalla de Baño',    count: 120, threshold: 80,  highWash: true  },
+    { name: 'Toalla de Mano',    count: 85,  threshold: 100, highWash: false },
+    { name: 'Sabana Queen',      count: 90,  threshold: 70,  highWash: true  },
+    { name: 'Sabana King',       count: 60,  threshold: 70,  highWash: false },
+    { name: 'Funda Almohada',    count: 95,  threshold: 60,  highWash: false },
+    { name: 'Cobertor',          count: 40,  threshold: 50,  highWash: true  },
+    { name: 'Bata',              count: 30,  threshold: 80,  highWash: false },
+    { name: 'Pie de Cama',       count: 45,  threshold: 90,  highWash: false },
+    { name: 'Mantel',            count: 55,  threshold: 100, highWash: false },
+    { name: 'Servilleta',        count: 75,  threshold: 120, highWash: false },
 ];
+// Total: 695 tags
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function randomHex(len) {
     let s = '';
@@ -39,46 +46,61 @@ function daysAgo(n) {
     return d;
 }
 
-// ── build tags ────────────────────────────────────────────────────────────────
+function sample(arr, n) {
+    const copy = [...arr].sort(() => 0.5 - Math.random());
+    return copy.slice(0, Math.min(n, copy.length));
+}
+
+// ── Tag generation ───────────────────────────────────────────────────────────
 
 function buildTags() {
     const tags = [];
+
     for (const art of ARTICLES) {
         for (let i = 0; i < art.count; i++) {
-            // Spread wash counts: ~20% near/over threshold, rest varied
+            // Wash count distribution: highWash articles skew high to trigger alerts
             let wash_count;
             const roll = Math.random();
-            if (roll < 0.10)      wash_count = randomInt(art.threshold, art.threshold + 20); // over threshold
-            else if (roll < 0.25) wash_count = randomInt(Math.floor(art.threshold * 0.8), art.threshold - 1); // warning zone
-            else                  wash_count = randomInt(5, Math.floor(art.threshold * 0.75));
+            if (art.highWash) {
+                if (roll < 0.30)      wash_count = randomInt(art.threshold, art.threshold + 30);
+                else if (roll < 0.55) wash_count = randomInt(Math.floor(art.threshold * 0.78), art.threshold - 1);
+                else                  wash_count = randomInt(8, Math.floor(art.threshold * 0.70));
+            } else {
+                if (roll < 0.08)      wash_count = randomInt(art.threshold, art.threshold + 20);
+                else if (roll < 0.22) wash_count = randomInt(Math.floor(art.threshold * 0.70), art.threshold - 1);
+                else                  wash_count = randomInt(2, Math.floor(art.threshold * 0.65));
+            }
 
-            // Status distribution: ~40% Entregado, ~35% Recoleccion (out), ~25% Sin actualizacion
+            // Status distribution: varied and realistic
             let status;
             const s = Math.random();
-            if (s < 0.40)      status = 'Entregado';
-            else if (s < 0.75) status = 'Recoleccion';
-            else               status = 'Sin actualizacion';
+            if (s < 0.32)       status = 'Entregado';
+            else if (s < 0.62)  status = 'Recoleccion';
+            else if (s < 0.80)  status = 'Conteo de Bodega';
+            else if (s < 0.92)  status = 'Reprocesado';
+            else                status = 'Sin actualizacion';
 
             tags.push({
-                scanId:     randomHex(24),
-                article:    art.name,
-                client:     CLIENT_NAME,
+                scanId:    randomHex(24),
+                article:   art.name,
+                client:    CLIENT_NAME,
                 status,
                 wash_count,
-                damaged:    Math.random() < 0.05,   // 5% damaged
-                damage:     false,
-                last_seen:  daysAgo(randomInt(0, 60)),
-                createdAt:  daysAgo(randomInt(90, 365)),
+                damaged:   Math.random() < 0.04,
+                damage:    false,
+                last_seen: daysAgo(randomInt(0, 45)),
+                createdAt: daysAgo(randomInt(180, 730)),
             });
         }
     }
     return tags;
 }
 
-// ── build transactions ────────────────────────────────────────────────────────
+// ── Transaction generation ────────────────────────────────────────────────────
+// 80 recolecciones + 75 entregas spread over 365 days (≈ 6–7 per month each)
+// Realistic batches: pick 4–7 article types, 15–80 units each
 
 function buildTransactions(tagDocs) {
-    // Group tags by article for EPC pools
     const pools = {};
     for (const t of tagDocs) {
         if (!pools[t.article]) pools[t.article] = [];
@@ -88,20 +110,26 @@ function buildTransactions(tagDocs) {
     const recolecciones = [];
     const entregas      = [];
 
-    // Create ~28 recoleccion + ~26 entrega transactions spread over 180 days
-    const txDates = [];
-    for (let i = 0; i < 28; i++) txDates.push(randomInt(1, 180));
-    txDates.sort((a, b) => b - a); // oldest first
+    // Spread 80 recolecciones fairly evenly over 365 days with some clustering
+    const recDates = [];
+    for (let i = 0; i < 80; i++) {
+        // Bias toward more recent (last 90 days get ~40% of transactions)
+        const daysBack = Math.random() < 0.40
+            ? randomInt(1, 90)
+            : randomInt(91, 365);
+        recDates.push(daysBack);
+    }
+    recDates.sort((a, b) => b - a);
 
-    for (const daysBack of txDates) {
+    for (const daysBack of recDates) {
+        const pickedArts = sample(ARTICLES, randomInt(4, 7));
         const articles = {};
-        const EPCs     = [];
+        const EPCs = [];
 
-        for (const art of ARTICLES) {
-            const qty = randomInt(3, Math.min(15, pools[art.name].length));
+        for (const art of pickedArts) {
+            const qty = randomInt(10, Math.min(60, Math.floor(pools[art.name].length * 0.6)));
             articles[art.name] = qty;
-            const sample = [...pools[art.name]].sort(() => 0.5 - Math.random()).slice(0, qty);
-            EPCs.push(...sample);
+            EPCs.push(...sample(pools[art.name], qty));
         }
 
         recolecciones.push({
@@ -112,20 +140,25 @@ function buildTransactions(tagDocs) {
         });
     }
 
-    // Entregas: slightly fewer, slightly more recent
+    // 75 entregas, same spread pattern
     const entDates = [];
-    for (let i = 0; i < 26; i++) entDates.push(randomInt(1, 170));
+    for (let i = 0; i < 75; i++) {
+        const daysBack = Math.random() < 0.40
+            ? randomInt(1, 85)
+            : randomInt(86, 355);
+        entDates.push(daysBack);
+    }
     entDates.sort((a, b) => b - a);
 
     for (const daysBack of entDates) {
+        const pickedArts = sample(ARTICLES, randomInt(4, 7));
         const articles = {};
-        const EPCs     = [];
+        const EPCs = [];
 
-        for (const art of ARTICLES) {
-            const qty = randomInt(3, Math.min(14, pools[art.name].length));
+        for (const art of pickedArts) {
+            const qty = randomInt(8, Math.min(55, Math.floor(pools[art.name].length * 0.55)));
             articles[art.name] = qty;
-            const sample = [...pools[art.name]].sort(() => 0.5 - Math.random()).slice(0, qty);
-            EPCs.push(...sample);
+            EPCs.push(...sample(pools[art.name], qty));
         }
 
         entregas.push({
@@ -139,21 +172,80 @@ function buildTransactions(tagDocs) {
     return { recolecciones, entregas };
 }
 
-// ── build damage reports ──────────────────────────────────────────────────────
+// ── Damage reports ────────────────────────────────────────────────────────────
+
+const DAMAGE_DESCRIPTIONS = [
+    'Desgarre en borde',
+    'Mancha permanente de tinta',
+    'Costura deshilachada',
+    'Decoloración por exceso de cloro',
+    'Rotura en tela',
+    'Quemadura de plancha',
+    'Desgaste extremo por uso',
+    'Agujero central',
+    'Pérdida de color (desteñido)',
+    'Rasgado en esquina',
+    'Bordado dañado',
+    'Fieltro pelado en superficie',
+];
 
 function buildDamageReports(tagDocs) {
-    const damaged = tagDocs.filter(t => t.damaged).slice(0, 8);
+    const damaged = tagDocs.filter(t => t.damaged);
     return damaged.map((t, i) => ({
-        epc:          t.scanId,
-        description:  ['Desgarre en borde', 'Mancha permanente', 'Costura deshilachada', 'Decoloración por cloro', 'Rotura en tela'][i % 5],
-        client:       CLIENT_NAME,
-        date:         daysAgo(randomInt(5, 60)),
-        imageUrl:     'https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/nature-mountains.jpg',
+        epc:           t.scanId,
+        description:   DAMAGE_DESCRIPTIONS[i % DAMAGE_DESCRIPTIONS.length],
+        client:        CLIENT_NAME,
+        date:          daysAgo(randomInt(2, 120)),
+        imageUrl:      'https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/nature-mountains.jpg',
         imagePublicId: `demo_damage_${i}`,
     }));
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// ── Inventory snapshots (90 days) ─────────────────────────────────────────────
+
+function buildSnapshots(tagDocs) {
+    const todaySnap = {};
+    for (const art of ARTICLES) todaySnap[art.name] = {};
+    for (const tag of tagDocs) {
+        const art = tag.article;
+        if (!todaySnap[art]) todaySnap[art] = {};
+        todaySnap[art][tag.status] = (todaySnap[art][tag.status] || 0) + 1;
+    }
+
+    const snapDocs = [];
+
+    for (let d = 90; d >= 0; d--) {
+        const date = new Date();
+        date.setDate(date.getDate() - d);
+        const dateStr = date.toISOString().slice(0, 10);
+
+        const snapshot = {};
+        for (const art of ARTICLES) {
+            const today = todaySnap[art.name] || {};
+            const total = art.count;
+            const jitter = (base, factor) => Math.max(0, base + Math.round((Math.random() - 0.5) * factor * Math.sqrt(d) / 5));
+
+            const entregado = jitter(today['Entregado'] || 0, 12);
+            const recol     = jitter(today['Recoleccion'] || 0, 10);
+            const bodega    = jitter(today['Conteo de Bodega'] || 0, 6);
+            const repro     = jitter(today['Reprocesado'] || 0, 3);
+            const sinAct    = Math.max(0, total - entregado - recol - bodega - repro);
+
+            snapshot[art.name] = {};
+            if (entregado > 0) snapshot[art.name]['Entregado']        = entregado;
+            if (recol > 0)     snapshot[art.name]['Recoleccion']      = recol;
+            if (bodega > 0)    snapshot[art.name]['Conteo de Bodega'] = bodega;
+            if (repro > 0)     snapshot[art.name]['Reprocesado']      = repro;
+            if (sinAct > 0)    snapshot[art.name]['Sin actualizacion']= sinAct;
+        }
+
+        snapDocs.push({ client: CLIENT_NAME, date: dateStr, snapshot, updatedAt: date });
+    }
+
+    return snapDocs;
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
     const force = process.argv.includes('--force');
@@ -180,32 +272,36 @@ async function main() {
         console.log('  ✓ Existing demo data wiped');
     }
 
-    console.log('Inserting tags…');
+    console.log('Building tags…');
     const tagDocs = buildTags();
     const tagResult = await db.collection('tags').insertMany(tagDocs);
-    const insertedTagIds = Object.values(tagResult.insertedIds);
-    console.log(`  ✓ ${insertedTagIds.length} tags`);
+    const tagIds = Object.values(tagResult.insertedIds);
+    const tagDocsWithIds = tagDocs.map((t, i) => ({ ...t, _id: tagIds[i] }));
+    console.log(`  ✓ ${tagIds.length} tags`);
 
-    const { recolecciones, entregas } = buildTransactions(
-        tagDocs.map((t, i) => ({ ...t, _id: tagResult.insertedIds[i] }))
-    );
+    const { recolecciones, entregas } = buildTransactions(tagDocsWithIds);
 
-    console.log('Inserting recolecciones…');
+    console.log('Building recolecciones…');
     const recResult = await db.collection('recoleccion').insertMany(recolecciones);
-    const insertedRecIds = Object.values(recResult.insertedIds);
-    console.log(`  ✓ ${insertedRecIds.length} recolecciones`);
+    const recIds = Object.values(recResult.insertedIds);
+    console.log(`  ✓ ${recIds.length} recolecciones`);
 
-    console.log('Inserting entregas…');
+    console.log('Building entregas…');
     const entResult = await db.collection('entrega').insertMany(entregas);
-    const insertedEntIds = Object.values(entResult.insertedIds);
-    console.log(`  ✓ ${insertedEntIds.length} entregas`);
+    const entIds = Object.values(entResult.insertedIds);
+    console.log(`  ✓ ${entIds.length} entregas`);
 
-    const damageDocs = buildDamageReports(tagDocs);
+    const damageDocs = buildDamageReports(tagDocsWithIds);
     if (damageDocs.length) {
-        console.log('Inserting damage reports…');
+        console.log('Building damage reports…');
         await db.collection('damage').insertMany(damageDocs);
         console.log(`  ✓ ${damageDocs.length} damage reports`);
     }
+
+    console.log('Building 90-day inventory snapshots…');
+    const snapDocs = buildSnapshots(tagDocsWithIds);
+    await db.collection('inventory_snapshots').insertMany(snapDocs);
+    console.log(`  ✓ ${snapDocs.length} daily snapshots`);
 
     console.log('Creating client document…');
     const thresholds = {};
@@ -215,70 +311,19 @@ async function main() {
     const sortedEnt = [...entregas].sort((a, b) => b.date - a.date);
 
     await db.collection('clientes').insertOne({
-        name:              CLIENT_NAME,
-        numero:            '+15129654086',
-        recolecciones:     insertedRecIds,
-        entregas:          insertedEntIds,
-        tags:              insertedTagIds,
+        name:             CLIENT_NAME,
+        numero:           '+15129654086',
+        recolecciones:    recIds,
+        entregas:         entIds,
+        tags:             tagIds,
         thresholds,
-        last_recoleccion:  sortedRec[0]?.date || new Date(),
-        last_entrega:      sortedEnt[0]?.date || new Date(),
+        last_recoleccion: sortedRec[0]?.date || new Date(),
+        last_entrega:     sortedEnt[0]?.date || new Date(),
     });
 
-    // ── Backfill 30 days of inventory snapshots ──────────────────────────────
-    // Simulate a realistic random walk so the trend chart has data from day 1.
-    console.log('Seeding 30 days of inventory snapshots…');
-
-    const STATUSES = ['Entregado', 'Recoleccion', 'Conteo de Bodega', 'Reprocesado', 'Sin actualizacion'];
-
-    // Build today's real breakdown from the inserted tags
-    const todaySnap = {};
-    for (const art of ARTICLES) todaySnap[art.name] = {};
-    for (const tag of tagDocs) {
-        if (!todaySnap[tag.article]) todaySnap[tag.article] = {};
-        todaySnap[tag.article][tag.status] = (todaySnap[tag.article][tag.status] || 0) + 1;
-    }
-
-    const snapDocs = [];
-    for (let d = 30; d >= 0; d--) {
-        const date = new Date();
-        date.setDate(date.getDate() - d);
-        const dateStr = date.toISOString().slice(0, 10);
-
-        // For past days: apply a small random walk backwards from today's state
-        const snapshot = {};
-        for (const art of ARTICLES) {
-            const total = art.count;
-            const today = todaySnap[art.name] || {};
-            snapshot[art.name] = {};
-            let remaining = total;
-            const jitter = (base, factor) => Math.max(0, base + Math.round((Math.random() - 0.5) * factor * d / 10));
-
-            const entregado = jitter(today['Entregado'] || 0, 8);
-            const recol     = jitter(today['Recoleccion'] || 0, 6);
-            const bodega    = jitter(today['Conteo de Bodega'] || 0, 4);
-            const repro     = jitter(today['Reprocesado'] || 0, 2);
-            const sinAct    = Math.max(0, total - entregado - recol - bodega - repro);
-
-            if (entregado > 0) snapshot[art.name]['Entregado'] = entregado;
-            if (recol > 0)     snapshot[art.name]['Recoleccion'] = recol;
-            if (bodega > 0)    snapshot[art.name]['Conteo de Bodega'] = bodega;
-            if (repro > 0)     snapshot[art.name]['Reprocesado'] = repro;
-            if (sinAct > 0)    snapshot[art.name]['Sin actualizacion'] = sinAct;
-        }
-
-        snapDocs.push({
-            client: CLIENT_NAME,
-            date: dateStr,
-            snapshot,
-            updatedAt: date,
-        });
-    }
-
-    await db.collection('inventory_snapshots').insertMany(snapDocs);
-    console.log(`  ✓ ${snapDocs.length} daily snapshots`);
-
-    console.log(`\nDone! Open the dashboard and search for: "${CLIENT_NAME}"`);
+    const total = ARTICLES.reduce((s, a) => s + a.count, 0);
+    console.log(`\n✓ Done!  ${total} tags · ${recIds.length} recolecciones · ${entIds.length} entregas · ${damageDocs.length} daños · ${snapDocs.length} snapshots`);
+    console.log(`  Open the dashboard and search for: "${CLIENT_NAME}"`);
     await client.close();
 }
 
