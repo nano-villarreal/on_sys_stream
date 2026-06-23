@@ -459,6 +459,44 @@
                 </div>
             <% } %>
 
+            <%
+            // Show recent entregas card for manual-only clients (no RFID tags but have delivery records)
+            const _hasNoTags = !articleAverages || articleAverages.length === 0;
+            const _hasEntregas = typeof recentEntregas !== 'undefined' && recentEntregas && recentEntregas.length > 0;
+            if (_hasNoTags && _hasEntregas) {
+            %>
+            <div class="card" style="animation: fadeUp 0.4s 0.13s ease both; margin-top: 14px; border-color: rgba(62,207,142,0.2);">
+                <div class="card-header">
+                    <span class="card-title">Últimas entregas</span>
+                    <a href="/log?client=<%= encodeURIComponent(client) %>" class="btn-action" style="font-size:12px;">Ver todas →</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Artículos</th>
+                                <th style="text-align:right">Prendas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <% recentEntregas.forEach(e => {
+                            const _total = Object.values(e.articles || {}).reduce((s, v) => s + Number(v), 0);
+                            const _arts  = Object.entries(e.articles || {}).map(([a, c]) => `${c} ${a}`).join(', ');
+                            const _date  = new Date(e.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Monterrey' });
+                        %>
+                            <tr>
+                                <td style="white-space:nowrap;color:var(--text-2);font-size:12px"><%= _date %></td>
+                                <td style="color:var(--text-2);font-size:12px;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= _arts %></td>
+                                <td style="text-align:right;font-weight:700;color:var(--green)"><%= _total %></td>
+                            </tr>
+                        <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <% } %>
+
             <!-- ── Per-article status breakdown ─────────────────────────────────── -->
             <div class="card" id="articleStatusCard" style="animation: fadeUp 0.4s 0.17s ease both; margin-top: 14px; display:none;">
                 <div class="card-header">

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Semanal · Cenacolo · Jun 14, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+:root{--accent:#a78bfa;--accent-bg:#2a1f44;--accent-border:#4a3a7a}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#a78bfa 0%,#7c3aed 60%,#4c1d95 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot .brand{color:var(--accent);font-weight:600}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:20pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;line-height:1.1}
+.slide-head{margin-bottom:5mm}
+.card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:4mm 5mm}
+
+.cmp{width:100%;border-collapse:collapse;font-size:7.5pt}
+.cmp th{font-size:6pt;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#4b5563;padding:2mm 2.5mm;border-bottom:1px solid #1e2431;background:#0f141a;white-space:nowrap}
+.cmp th:not(:first-child){text-align:right}
+.cmp td{padding:1.6mm 2.5mm;border-bottom:1px solid #0a0e14;vertical-align:middle}
+.cmp td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.cmp .art{color:#cbd5e1;font-size:7pt}
+.cmp .prev{color:#6b7280;font-weight:500}
+.cmp .curr{color:#f1f5f9;font-weight:700}
+.cmp .up{color:#3ecf8e;font-weight:700}
+.cmp .dn{color:#ef4444;font-weight:700}
+.cmp .flat{color:#6b7280;font-weight:500}
+.cmp tr.total td{background:#2a1f44;color:#a78bfa;font-weight:700;border-top:1px solid #4a3a7a}
+.cmp tr:nth-child(even) td{background:#080b0f}
+.cmp .stable-row td{opacity:0.65}
+
+.insight{background:#0f141a;border-left:3px solid var(--accent);border-radius:0 2mm 2mm 0;padding:3mm 4mm;margin-bottom:3mm}
+.insight-title{font-size:7.5pt;font-weight:700;color:var(--accent);margin-bottom:1mm}
+.insight-body{font-size:7pt;color:#9ca3af;line-height:1.5}
+.warn{border-left-color:#f59e0b}
+.warn .insight-title{color:#f59e0b}
+</style>
+</head>
+<body>
+
+<!-- ══ SLIDE 1 — PORTADA ══════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#1e1433 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:12mm;height:12mm;background:#a78bfa;border-radius:2.5mm;display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:900;color:#1a0f2e">ON</div>
+    <div>
+      <div style="font-size:13pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+      <div style="font-size:7.5pt;color:#6b7280;margin-top:0.5mm">Reporte semanal de entregas</div>
+    </div>
+  </div>
+
+  <div style="font-size:32pt;font-weight:900;color:#f1f5f9;letter-spacing:-1px;margin-bottom:3mm">Cenacolo</div>
+  <div style="font-size:10pt;font-weight:600;color:#a78bfa;letter-spacing:1px;margin-bottom:8mm">SEMANA 8 – 14 DE JUNIO, 2026</div>
+
+  <div style="display:flex;align-items:center;gap:12mm;margin-bottom:8mm">
+    <div style="text-align:center">
+      <div style="font-size:44pt;font-weight:900;letter-spacing:-2px;color:#f1f5f9;line-height:1">967</div>
+      <div style="font-size:8.5pt;color:#9ca3af">prendas entregadas</div>
+    </div>
+    <div style="width:1px;height:20mm;background:#1e2431"></div>
+    <div style="display:flex;flex-direction:column;gap:3mm">
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">vs semana anterior</div>
+        <div style="font-size:18pt;font-weight:800;color:#ef4444">↓ −150 · −13.4%</div>
+      </div>
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Semana anterior</div>
+        <div style="font-size:14pt;font-weight:700;color:#6b7280">1,117</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category pills -->
+  <div style="display:flex;gap:4mm">
+    <div style="background:#2a1f44;border:1px solid #4a3a7a;border-radius:99px;padding:3px 12px;font-size:8pt;color:#a78bfa;font-weight:600">Servilletas: 740 (76.5%)</div>
+    <div style="background:#1a2027;border:1px solid #2d3740;border-radius:99px;padding:3px 12px;font-size:8pt;color:#9ca3af;font-weight:600">Manteles: 196 (20.3%)</div>
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:99px;padding:3px 12px;font-size:8pt;color:#6b7280;font-weight:600">Otros: 31 (3.2%)</div>
+  </div>
+
+  <div style="font-size:7pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Generado el 22 Jun 2026</div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>1 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 2 — DETALLE SEMANAL ═════════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Cenacolo · Jun 8–14, 2026</div>
+    <div class="slide-title">Detalle semanal <span style="color:#a78bfa;font-size:16pt">vs semana anterior</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:6mm;flex:1;min-height:0">
+
+    <!-- Left: table -->
+    <div style="display:flex;flex-direction:column;gap:3mm">
+      <table class="cmp">
+        <thead>
+          <tr><th style="text-align:left">Artículo</th><th>Jun 7</th><th>Jun 14</th><th>Δ</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="art" style="font-weight:600;color:#a78bfa">Servilletas</td><td class="prev">823</td><td class="curr">740</td><td class="dn">−83</td></tr>
+          <tr><td class="art">Mantel cuadrado gde</td><td class="prev">219</td><td class="curr">162</td><td class="dn">−57</td></tr>
+          <tr><td class="art">Mantel cuadrado med</td><td class="prev">6</td><td class="curr" style="color:#4b5563">—</td><td class="dn">−6</td></tr>
+          <tr class="stable-row"><td class="art">Mantel ovalado med</td><td class="prev">25</td><td class="curr">25</td><td class="flat">=</td></tr>
+          <tr class="stable-row"><td class="art">Mantel ovalado gde</td><td class="prev">9</td><td class="curr">9</td><td class="flat">=</td></tr>
+          <tr class="stable-row"><td class="art">Molleton med</td><td class="prev">8</td><td class="curr">8</td><td class="flat">=</td></tr>
+          <tr class="stable-row"><td class="art">Tortillera</td><td class="prev">14</td><td class="curr">14</td><td class="flat">=</td></tr>
+          <tr class="stable-row"><td class="art">Cubrebandejas</td><td class="prev">6</td><td class="curr">6</td><td class="flat">=</td></tr>
+          <tr class="stable-row"><td class="art">Delantal</td><td class="prev">3</td><td class="curr">3</td><td class="flat">=</td></tr>
+          <tr><td class="art">Molleton ch</td><td class="prev">4</td><td class="curr" style="color:#4b5563">—</td><td class="dn">−4</td></tr>
+          <tr class="total"><td>Total</td><td>1,117</td><td>967</td><td style="color:#ef4444">−150</td></tr>
+        </tbody>
+      </table>
+
+      <div style="background:#0f141a;border:1px solid #1e2431;border-radius:2mm;padding:2.5mm 4mm;font-size:6.5pt;color:#6b7280">
+        <span style="color:#a78bfa;font-weight:600">Filas atenuadas (=)</span> — 6 artículos sin variación respecto a la semana anterior. Posible stock fijo por operación.
+      </div>
+    </div>
+
+    <!-- Right: horizontal bar chart -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#a78bfa44;border-radius:1px"></div><span style="font-size:6.5pt;color:#6b7280">Jun 7</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#a78bfa;border-radius:1px"></div><span style="font-size:6.5pt;color:#9ca3af">Jun 14</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">prendas por artículo</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartCompare"></canvas></div>
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>2 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 3 — TENDENCIA 6 SEMANAS ════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Cenacolo · Tendencia 10 May – 14 Jun</div>
+    <div class="slide-title">Volumen semanal <span style="color:#a78bfa">por categoría</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 68mm;gap:7mm;flex:1;min-height:0">
+
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#a78bfa;border-radius:2px"></div><span style="font-size:6.5pt;color:#9ca3af">Servilletas</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#f59e0b;border-radius:2px"></div><span style="font-size:6.5pt;color:#9ca3af">Manteles</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#374151;border-radius:2px"></div><span style="font-size:6.5pt;color:#9ca3af">Otros</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">10 May → 14 Jun 2026</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartTrend"></canvas></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0">
+
+      <div class="card" style="margin-bottom:4mm">
+        <div style="font-size:6pt;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Totales semanales</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 4mm;font-size:6.5pt">
+          <span style="color:#6b7280">10 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">348 ↓ menor</span>
+          <span style="color:#6b7280">17 May</span><span style="color:#f1f5f9;text-align:right;font-weight:600">1,291 ↑ pico</span>
+          <span style="color:#6b7280">24 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">863</span>
+          <span style="color:#6b7280">31 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">729</span>
+          <span style="color:#6b7280">7 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,117</span>
+          <span style="color:#a78bfa;font-weight:700">14 Jun ●</span><span style="color:#ef4444;text-align:right;font-weight:800">967 ↓</span>
+        </div>
+      </div>
+
+      <div class="insight" style="margin-bottom:3mm">
+        <div class="insight-title">Servilletas — indicador principal</div>
+        <div class="insight-body">Representan el 76.5% del volumen total. Su variación semanal es el mejor proxy para la actividad del restaurante. −83 servilletas esta semana = ~83 cubiertos menos.</div>
+      </div>
+
+      <div class="insight warn" style="margin-bottom:3mm">
+        <div class="insight-title">Alta volatilidad histórica ↕</div>
+        <div class="insight-body">Rango entre 348 (10 May) y 1,291 (17 May) — una variación de 3.7×. Los picos posiblemente coinciden con eventos privados o banquetes.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">6 artículos sin variación</div>
+        <div class="insight-body">Manteles ovalados, molleton, tortilleras, cubrebandejas y delantales son idénticos al 7 Jun. Sugieren un stock fijo independiente del evento.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>3 / 3 · Semana 8–14 Jun 2026</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+new Chart(document.getElementById('chartCompare'), {
+  type: 'bar',
+  data: {
+    labels: ['Servilletas', 'Mantel cuad gde', 'Mantel ov med', 'Tortillera', 'Mantel ov gde', 'Molleton med', 'Cubrebandejas', 'Delantal', 'Mantel cuad med', 'Molleton ch'],
+    datasets: [
+      { label: 'Jun 7',  data: [823, 219, 25, 14, 9, 8, 6, 3, 6, 4], backgroundColor: '#a78bfa33', borderColor: '#a78bfa55', borderWidth: 1, borderRadius: 2 },
+      { label: 'Jun 14', data: [740, 162, 25, 14, 9, 8, 6, 3, 0, 0], backgroundColor: '#a78bfa',   borderColor: '#a78bfa',   borderWidth: 1, borderRadius: 2 },
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7 }, color: '#6b7280', maxTicksLimit: 6 } },
+      y: { grid: { display: false }, ticks: { font: { size: 7 }, color: '#9ca3af' } },
+    }
+  }
+});
+
+new Chart(document.getElementById('chartTrend'), {
+  type: 'bar',
+  data: {
+    labels: ['10 May', '17 May', '24 May', '31 May', '7 Jun', '14 Jun'],
+    datasets: [
+      { label: 'Servilletas', data: [281, 1015, 640, 564, 823, 740], backgroundColor: '#a78bfa', borderRadius: 2 },
+      { label: 'Manteles',    data: [63,  259,  207, 134, 259, 196], backgroundColor: '#f59e0b', borderRadius: 2 },
+      { label: 'Otros',       data: [4,   17,   16,  31,  35,  31],  backgroundColor: '#374151', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280' } },
+      y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 5 }, suggestedMax: 1400 },
+    }
+  }
+});
+</script>
+</body>
+</html>

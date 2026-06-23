@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Semanal — 8–14 Jun 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3ecf8e 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot span{color:#3ecf8e;font-weight:600}
+.g{color:#3ecf8e}.dim{color:#6b7280}.up{color:#3ecf8e}.dn{color:#ef4444}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:22pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+.slide-head{margin-bottom:5mm}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2px 10px;font-size:7.5pt;font-weight:600}
+.chip-g{background:#0d2b1c;border:1px solid #1f5c38;color:#3ecf8e}
+.chip-b{background:#1a2744;border:1px solid #2d3f6e;color:#60a5fa}
+.chip-v{background:#2a1f44;border:1px solid #4a3a7a;color:#a78bfa}
+
+/* ── article bar inside client cards ── */
+.art-row{display:flex;align-items:center;gap:4mm;margin-bottom:1.5mm}
+.art-label{font-size:6.5pt;color:#9ca3af;width:52mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.art-bar-wrap{flex:1;height:5px;background:#1e2431;border-radius:2px}
+.art-bar{height:100%;border-radius:2px}
+.art-val{font-size:6.5pt;font-weight:700;color:#e2e8f0;width:22mm;text-align:right}
+
+/* ── detailed table ── */
+.dtable{width:100%;border-collapse:collapse;font-size:7pt}
+.dtable th{background:#131820;color:#4b5563;font-size:6pt;text-transform:uppercase;letter-spacing:0.5px;padding:2mm 2.5mm;text-align:left;border-bottom:1px solid #1e2431}
+.dtable th:not(:first-child){text-align:right}
+.dtable td{padding:1.8mm 2.5mm;border-bottom:1px solid #0f141a;color:#e2e8f0;vertical-align:middle}
+.dtable td:not(:first-child){text-align:right;color:#9ca3af}
+.dtable td.qty{color:#f1f5f9;font-weight:700}
+.dtable tr:nth-child(even) td{background:#0b0e14}
+.dtable tr.total-row td{background:#0d2b1c;color:#3ecf8e;font-weight:700;border-top:1px solid #1f5c38}
+
+/* ── mini pct bar in table ── */
+.pct-wrap{display:inline-block;width:24mm;height:4px;background:#1e2431;border-radius:2px;vertical-align:middle;margin-left:2mm}
+.pct-fill{height:100%;border-radius:2px}
+
+/* delta badge */
+.delta{font-size:6.5pt;font-weight:700;padding:1px 5px;border-radius:99px;white-space:nowrap}
+.delta-up{background:#0d2b1c;color:#3ecf8e}
+.delta-dn{background:#2d1010;color:#ef4444}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 1 — PORTADA
+════════════════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+
+  <!-- Logo row -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10mm">
+    <div style="width:14mm;height:14mm;background:#3ecf8e;border-radius:3mm;display:flex;align-items:center;justify-content:center;font-size:18pt;font-weight:900;color:#091a12">ON</div>
+    <div>
+      <div style="font-size:16pt;font-weight:800;color:#e2e8f0;line-height:1">Sistema de Inventario</div>
+      <div style="font-size:8pt;color:#6b7280;margin-top:1mm">Reporte semanal de entregas</div>
+    </div>
+  </div>
+
+  <!-- Period -->
+  <div style="font-size:11pt;font-weight:600;color:#3ecf8e;letter-spacing:1px;margin-bottom:5mm">SEMANA 8 – 14 DE JUNIO, 2026</div>
+
+  <!-- Hero KPI -->
+  <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:8mm">
+    <div style="font-size:54pt;font-weight:900;letter-spacing:-2px;color:#f1f5f9;line-height:1">3,336</div>
+    <div style="font-size:14pt;color:#9ca3af">prendas<br>entregadas</div>
+  </div>
+
+  <!-- Delta vs prev week -->
+  <div style="display:flex;align-items:center;gap:6mm;margin-bottom:10mm">
+    <div style="background:#2d1010;border:1px solid #7f1d1d44;border-radius:99px;padding:4px 14px;font-size:9pt;font-weight:700;color:#ef4444">↓ −210 vs semana anterior</div>
+    <div style="font-size:8.5pt;color:#6b7280">Semana anterior: 3,546</div>
+  </div>
+
+  <!-- Client chips -->
+  <div style="display:flex;gap:4mm">
+    <div class="chip chip-g"><span style="width:6px;height:6px;background:#3ecf8e;border-radius:50%;display:inline-block"></span>Madero</div>
+    <div class="chip chip-b"><span style="width:6px;height:6px;background:#60a5fa;border-radius:50%;display:inline-block"></span>Holiday Inn San Jeronimo</div>
+    <div class="chip chip-v"><span style="width:6px;height:6px;background:#a78bfa;border-radius:50%;display:inline-block"></span>Cenacolo</div>
+  </div>
+
+  <div style="font-size:7.5pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">emiliano.villarreal99@gmail.com</div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>1 / 4</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 2 — RESUMEN POR CLIENTE
+════════════════════════════════════════════════════════════════════════ -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Semana 8–14 Jun · Resumen</div>
+    <div class="slide-title">Entregado por cliente <span style="color:#3ecf8e">esta semana</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;flex:1">
+
+    <!-- ── Madero ── -->
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column">
+      <div class="chip chip-g" style="margin-bottom:3mm;align-self:flex-start">● Madero</div>
+      <div style="display:flex;align-items:baseline;gap:3mm;margin-bottom:0.5mm">
+        <div style="font-size:26pt;font-weight:800;color:#f1f5f9;line-height:1">1,548</div>
+        <div style="font-size:7.5pt;color:#6b7280">prendas</div>
+      </div>
+      <div style="margin-bottom:4mm"><span class="delta delta-up">↑ +53 · +3.5%</span> <span style="font-size:6.5pt;color:#6b7280">vs semana anterior</span></div>
+
+      <!-- Artículos -->
+      <div style="flex:1">
+        <div class="art-row"><span class="art-label">Funda Alm. Mat/Queen</span><div class="art-bar-wrap"><div class="art-bar" style="width:100%;background:#3ecf8e"></div></div><span class="art-val">509</span></div>
+        <div class="art-row"><span class="art-label">Sábanas Mat/Queen</span><div class="art-bar-wrap"><div class="art-bar" style="width:92.7%;background:#3ecf8e"></div></div><span class="art-val">472</span></div>
+        <div class="art-row"><span class="art-label">Toalla Baño</span><div class="art-bar-wrap"><div class="art-bar" style="width:72.5%;background:#60a5fa"></div></div><span class="art-val">369</span></div>
+        <div class="art-row"><span class="art-label">Toalla Mano</span><div class="art-bar-wrap"><div class="art-bar" style="width:35.9%;background:#60a5fa"></div></div><span class="art-val">183</span></div>
+        <div class="art-row"><span class="art-label">Cobertor</span><div class="art-bar-wrap"><div class="art-bar" style="width:2%;background:#f59e0b"></div></div><span class="art-val">10</span></div>
+        <div class="art-row"><span class="art-label">Protector / Pie de cama</span><div class="art-bar-wrap"><div class="art-bar" style="width:1%;background:#f59e0b"></div></div><span class="art-val">5</span></div>
+      </div>
+
+      <!-- Category totals -->
+      <div style="display:flex;gap:2mm;margin-top:3mm">
+        <div style="flex:1;background:#0d2b1c;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#3ecf8e">981</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Ropa cama</div>
+        </div>
+        <div style="flex:1;background:#1a2744;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#60a5fa">552</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Baño</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#9ca3af">15</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Otros</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Holiday Inn San Jeronimo ── -->
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column">
+      <div class="chip chip-b" style="margin-bottom:3mm;align-self:flex-start">● Holiday Inn SJ</div>
+      <div style="display:flex;align-items:baseline;gap:3mm;margin-bottom:0.5mm">
+        <div style="font-size:26pt;font-weight:800;color:#f1f5f9;line-height:1">821</div>
+        <div style="font-size:7.5pt;color:#6b7280">prendas</div>
+      </div>
+      <div style="margin-bottom:4mm"><span class="delta delta-dn">↓ −113 · −12.1%</span> <span style="font-size:6.5pt;color:#6b7280">vs semana anterior</span></div>
+
+      <div style="flex:1">
+        <div class="art-row"><span class="art-label">Sábanas Mat/Queen</span><div class="art-bar-wrap"><div class="art-bar" style="width:100%;background:#60a5fa"></div></div><span class="art-val">434</span></div>
+        <div class="art-row"><span class="art-label">Sábana King</span><div class="art-bar-wrap"><div class="art-bar" style="width:45.8%;background:#60a5fa"></div></div><span class="art-val">199</span></div>
+        <div class="art-row"><span class="art-label">Duvet Mat/Queen</span><div class="art-bar-wrap"><div class="art-bar" style="width:27.1%;background:#3ecf8e"></div></div><span class="art-val">118</span></div>
+        <div class="art-row"><span class="art-label">Duvet King</span><div class="art-bar-wrap"><div class="art-bar" style="width:13.5%;background:#3ecf8e"></div></div><span class="art-val">59</span></div>
+        <div class="art-row"><span class="art-label">Funda Alm. Mat/Queen</span><div class="art-bar-wrap"><div class="art-bar" style="width:2.5%;background:#f59e0b"></div></div><span class="art-val">11</span></div>
+      </div>
+
+      <div style="display:flex;gap:2mm;margin-top:3mm">
+        <div style="flex:1;background:#1a2744;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#60a5fa">633</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Mat/Queen</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#a78bfa">258</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">King</div>
+        </div>
+      </div>
+
+      <div style="margin-top:2mm;background:#1a0d0d;border:1px solid #7f1d1d33;border-radius:2mm;padding:2.5mm 3mm;font-size:6.5pt;color:#ef4444">
+        Fundas de almohada prácticamente sin movimiento — posible cambio en operación
+      </div>
+    </div>
+
+    <!-- ── Cenacolo ── -->
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column">
+      <div class="chip chip-v" style="margin-bottom:3mm;align-self:flex-start">● Cenacolo</div>
+      <div style="display:flex;align-items:baseline;gap:3mm;margin-bottom:0.5mm">
+        <div style="font-size:26pt;font-weight:800;color:#f1f5f9;line-height:1">967</div>
+        <div style="font-size:7.5pt;color:#6b7280">prendas</div>
+      </div>
+      <div style="margin-bottom:4mm"><span class="delta delta-dn">↓ −150 · −13.4%</span> <span style="font-size:6.5pt;color:#6b7280">vs semana anterior</span></div>
+
+      <div style="flex:1">
+        <div class="art-row"><span class="art-label">Servilletas</span><div class="art-bar-wrap"><div class="art-bar" style="width:100%;background:#a78bfa"></div></div><span class="art-val">740</span></div>
+        <div class="art-row"><span class="art-label">Mantel cuadrado gde</span><div class="art-bar-wrap"><div class="art-bar" style="width:21.9%;background:#a78bfa"></div></div><span class="art-val">162</span></div>
+        <div class="art-row"><span class="art-label">Mantel ovalado med</span><div class="art-bar-wrap"><div class="art-bar" style="width:3.4%;background:#f59e0b"></div></div><span class="art-val">25</span></div>
+        <div class="art-row"><span class="art-label">Tortillera</span><div class="art-bar-wrap"><div class="art-bar" style="width:1.9%;background:#6b7280"></div></div><span class="art-val">14</span></div>
+        <div class="art-row"><span class="art-label">Mantel ovalado gde</span><div class="art-bar-wrap"><div class="art-bar" style="width:1.2%;background:#f59e0b"></div></div><span class="art-val">9</span></div>
+        <div class="art-row"><span class="art-label">Molleton / Delantal / Cubrebandeja</span><div class="art-bar-wrap"><div class="art-bar" style="width:1%;background:#6b7280"></div></div><span class="art-val">17</span></div>
+      </div>
+
+      <div style="display:flex;gap:2mm;margin-top:3mm">
+        <div style="flex:2;background:#2a1f44;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#a78bfa">740</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Servilletas (76.5%)</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:2.5mm;text-align:center">
+          <div style="font-size:10pt;font-weight:800;color:#9ca3af">227</div>
+          <div style="font-size:5.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px">Manteles+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>2 / 4</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 3 — DESGLOSE DETALLADO
+════════════════════════════════════════════════════════════════════════ -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Desglose por artículo · Jun 8–14</div>
+    <div class="slide-title">Detalle completo <span style="color:#3ecf8e">por cliente</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;flex:1">
+
+    <!-- Madero table -->
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:2.5mm 4mm;background:#131820;border-bottom:1px solid #1e2431;display:flex;align-items:center;justify-content:space-between">
+        <div class="chip chip-g" style="font-size:7pt">● Madero</div>
+        <div style="font-size:6.5pt;color:#4b5563">8–14 Jun</div>
+      </div>
+      <div style="flex:1;overflow:hidden">
+        <table class="dtable" style="width:100%">
+          <thead><tr><th>Artículo</th><th>Cant.</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td>Funda Almohada Mat/Queen</td><td class="qty">509</td><td><span style="color:#3ecf8e">32.9%</span><div class="pct-wrap"><div class="pct-fill" style="width:100%;background:#3ecf8e"></div></div></td></tr>
+            <tr><td>Sábanas Mat/Queen</td><td class="qty">472</td><td><span style="color:#3ecf8e">30.5%</span><div class="pct-wrap"><div class="pct-fill" style="width:92.7%;background:#3ecf8e"></div></div></td></tr>
+            <tr><td>Toalla Baño</td><td class="qty">369</td><td><span style="color:#60a5fa">23.8%</span><div class="pct-wrap"><div class="pct-fill" style="width:72.5%;background:#60a5fa"></div></div></td></tr>
+            <tr><td>Toalla Mano</td><td class="qty">183</td><td><span style="color:#60a5fa">11.8%</span><div class="pct-wrap"><div class="pct-fill" style="width:35.9%;background:#60a5fa"></div></div></td></tr>
+            <tr><td>Cobertor</td><td class="qty">10</td><td><span style="color:#6b7280">0.6%</span><div class="pct-wrap"><div class="pct-fill" style="width:2%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Protector de colchon</td><td class="qty">3</td><td><span style="color:#6b7280">0.2%</span><div class="pct-wrap"><div class="pct-fill" style="width:0.6%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Pie de cama</td><td class="qty">2</td><td><span style="color:#6b7280">0.1%</span><div class="pct-wrap"><div class="pct-fill" style="width:0.4%;background:#6b7280"></div></div></td></tr>
+            <tr class="total-row"><td>Total</td><td class="qty">1,548</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:2.5mm 4mm;font-size:6.5pt;color:#4b5563;border-top:1px solid #0f141a">
+        ↑ +53 vs semana anterior · Único cliente con crecimiento
+      </div>
+    </div>
+
+    <!-- Holiday Inn table -->
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:2.5mm 4mm;background:#131820;border-bottom:1px solid #1e2431;display:flex;align-items:center;justify-content:space-between">
+        <div class="chip chip-b" style="font-size:7pt">● Holiday Inn SJ</div>
+        <div style="font-size:6.5pt;color:#4b5563">8–14 Jun</div>
+      </div>
+      <div style="flex:1;overflow:hidden">
+        <table class="dtable" style="width:100%">
+          <thead><tr><th>Artículo</th><th>Cant.</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td>Sábanas Mat/Queen</td><td class="qty">434</td><td><span style="color:#60a5fa">52.9%</span><div class="pct-wrap"><div class="pct-fill" style="width:100%;background:#60a5fa"></div></div></td></tr>
+            <tr><td>Sábana King</td><td class="qty">199</td><td><span style="color:#60a5fa">24.2%</span><div class="pct-wrap"><div class="pct-fill" style="width:45.8%;background:#60a5fa"></div></div></td></tr>
+            <tr><td>Duvet Mat/Queen</td><td class="qty">118</td><td><span style="color:#3ecf8e">14.4%</span><div class="pct-wrap"><div class="pct-fill" style="width:27.1%;background:#3ecf8e"></div></div></td></tr>
+            <tr><td>Duvet King</td><td class="qty">59</td><td><span style="color:#3ecf8e">7.2%</span><div class="pct-wrap"><div class="pct-fill" style="width:13.6%;background:#3ecf8e"></div></div></td></tr>
+            <tr><td>Funda Almohada Mat/Queen</td><td class="qty">11</td><td><span style="color:#6b7280">1.3%</span><div class="pct-wrap"><div class="pct-fill" style="width:2.5%;background:#6b7280"></div></div></td></tr>
+            <tr class="total-row"><td>Total</td><td class="qty">821</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:2.5mm 4mm;font-size:6.5pt;color:#4b5563;border-top:1px solid #0f141a">
+        ↓ −113 vs semana anterior · Fundas de almohada casi sin movimiento
+      </div>
+    </div>
+
+    <!-- Cenacolo table -->
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:2.5mm 4mm;background:#131820;border-bottom:1px solid #1e2431;display:flex;align-items:center;justify-content:space-between">
+        <div class="chip chip-v" style="font-size:7pt">● Cenacolo</div>
+        <div style="font-size:6.5pt;color:#4b5563">8–14 Jun</div>
+      </div>
+      <div style="flex:1;overflow:hidden">
+        <table class="dtable" style="width:100%">
+          <thead><tr><th>Artículo</th><th>Cant.</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td>Servilletas</td><td class="qty">740</td><td><span style="color:#a78bfa">76.5%</span><div class="pct-wrap"><div class="pct-fill" style="width:100%;background:#a78bfa"></div></div></td></tr>
+            <tr><td>Mantel cuadrado gde</td><td class="qty">162</td><td><span style="color:#a78bfa">16.8%</span><div class="pct-wrap"><div class="pct-fill" style="width:21.9%;background:#a78bfa"></div></div></td></tr>
+            <tr><td>Mantel ovalado med</td><td class="qty">25</td><td><span style="color:#6b7280">2.6%</span><div class="pct-wrap"><div class="pct-fill" style="width:3.4%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Tortillera</td><td class="qty">14</td><td><span style="color:#6b7280">1.4%</span><div class="pct-wrap"><div class="pct-fill" style="width:1.9%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Mantel ovalado gde</td><td class="qty">9</td><td><span style="color:#6b7280">0.9%</span><div class="pct-wrap"><div class="pct-fill" style="width:1.2%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Molleton med</td><td class="qty">8</td><td><span style="color:#6b7280">0.8%</span><div class="pct-wrap"><div class="pct-fill" style="width:1.1%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Cubrebandejas</td><td class="qty">6</td><td><span style="color:#6b7280">0.6%</span><div class="pct-wrap"><div class="pct-fill" style="width:0.8%;background:#6b7280"></div></div></td></tr>
+            <tr><td>Delantal</td><td class="qty">3</td><td><span style="color:#6b7280">0.3%</span><div class="pct-wrap"><div class="pct-fill" style="width:0.4%;background:#6b7280"></div></div></td></tr>
+            <tr class="total-row"><td>Total</td><td class="qty">967</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:2.5mm 4mm;font-size:6.5pt;color:#4b5563;border-top:1px solid #0f141a">
+        ↓ −150 vs semana anterior · Servilletas dominan el 76.5% del volumen
+      </div>
+    </div>
+
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>3 / 4</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 4 — TENDENCIA 6 SEMANAS + INSIGHTS
+════════════════════════════════════════════════════════════════════════ -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Tendencia · últimas 6 semanas</div>
+    <div class="slide-title">Volumen semanal de entregas <span style="color:#3ecf8e">por cliente</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 68mm;gap:7mm;flex:1">
+
+    <!-- Line chart -->
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:4mm;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:4mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:8px;height:8px;background:#3ecf8e;border-radius:50%"></div><span style="font-size:6.5pt;color:#9ca3af">Madero</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:8px;height:8px;background:#60a5fa;border-radius:50%"></div><span style="font-size:6.5pt;color:#9ca3af">Holiday Inn SJ</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:8px;height:8px;background:#a78bfa;border-radius:50%"></div><span style="font-size:6.5pt;color:#9ca3af">Cenacolo</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">May 11 → Jun 14</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartTrend"></canvas></div>
+    </div>
+
+    <!-- Insight cards -->
+    <div style="display:flex;flex-direction:column;gap:3mm">
+
+      <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:7.5pt;font-weight:700;color:#3ecf8e;margin-bottom:1.5mm">Madero — tendencia estable ↗</div>
+        <div style="font-size:7pt;color:#9ca3af;line-height:1.5">Único cliente con crecimiento esta semana (+3.5%). Volumen consistente entre 1,200–1,700 prendas semanales. Toallas representan el 35% del total.</div>
+      </div>
+
+      <div style="background:#1a0d0d;border:1px solid #7f1d1d44;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:7.5pt;font-weight:700;color:#ef4444;margin-bottom:1.5mm">Holiday Inn SJ — baja ocupación ↘</div>
+        <div style="font-size:7pt;color:#9ca3af;line-height:1.5">Caída de 12.1% vs semana previa. Fundas de almohada casi sin entregas en las últimas 4 semanas — señal de menor rotación. Mínimo en 6 semanas.</div>
+      </div>
+
+      <div style="background:#2a1f44;border:1px solid #4a3a7a44;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:7.5pt;font-weight:700;color:#a78bfa;margin-bottom:1.5mm">Cenacolo — volatilidad alta ↕</div>
+        <div style="font-size:7pt;color:#9ca3af;line-height:1.5">Alta variabilidad semana a semana (rango 729–1,291). Picos coinciden con eventos de mayor aforo. Servilletas dominan el 76% del volumen.</div>
+      </div>
+
+      <!-- Grand total summary -->
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:3mm 4mm;margin-top:auto">
+        <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1.5mm">Total acumulado · 6 semanas</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm">
+          <div style="text-align:center">
+            <div style="font-size:10pt;font-weight:800;color:#3ecf8e">8,866</div>
+            <div style="font-size:5.5pt;color:#6b7280">Madero</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:10pt;font-weight:800;color:#60a5fa">5,070</div>
+            <div style="font-size:5.5pt;color:#6b7280">HI SJ</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:10pt;font-weight:800;color:#a78bfa">5,875</div>
+            <div style="font-size:5.5pt;color:#6b7280">Cenacolo</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot"><span>ON Sistema de Inventario</span><span>4 / 4 · Generado el 22 Jun 2026</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+// ── 6-week trend chart ──────────────────────────────────────────────────────
+new Chart(document.getElementById('chartTrend'), {
+  type: 'line',
+  data: {
+    labels: ['11 May', '17 May', '24 May', '31 May', '7 Jun', '14 Jun'],
+    datasets: [
+      {
+        label: 'Madero',
+        data: [1385, 1246, 1523, 1674, 1495, 1548],
+        borderColor: '#3ecf8e',
+        backgroundColor: '#3ecf8e18',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#3ecf8e',
+        fill: false,
+        tension: 0.3,
+      },
+      {
+        label: 'Holiday Inn SJ',
+        data: [891, 779, 924, 896, 934, 821],
+        borderColor: '#60a5fa',
+        backgroundColor: '#60a5fa18',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#60a5fa',
+        fill: false,
+        tension: 0.3,
+      },
+      {
+        label: 'Cenacolo',
+        data: [1291, 863, 729, 1117, 967, null],
+        borderColor: '#a78bfa',
+        backgroundColor: '#a78bfa18',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#a78bfa',
+        fill: false,
+        tension: 0.3,
+        spanGaps: true,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { font: { size: 8 }, color: '#6b7280' },
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 5 },
+        suggestedMin: 0,
+        suggestedMax: 1800,
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

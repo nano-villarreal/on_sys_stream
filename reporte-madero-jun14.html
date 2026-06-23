@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Semanal · Madero · Jun 14, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+:root{--accent:#3ecf8e;--accent-dim:#3ecf8e22;--accent-border:#1f5c38;--accent-bg:#0d2b1c}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent) 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot .brand{color:var(--accent);font-weight:600}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:20pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;line-height:1.1}
+.slide-head{margin-bottom:5mm}
+.card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:4mm 5mm}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 11px;font-size:7.5pt;font-weight:600;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
+
+/* comparison table */
+.cmp{width:100%;border-collapse:collapse;font-size:7.5pt}
+.cmp th{font-size:6pt;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#4b5563;padding:2mm 2.5mm;border-bottom:1px solid #1e2431;background:#0f141a;white-space:nowrap}
+.cmp th:not(:first-child){text-align:right}
+.cmp td{padding:1.8mm 2.5mm;border-bottom:1px solid #0a0e14;vertical-align:middle}
+.cmp td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.cmp .art{color:#cbd5e1;font-size:7pt}
+.cmp .prev{color:#6b7280;font-weight:500}
+.cmp .curr{color:#f1f5f9;font-weight:700}
+.cmp .up{color:#3ecf8e;font-weight:700}
+.cmp .dn{color:#ef4444;font-weight:700}
+.cmp .flat{color:#6b7280}
+.cmp tr.total td{background:#0d2b1c;color:#3ecf8e;font-weight:700;border-top:1px solid #1f5c38}
+.cmp tr:nth-child(even) td{background:#080b0f}
+
+/* insight cards */
+.insight{background:#0f141a;border-left:3px solid var(--accent);border-radius:0 2mm 2mm 0;padding:3mm 4mm;margin-bottom:3mm}
+.insight-title{font-size:7.5pt;font-weight:700;color:var(--accent);margin-bottom:1mm}
+.insight-body{font-size:7pt;color:#9ca3af;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- ══ SLIDE 1 — PORTADA ══════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+
+  <!-- ON logo -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:12mm;height:12mm;background:#3ecf8e;border-radius:2.5mm;display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:900;color:#091a12">ON</div>
+    <div>
+      <div style="font-size:13pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+      <div style="font-size:7.5pt;color:#6b7280;margin-top:0.5mm">Reporte semanal de entregas</div>
+    </div>
+  </div>
+
+  <!-- Client name -->
+  <div style="font-size:32pt;font-weight:900;color:#f1f5f9;letter-spacing:-1px;margin-bottom:3mm">Madero</div>
+  <div style="font-size:10pt;font-weight:600;color:#3ecf8e;letter-spacing:1px;margin-bottom:8mm">SEMANA 8 – 14 DE JUNIO, 2026</div>
+
+  <!-- Hero KPIs -->
+  <div style="display:flex;align-items:center;gap:12mm;margin-bottom:8mm">
+    <div style="text-align:center">
+      <div style="font-size:44pt;font-weight:900;letter-spacing:-2px;color:#f1f5f9;line-height:1">1,548</div>
+      <div style="font-size:8.5pt;color:#9ca3af">prendas entregadas</div>
+    </div>
+    <div style="width:1px;height:20mm;background:#1e2431"></div>
+    <div style="display:flex;flex-direction:column;gap:3mm">
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">vs semana anterior</div>
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">↑ +53 · +3.5%</div>
+      </div>
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Semana anterior</div>
+        <div style="font-size:14pt;font-weight:700;color:#6b7280">1,495</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category pills -->
+  <div style="display:flex;gap:4mm">
+    <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:3px 12px;font-size:8pt;color:#3ecf8e;font-weight:600">Ropa cama: 996</div>
+    <div style="background:#1a2744;border:1px solid #2d3f6e;border-radius:99px;padding:3px 12px;font-size:8pt;color:#60a5fa;font-weight:600">Baño: 552</div>
+  </div>
+
+  <div style="font-size:7pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Generado el 22 Jun 2026</div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>1 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 2 — DETALLE SEMANAL ═════════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Madero · Jun 8–14, 2026</div>
+    <div class="slide-title">Detalle semanal <span style="color:#3ecf8e;font-size:16pt">vs semana anterior</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:6mm;flex:1;min-height:0">
+
+    <!-- Comparison table -->
+    <div style="display:flex;flex-direction:column">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th style="text-align:left">Artículo</th>
+            <th>Jun 7</th>
+            <th>Jun 14</th>
+            <th>Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="art">Funda Almohada Mat/Queen</td><td class="prev">495</td><td class="curr">509</td><td class="up">+14</td></tr>
+          <tr><td class="art">Sábanas Mat/Queen</td><td class="prev">456</td><td class="curr">472</td><td class="up">+16</td></tr>
+          <tr><td class="art">Toalla Baño</td><td class="prev">344</td><td class="curr">369</td><td class="up">+25</td></tr>
+          <tr><td class="art">Toalla Mano</td><td class="prev">185</td><td class="curr">183</td><td class="dn">−2</td></tr>
+          <tr><td class="art">Cobertor</td><td class="prev">11</td><td class="curr">10</td><td class="dn">−1</td></tr>
+          <tr><td class="art">Protector de colchon</td><td class="prev" style="color:#4b5563">—</td><td class="curr">3</td><td class="up">+3</td></tr>
+          <tr><td class="art">Pie de cama</td><td class="prev">3</td><td class="curr">2</td><td class="dn">−1</td></tr>
+          <tr><td class="art">Almohada</td><td class="prev">1</td><td class="curr" style="color:#4b5563">—</td><td class="dn">−1</td></tr>
+          <tr class="total"><td>Total</td><td>1,495</td><td>1,548</td><td>+53</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Category breakdown below table -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:4mm">
+        <div class="card" style="padding:3mm 4mm">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Ropa de cama</div>
+          <div style="font-size:16pt;font-weight:800;color:#3ecf8e">996</div>
+          <div style="font-size:6.5pt;color:#9ca3af">64.3% del total · Jun 14</div>
+        </div>
+        <div class="card" style="padding:3mm 4mm;border-color:#2d3f6e">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Toallas</div>
+          <div style="font-size:16pt;font-weight:800;color:#60a5fa">552</div>
+          <div style="font-size:6.5pt;color:#9ca3af">35.7% del total · Jun 14</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grouped bar chart -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e44;border-radius:1px"></div><span style="font-size:6.5pt;color:#6b7280">Jun 7</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e;border-radius:1px"></div><span style="font-size:6.5pt;color:#9ca3af">Jun 14</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">prendas por artículo</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartCompare"></canvas></div>
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>2 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 3 — TENDENCIA 6 SEMANAS ════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Madero · Tendencia 11 May – 14 Jun</div>
+    <div class="slide-title">Volumen semanal <span style="color:#3ecf8e">por categoría</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 68mm;gap:7mm;flex:1;min-height:0">
+
+    <!-- Stacked bar chart -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#3ecf8e;border-radius:2px"></div><span style="font-size:6.5pt;color:#9ca3af">Ropa de cama</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#60a5fa;border-radius:2px"></div><span style="font-size:6.5pt;color:#9ca3af">Toallas de baño</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">11 May → 14 Jun 2026</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartTrend"></canvas></div>
+    </div>
+
+    <!-- Insights -->
+    <div style="display:flex;flex-direction:column;gap:0">
+
+      <!-- Weekly totals mini table -->
+      <div class="card" style="margin-bottom:4mm">
+        <div style="font-size:6pt;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Totales semanales</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 4mm;font-size:6.5pt">
+          <span style="color:#6b7280">11 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,385</span>
+          <span style="color:#6b7280">17 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,246</span>
+          <span style="color:#6b7280">24 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,523</span>
+          <span style="color:#6b7280">31 May</span><span style="color:#e2e8f0;text-align:right;font-weight:600;color:#f1f5f9">1,674 ↑ pico</span>
+          <span style="color:#6b7280">7 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,495</span>
+          <span style="color:#3ecf8e;font-weight:700">14 Jun ●</span><span style="color:#3ecf8e;text-align:right;font-weight:800">1,548</span>
+        </div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Único cliente con crecimiento ↑</div>
+        <div class="insight-body">Esta semana Madero fue el único de los 3 clientes con saldo positivo. +53 prendas (+3.5%) versus semana previa.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Toallas de baño — alza destacada</div>
+        <div class="insight-body">Toallas de baño subieron +25 unidades (+7.3%). El mayor aumento individual de la semana, posiblemente por mayor ocupación.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Tendencia general: estable</div>
+        <div class="insight-body">Rango histórico 1,246–1,674. Esta semana (1,548) se encuentra ligeramente por encima del promedio de 6 semanas (1,479).</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>3 / 3 · Semana 8–14 Jun 2026</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+// ── Slide 2 — Grouped horizontal bar ────────────────────────────────────────
+new Chart(document.getElementById('chartCompare'), {
+  type: 'bar',
+  data: {
+    labels: ['Funda Alm. MQ', 'Sábanas MQ', 'Toalla Baño', 'Toalla Mano', 'Cobertor', 'Pie de cama', 'Protector', 'Almohada'],
+    datasets: [
+      { label: 'Jun 7',  data: [495, 456, 344, 185, 11, 3, 0, 1], backgroundColor: '#3ecf8e33', borderColor: '#3ecf8e55', borderWidth: 1, borderRadius: 2 },
+      { label: 'Jun 14', data: [509, 472, 369, 183, 10, 2, 3, 0], backgroundColor: '#3ecf8e',   borderColor: '#3ecf8e',   borderWidth: 1, borderRadius: 2 },
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7 }, color: '#6b7280', maxTicksLimit: 6 } },
+      y: { grid: { display: false }, ticks: { font: { size: 7 }, color: '#9ca3af' } },
+    }
+  }
+});
+
+// ── Slide 3 — Stacked bar by category ───────────────────────────────────────
+new Chart(document.getElementById('chartTrend'), {
+  type: 'bar',
+  data: {
+    labels: ['11 May', '17 May', '24 May', '31 May', '7 Jun', '14 Jun'],
+    datasets: [
+      { label: 'Ropa de cama', data: [872, 776, 930, 1007, 966, 996], backgroundColor: '#3ecf8e', borderRadius: 2 },
+      { label: 'Toallas',      data: [513, 470, 593,  667, 529, 552], backgroundColor: '#60a5fa', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280' } },
+      y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 5 }, suggestedMax: 1800 },
+    }
+  }
+});
+</script>
+</body>
+</html>

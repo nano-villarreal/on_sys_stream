@@ -270,35 +270,25 @@ const sendMessage = async (content, senderID, accion, options = {}) => {
                 if (item.articles && typeof item.articles === 'object') {
                     for (const [type, qty] of Object.entries(item.articles)) {
                         totalItems += Number(qty) || 0;
-                        const plural = qty === 1 ? '' : 's';
-                        articleParts.push(`${qty} ${type}${plural}`);
+                        articleParts.push(`• ${qty}  ${type}`);
                     }
                 }
             }
 
-            const itemsText = articleParts.length > 0
-                ? articleParts.join(' + ')
-                : `${totalItems} artículo${totalItems === 1 ? '' : 's'}`;
+            const artLines = articleParts.length > 0
+                ? articleParts.join('\n')
+                : `• ${totalItems} artículo${totalItems === 1 ? '' : 's'}`;
 
-            // Clean message
-            const summary = ` ${itemsText} de ${client}\n${dateTimeStr}`;
-            console.log(accion)
-            if (accion == 'entrega') {
-                const msg = await twilioClient.messages.create({
-                    from: 'whatsapp:+14155238886',
-                    to: 'whatsapp:' + senderID,
-                    body: 'Entrega: ' + summary
-                });
-                console.log('Clean summary sent:', summary, 'SID:', msg.sid);
-            }
-            else {
-                const msg = await twilioClient.messages.create({
-                    from: 'whatsapp:+14155238886',
-                    to: 'whatsapp:' + senderID,
-                    body: 'Recoleccion: ' + summary
-                });
-                console.log('Clean summary sent:', summary, 'SID:', msg.sid);
-            }
+            const accionEmoji = accion === 'entrega' ? '📦' : '↩';
+            const accionLabel = accion === 'entrega' ? 'Entrega' : 'Recolección';
+            const body = `*${accionEmoji} ${accionLabel}* — ${client}\n${dateTimeStr}\n\n${artLines}\n\n_${totalItems} prenda${totalItems === 1 ? '' : 's'} en total_`;
+
+            const msg = await twilioClient.messages.create({
+                from: 'whatsapp:+14155238886',
+                to: 'whatsapp:' + senderID,
+                body
+            });
+            console.log('Message sent, SID:', msg.sid);
 
             return;
         }
@@ -1081,6 +1071,7 @@ webApp.post('/dashboard', async (req, res) => {
     let returnRate = null;
     let lifecycleAlerts = [];
     let thresholds = {};
+    let recentEntregas = [];
 
     if (!client?.trim()) {
         error = 'Por favor ingresa un nombre de cliente.';
@@ -1158,6 +1149,13 @@ webApp.post('/dashboard', async (req, res) => {
 
             thresholds = savedThresholds;
 
+            // Recent entrega activity — shown when client has no RFID tags (manual-only)
+            recentEntregas = await mongoClient.db("on").collection("entrega")
+                .find({ client: clientName })
+                .sort({ date: -1 })
+                .limit(5)
+                .toArray();
+
         } catch (err) {
             console.error('Error en dashboard:', err);
             error = 'Error al consultar la base de datos.';
@@ -1175,6 +1173,7 @@ webApp.post('/dashboard', async (req, res) => {
         returnRate,
         lifecycleAlerts,
         thresholds,
+        recentEntregas,
         summaryToken: clientName ? genSummaryToken(clientName) : null
     });
 });
