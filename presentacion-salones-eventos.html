@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ON Sistema — Salones de Eventos</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3ecf8e 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot span{color:#3ecf8e;font-weight:600}
+.g{color:#3ecf8e}.dim{color:#6b7280}.warn{color:#f59e0b}.red{color:#ef4444}.blue{color:#3b82f6}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:22pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px}
+.slide-head{margin-bottom:6mm}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#132d1f;border:1px solid #1f5c38;border-radius:99px;padding:6px 18px;font-size:9pt;color:#3ecf8e;font-weight:500}
+.kpi-box{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.kpi-box .val{font-size:19pt;font-weight:800}
+.kpi-box .lbl{font-size:7pt;font-weight:600;letter-spacing:1px;color:#6b7280;text-transform:uppercase;margin-top:1mm}
+.problem-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.problem-card .icon{font-size:22pt;margin-bottom:3mm}
+.problem-card h3{font-size:11pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.problem-card p{font-size:8.5pt;color:#9ca3af;line-height:1.5}
+.client-chip{display:inline-flex;align-items:center;gap:5px;background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:2px 10px;font-size:7.5pt;color:#3ecf8e;font-weight:600}
+.dash-kpi{flex:1;background:#0e1117;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center}
+.dash-kpi .v{font-size:14pt;font-weight:800}
+.dash-kpi .l{font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5mm}
+.feat-item{display:flex;align-items:flex-start;gap:4mm;background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm}
+.feat-item .icon{font-size:14pt;min-width:8mm}
+.feat-item h4{font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm}
+.feat-item p{font-size:7.5pt;color:#9ca3af;line-height:1.4}
+.badge-crit{background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.badge-warn{background:#2d1f00;color:#f59e0b;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700}
+.pct-bar{height:5px;border-radius:2px;background:#3ecf8e;margin-top:1mm}
+.pct-bar.warn{background:#f59e0b}.pct-bar.crit{background:#ef4444}
+.lc-info-card{background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:5mm}
+.lc-info-card h4{font-size:9.5pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.lc-info-card p{font-size:8pt;color:#9ca3af;line-height:1.55}
+.type-badge{padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700;white-space:nowrap;margin-top:0.5mm}
+.badge-rec{background:#1a3a2a;color:#3ecf8e}.badge-ent{background:#1a2744;color:#60a5fa}.badge-rep{background:#2a1f44;color:#818cf8}
+.prop-card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:6mm 7mm}
+.prop-card .step{width:8mm;height:8mm;background:#3ecf8e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:800;color:#091a12;margin-bottom:3mm}
+.cta-bar{background:linear-gradient(90deg,#0d2b1c,#13381f);border:1px solid #1f5c38;border-radius:3mm;padding:6mm 9mm;display:flex;align-items:center;justify-content:space-between}
+.scan-step{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;flex:1}
+.scan-step .num{width:8mm;height:8mm;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9pt;font-weight:800;margin-bottom:3mm}
+.scan-step h3{font-size:10pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm}
+.scan-step p{font-size:8pt;color:#9ca3af;line-height:1.5}
+.scan-readout{margin-top:3mm;background:#0e1117;border-radius:2mm;padding:2.5mm 3mm;font-size:7.5pt}
+.salon-tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:6.5pt;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1 — COVER -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:16mm;height:16mm;background:#3ecf8e;border-radius:3mm;display:flex;align-items:center;justify-content:center;font-size:22pt;font-weight:900;color:#091a12">ON</div>
+    <div style="font-size:24pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+  </div>
+  <h1 style="font-size:32pt;font-weight:900;text-align:center;letter-spacing:-1px;line-height:1.1;margin-bottom:5mm;color:#f1f5f9">Control total de <span style="color:#3ecf8e">mantelería<br>por evento</span></h1>
+  <p style="font-size:13pt;color:#9ca3af;text-align:center;margin-bottom:14mm">Tecnología RFID para salones de eventos — sabe exactamente qué tienes,<br>qué salió con cada boda, y cuándo hay que reponer.</p>
+  <div class="pill"><span style="width:7px;height:7px;background:#3ecf8e;border-radius:50%;display:inline-block"></span>Propuesta para salón de eventos &nbsp;·&nbsp; Junio 2026</div>
+  <div style="font-size:8pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Confidencial · emiliano.villarreal99@gmail.com</div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>1 / 9</span></div>
+</div>
+
+<!-- SLIDE 2 — PROBLEMA -->
+<div class="slide" style="padding:14mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">El problema</div>
+    <div class="slide-title">Con cada boda o evento, <span style="color:#ef4444">cientos de piezas desaparecen</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="problem-card">
+      <div class="icon">📋</div>
+      <h3>Conteo manual antes del montaje</h3>
+      <p>Contar a mano 400 manteles, 500 servilletas y 80 faldones antes de cada evento es lento y lleno de errores. Si falta algo, se descubre cuando el salón ya está a punto de abrir.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🧺</div>
+      <h3>La lavandería regresa de menos</h3>
+      <p>Envías 600 piezas y recibes 571. Sin evidencia de qué salió exactamente, el proveedor no reconoce los faltantes y el costo lo absorbes tú.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🎊</div>
+      <h3>Eventos simultáneos: mezcla de lotes</h3>
+      <p>Cuando dos salones operan al mismo tiempo, la ropa de una boda termina en la otra. Después es imposible saber qué pertenece a cada cliente o qué se perdió en cuál evento.</p>
+    </div>
+  </div>
+  <div style="background:linear-gradient(135deg,#1a0d0d,#2d1010);border:1px solid #7f1d1d44;border-radius:3mm;padding:5mm 8mm;display:flex;align-items:center;gap:5mm">
+    <div style="font-size:30pt;font-weight:900;color:#ef4444">15–22%</div>
+    <div style="font-size:9pt;color:#d1d5db;line-height:1.5">
+      <strong style="color:#f9fafb;display:block;font-size:11pt;margin-bottom:1mm">De la mantelería se pierde o deteriora cada temporada</strong>
+      Un salón con 3,000 piezas puede perder 450–660 prendas al año — sin poder identificar si se fueron en la lavandería, con los invitados, o se desgastaron por falta de control de ciclos.
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>2 / 9</span></div>
+</div>
+
+<!-- SLIDE 3 — FLUJO POR EVENTO -->
+<div class="slide" style="padding:10mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Control por evento</div>
+    <div class="slide-title">Sabe exactamente qué entra y qué sale <span style="color:#3ecf8e">en cada celebración</span></div>
+  </div>
+  <div style="display:flex;gap:5mm;flex:1">
+    <div class="scan-step">
+      <div class="num" style="background:#f59e0b;color:#000">1</div>
+      <h3>Pre-evento (montaje)</h3>
+      <p>El coordinador pasa el lector por los bultos antes del montaje. En segundos tiene el conteo exacto de manteles, faldones y servilletas disponibles — por salón asignado.</p>
+      <div class="scan-readout" style="color:#f59e0b">
+        <div style="margin-bottom:1mm;font-weight:600">📦 Inventario disponible — Boda Martínez · Salón A</div>
+        <div>Mantel redondo: <strong style="color:#e2e8f0">48</strong> · Servilleta: <strong style="color:#e2e8f0">320</strong></div>
+        <div>Faldón: <strong style="color:#e2e8f0">14</strong> · Cubre-mantel: <strong style="color:#e2e8f0">48</strong></div>
+        <div style="margin-top:1mm;color:#6b7280;font-size:6.5pt">430 piezas · 14 jun 10:00 · Listo para montaje</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:20pt;color:#3ecf8e;padding:0 2mm">→</div>
+    <div class="scan-step">
+      <div class="num" style="background:#3b82f6;color:#fff">2</div>
+      <h3>Salida a lavandería</h3>
+      <p>Al terminar el evento, toda la ropa sucia se escanea antes de salir. El sistema registra el conteo exacto por artículo y por salón — evidencia inmediata de cualquier faltante.</p>
+      <div class="scan-readout" style="color:#3b82f6">
+        <div style="margin-bottom:1mm;font-weight:600">🚚 Salida a lavandería — Post evento</div>
+        <div>Mantel redondo: <strong style="color:#e2e8f0">48</strong> · Servilleta: <strong style="color:#e2e8f0">316</strong></div>
+        <div>Faldón: <strong style="color:#e2e8f0">14</strong> · Cubre-mantel: <strong style="color:#e2e8f0">47</strong></div>
+        <div style="margin-top:1mm;color:#ef4444;font-size:6.5pt">⚠ 5 faltantes vs. entrada — alerta generada</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:20pt;color:#3ecf8e;padding:0 2mm">→</div>
+    <div class="scan-step">
+      <div class="num" style="background:#3ecf8e;color:#091a12">3</div>
+      <h3>Recepción de lavandería</h3>
+      <p>Al regresar la ropa limpia, se escanea la entrega. El sistema compara automáticamente con lo enviado y genera el reporte de faltantes con evidencia lista para reclamar.</p>
+      <div class="scan-readout" style="color:#3ecf8e">
+        <div style="margin-bottom:1mm;font-weight:600">✓ Recepción — 15 jun</div>
+        <div>Mantel redondo: <strong style="color:#e2e8f0">47</strong> · Servilleta: <strong style="color:#e2e8f0">314</strong></div>
+        <div>Faldón: <strong style="color:#e2e8f0">14</strong> · Cubre-mantel: <strong style="color:#e2e8f0">46</strong></div>
+        <div style="margin-top:1mm;color:#ef4444;font-size:6.5pt">⚠ 8 faltantes totales — reporte generado</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>3 / 9</span></div>
+</div>
+
+<!-- SLIDE 4 — EVENTOS SIMULTÁNEOS -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Múltiples salones</div>
+    <div class="slide-title">Dos eventos al mismo tiempo, <span style="color:#3ecf8e">sin mezclar ni perder el hilo</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1">
+    <div style="display:flex;flex-direction:column;gap:4mm">
+      <!-- Salon A -->
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm">
+        <div style="display:flex;align-items:center;gap:3mm;margin-bottom:3mm">
+          <div style="width:3mm;height:3mm;background:#3ecf8e;border-radius:50%"></div>
+          <div style="font-size:9pt;font-weight:700;color:#f1f5f9">Salón A · Boda Martínez</div>
+          <span class="salon-tag" style="background:#0d2b1c;color:#3ecf8e;margin-left:auto">ACTIVO</span>
+        </div>
+        <div style="display:flex;gap:3mm">
+          <div class="dash-kpi"><div class="v" style="color:#e2e8f0">430</div><div class="l">Piezas</div></div>
+          <div class="dash-kpi"><div class="v warn">316</div><div class="l">Servilletas</div></div>
+          <div class="dash-kpi"><div class="v g">48</div><div class="l">Manteles</div></div>
+          <div class="dash-kpi"><div class="v red">5</div><div class="l">Faltantes</div></div>
+        </div>
+        <div style="margin-top:3mm;font-size:7pt;color:#6b7280">250 comensales · Entrada escaneo: 14 jun 10:00</div>
+      </div>
+      <!-- Salon B -->
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm">
+        <div style="display:flex;align-items:center;gap:3mm;margin-bottom:3mm">
+          <div style="width:3mm;height:3mm;background:#3b82f6;border-radius:50%"></div>
+          <div style="font-size:9pt;font-weight:700;color:#f1f5f9">Salón B · XV Años García</div>
+          <span class="salon-tag" style="background:#1a2744;color:#60a5fa;margin-left:auto">ACTIVO</span>
+        </div>
+        <div style="display:flex;gap:3mm">
+          <div class="dash-kpi"><div class="v" style="color:#e2e8f0">280</div><div class="l">Piezas</div></div>
+          <div class="dash-kpi"><div class="v" style="color:#3b82f6">190</div><div class="l">Servilletas</div></div>
+          <div class="dash-kpi"><div class="v g">32</div><div class="l">Manteles</div></div>
+          <div class="dash-kpi"><div class="v g">0</div><div class="l">Faltantes</div></div>
+        </div>
+        <div style="margin-top:3mm;font-size:7pt;color:#6b7280">150 comensales · Entrada escaneo: 14 jun 11:30</div>
+      </div>
+      <!-- Alert -->
+      <div style="background:#1a0d0d;border:1px solid #7f1d1d44;border-radius:3mm;padding:4mm 5mm;display:flex;align-items:center;gap:4mm">
+        <div style="font-size:16pt">⚠️</div>
+        <div>
+          <div style="font-size:8.5pt;font-weight:700;color:#ef4444;margin-bottom:1mm">Sin ON: la mezcla es inevitable</div>
+          <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Cuando el equipo recoge la ropa de dos salones al mismo tiempo, las servilletas azules de una boda terminan en los bultos de la otra. El sistema registra cada pieza con su evento asignado — la separación es automática.</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div class="feat-item"><div class="icon">🏷️</div><div><h4>Cada pieza asignada a su evento</h4><p>Al etiquetar, la mantelería queda vinculada al cliente o al evento. El lector sabe a qué salón pertenece cada pieza — incluso si los bultos se mezclan en el camino.</p></div></div>
+      <div class="feat-item"><div class="icon">📲</div><div><h4>Alerta en tiempo real</h4><p>El coordinador recibe una notificación por WhatsApp si al cerrar un salón hay faltantes — antes de que el cliente se vaya y la responsabilidad quede en disputa.</p></div></div>
+      <div class="feat-item"><div class="icon">📊</div><div><h4>Reporte por evento, no por día</h4><p>Cada boda, quinceañera o evento corporativo tiene su propio historial: piezas asignadas, usadas, enviadas a lavandería y recuperadas.</p></div></div>
+      <div class="feat-item"><div class="icon">🗓️</div><div><h4>Agenda de disponibilidad</h4><p>Sabe cuántas piezas están en lavandería y cuándo regresan. Antes de confirmar una fecha, verifica que el inventario alcanza — sin sorpresas de último minuto.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>4 / 9</span></div>
+</div>
+
+<!-- SLIDE 5 — DASHBOARD -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Dashboard del salón</div>
+    <div class="slide-title">Todo tu inventario de mantelería, <span style="color:#3ecf8e">en un vistazo</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8mm;flex:1">
+    <div style="background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:5mm;display:flex;flex-direction:column;gap:3mm">
+      <div class="client-chip">● Salón Cristal</div>
+      <div style="display:flex;gap:3mm">
+        <div class="dash-kpi"><div class="v" style="color:#e2e8f0">2,840</div><div class="l">Total</div></div>
+        <div class="dash-kpi"><div class="v g">47,200</div><div class="l">Lavados</div></div>
+        <div class="dash-kpi"><div class="v" style="color:#818cf8">16.6</div><div class="l">Promedio</div></div>
+        <div class="dash-kpi"><div class="v warn">620</div><div class="l">Lavand.</div></div>
+        <div class="dash-kpi"><div class="v red">83</div><div class="l">Críticas</div></div>
+      </div>
+      <div style="display:flex;gap:3mm;margin-top:1mm">
+        <div style="flex:1.6;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Lavados promedio por artículo</div>
+          <div style="position:relative;height:44mm"><canvas id="chartWash"></canvas></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:1.5mm">
+          <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Estado actual</div>
+          <div style="position:relative;height:44mm"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4mm">
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">97.1%</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Tasa de retorno de lavandería<br>últimos 60 días</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div class="feat-item"><div class="icon">🔢</div><div><h4>Conteo instantáneo antes del montaje</h4><p>En 60 segundos sabes exactamente cuántos manteles, servilletas y faldones limpios tienes disponibles — sin revisar estantes ni contar a mano.</p></div></div>
+      <div class="feat-item"><div class="icon">🎯</div><div><h4>Trazabilidad individual por EPC</h4><p>Cada pieza tiene identidad única. Si un mantel desaparece, sabes exactamente cuál fue, en qué evento se usó y cuándo salió a lavandería.</p></div></div>
+      <div class="feat-item"><div class="icon">📆</div><div><h4>Planificación de temporada alta</h4><p>Visualiza cuántas piezas están disponibles semana a semana. Evita confirmar eventos que excedan tu inventario real en diciembre o temporada de bodas.</p></div></div>
+      <div class="feat-item"><div class="icon">💡</div><div><h4>Alertas de reposición</h4><p>El sistema avisa cuando un tipo de mantel alcanza un mínimo crítico — con tiempo suficiente para comprar o rentar antes del siguiente fin de semana comprometido.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>5 / 9</span></div>
+</div>
+
+<!-- SLIDE 6 — BITÁCORA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Bitácora y trazabilidad</div>
+    <div class="slide-title">Cada evento, cada pieza, <span style="color:#3ecf8e">registrado para siempre</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 72mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;align-items:center">
+        <span>● Salón Cristal</span>
+        <span style="margin-left:auto;color:#6b7280;font-weight:400">Filtrar · CSV · PDF</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">48× Mantel redondo &nbsp; 320× Servilleta &nbsp; 14× Faldón &nbsp; 48× Cubre-mantel</div><div style="font-size:7pt;color:#6b7280">430 piezas · Boda Martínez · Salón A · EPCs escaneados</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">14 jun<br>23:00</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a;background:#0b0e14">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">47× Mantel redondo &nbsp; 314× Servilleta &nbsp; 14× Faldón &nbsp; 46× Cubre-mantel</div><div style="font-size:7pt;color:#6b7280">421 recibidas · 9 faltantes detectados · Alerta generada</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">16 jun<br>09:30</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rec">Recolección</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">32× Mantel rectangular &nbsp; 190× Servilleta &nbsp; 10× Faldón &nbsp; 32× Cubre-mantel</div><div style="font-size:7pt;color:#6b7280">264 piezas · XV Años García · Salón B · EPCs escaneados</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">14 jun<br>23:30</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a;background:#0b0e14">
+        <span class="type-badge badge-ent">Entrega</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">32× Mantel rectangular &nbsp; 190× Servilleta &nbsp; 10× Faldón &nbsp; 32× Cubre-mantel</div><div style="font-size:7pt;color:#6b7280">264 recibidas · Retorno completo</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">16 jun<br>10:00</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:4mm;padding:3mm 5mm;border-bottom:1px solid #0f141a">
+        <span class="type-badge badge-rep">Reproceso</span>
+        <div style="flex:1"><div style="font-size:8pt;font-weight:600;color:#e2e8f0;margin-bottom:0.5mm">4× Mantel redondo &nbsp; 12× Servilleta</div><div style="font-size:7pt;color:#6b7280">Manchas de vino — reproceso con lavado intensivo · Boda Martínez</div></div>
+        <div style="font-size:6.5pt;color:#4b5563;white-space:nowrap">17 jun<br>11:00</div>
+      </div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563">Mostrando 5 de 112 eventos · Reportes automáticos por WhatsApp tras cada evento</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:flex-start">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:9pt;font-weight:700;color:#f1f5f9;margin-bottom:2mm">¿Qué es la Bitácora?</div>
+        <p style="font-size:7.5pt;color:#9ca3af;line-height:1.5">Registro cronológico de cada envío a lavandería, cada entrega recibida y cada reproceso. Incluye fecha, hora, artículos por tipo y EPC individual de cada pieza — evidencia lista para reclamar faltantes a tu proveedor.</p>
+      </div>
+      <div style="display:flex;gap:2mm">
+        <div style="flex:1;background:#0d2b1c;border:1px solid #1f5c38;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3ecf8e">56</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Recolecciones</div>
+        </div>
+        <div style="flex:1;background:#13181f;border:1px solid #1e2431;border-radius:2mm;padding:3mm;text-align:center">
+          <div style="font-size:18pt;font-weight:800;color:#3b82f6">54</div>
+          <div style="font-size:6.5pt;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">Entregas</div>
+        </div>
+      </div>
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:3mm 4mm;flex:1">
+        <div style="font-size:7pt;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Actividad mensual</div>
+        <div style="position:relative;height:50mm"><canvas id="chartMonthly"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>6 / 9</span></div>
+</div>
+
+<!-- SLIDE 7 — LAVANDERÍA ACCOUNTABILITY -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Control de lavandería</div>
+    <div class="slide-title">Termina con los faltantes <span style="color:#3ecf8e">sin evidencia</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="padding:3mm 5mm;background:#131820;border-bottom:1px solid #1e2431;font-size:7.5pt;font-weight:600;color:#e2e8f0;display:flex;align-items:center">
+        <span>● Salón Cristal · Historial de envíos</span>
+        <span style="margin-left:auto;color:#6b7280;font-weight:400">CSV · PDF</span>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;background:#131820;border-bottom:1px solid #1e2431">
+        <div>Evento</div><div>Enviadas</div><div>Recibidas</div><div>Faltantes</div><div>Estado</div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">Boda Martínez</div><div style="color:#e2e8f0">430</div><div style="color:#3ecf8e">421</div><div style="color:#ef4444;font-weight:700">9</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">XV García</div><div style="color:#e2e8f0">264</div><div style="color:#3ecf8e">264</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">Corp. Cemex</div><div style="color:#e2e8f0">580</div><div style="color:#3ecf8e">574</div><div style="color:#ef4444;font-weight:700">6</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">Boda Ríos</div><div style="color:#e2e8f0">395</div><div style="color:#3ecf8e">395</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center">
+        <div class="dim">Posada Dic.</div><div style="color:#e2e8f0">1,240</div><div style="color:#3ecf8e">1,218</div><div style="color:#ef4444;font-weight:700">22</div><div><span style="background:#2d1010;color:#ef4444;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">FALTANTE</span></div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14">
+        <div class="dim">Graduación</div><div style="color:#e2e8f0">320</div><div style="color:#3ecf8e">320</div><div style="color:#3ecf8e;font-weight:700">0</div><div><span style="background:#0d2b1c;color:#3ecf8e;padding:1px 6px;border-radius:99px;font-size:6.5pt;font-weight:700">COMPLETO</span></div>
+      </div>
+      <div style="padding:3mm 5mm;font-size:7pt;color:#4b5563">56 eventos registrados en 6 meses · Tasa de retorno: 97.1%</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3mm;justify-content:center">
+      <div style="background:#13181f;border:1px solid #1e2431;border-radius:2.5mm;padding:4mm">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font-size:22pt;font-weight:800;color:#e2e8f0">38,400</div><div style="font-size:7.5pt;color:#9ca3af">Prendas enviadas</div></div>
+          <div><div style="font-size:18pt;font-weight:800;color:#3ecf8e">37,282</div><div style="font-size:7.5pt;color:#9ca3af">Recibidas</div></div>
+        </div>
+      </div>
+      <div style="background:#1a0d0d;border:1px solid #7f1d1d44;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:8pt;font-weight:600;color:#ef4444;margin-bottom:1.5mm">1,118 prendas faltantes (6 meses)</div>
+        <div style="font-size:7.5pt;color:#9ca3af;line-height:1.4">Evidencia documentada por evento, con EPCs individuales, lista para presentar al proveedor de lavandería.</div>
+      </div>
+      <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:2.5mm;padding:4mm">
+        <div style="font-size:8pt;font-weight:600;color:#3ecf8e;margin-bottom:1.5mm">Valor recuperable estimado</div>
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">$83,850 MXN</div>
+        <div style="font-size:7pt;color:#9ca3af;margin-top:1mm">1,118 piezas × $75 prom.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>7 / 9</span></div>
+</div>
+
+<!-- SLIDE 8 — CICLO DE VIDA -->
+<div class="slide" style="padding:12mm 14mm 10mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Ciclo de vida</div>
+    <div class="slide-title">Reemplaza mantelería <span style="color:#3ecf8e">antes de que el novio lo note en las fotos</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 55mm;gap:8mm;flex:1">
+    <div style="background:#080b0f;border:1px solid #1e2431;border-radius:3mm;overflow:hidden;flex:1">
+      <div style="background:#131820;padding:3mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:6.5pt;font-weight:700;letter-spacing:0.5px;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #1e2431">
+        <div>Artículo</div><div>Prom. lavados</div><div>Límite</div><div>Estado</div>
+      </div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Mantel redondo premium</div><div style="color:#ef4444;font-weight:700">38</div><div class="dim">35</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Servilleta de tela</div><div style="color:#ef4444;font-weight:700">62</div><div class="dim">60</div><div><span class="badge-crit">CRÍTICO</span><div class="pct-bar crit" style="width:100%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Cubre-mantel</div><div style="color:#f59e0b;font-weight:700">28</div><div class="dim">35</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:80%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Faldón de mesa</div><div style="color:#f59e0b;font-weight:700">22</div><div class="dim">30</div><div><span class="badge-warn">AVISO</span><div class="pct-bar warn" style="width:73%"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Mantel rectangular</div><div style="color:#9ca3af">18</div><div class="dim">35</div><div><div class="pct-bar" style="width:51%;background:#3ecf8e"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center;background:#0b0e14"><div style="color:#e2e8f0;font-weight:600">Cover de silla</div><div style="color:#9ca3af">12</div><div class="dim">50</div><div><div class="pct-bar" style="width:24%;background:#3ecf8e"></div></div></div>
+      <div style="padding:2.5mm 5mm;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;font-size:7.5pt;border-bottom:1px solid #0f141a;align-items:center"><div style="color:#e2e8f0;font-weight:600">Lazo / moño silla</div><div style="color:#9ca3af">9</div><div class="dim">40</div><div><div class="pct-bar" style="width:22%;background:#3ecf8e"></div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4mm;justify-content:center">
+      <div class="lc-info-card"><h4>Umbrales por categoría</h4><p>Un mantel de boda premium y uno de evento corporativo tienen estándares distintos. Configura límites de ciclo diferentes por tipo de prenda y nivel de evento.</p></div>
+      <div class="lc-info-card" style="border-color:#7f1d1d44;background:#1a0d0d"><h4 style="color:#ef4444">Impacto en la imagen del salón</h4><p>Un mantel desgastado o con pilling en una boda afecta directamente las fotografías y las reseñas. El sistema detecta qué piezas ya superaron su vida útil antes de asignarlas a un evento importante.</p></div>
+      <div class="lc-info-card" style="border-color:#1f5c38;background:#0d2b1c"><h4 style="color:#3ecf8e">Planificación de compras</h4><p>Recibe alertas cuando artículos alcanzan el 80% de vida útil — con tiempo para cotizar y reponer antes de temporada alta de bodas o diciembre.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>8 / 9</span></div>
+</div>
+
+<!-- SLIDE 9 — PROPUESTA -->
+<div class="slide" style="padding:14mm 16mm 10mm;justify-content:center">
+  <div class="accent-bar"></div>
+  <div style="font-size:7pt;font-weight:700;letter-spacing:2px;color:#3ecf8e;text-transform:uppercase;margin-bottom:3mm">Próximos pasos</div>
+  <h2 style="font-size:26pt;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;margin-bottom:2mm">Operando antes de <span style="color:#3ecf8e">tu próximo evento</span></h2>
+  <p style="font-size:10pt;color:#9ca3af;margin-bottom:9mm">Para un salón con 1,500–4,000 piezas, el sistema está listo antes del siguiente fin de semana con evento.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;margin-bottom:8mm">
+    <div class="prop-card"><div class="step">1</div><h4>Día 1: Etiquetado</h4><p>Colocamos chips RFID en cada mantel, servilleta, faldón y cover. Para 2,000–3,000 piezas, el proceso se completa en un día de trabajo.</p></div>
+    <div class="prop-card"><div class="step">2</div><h4>Día 2: Configuración</h4><p>Alta en el sistema, configuración de salones y artículos, umbrales por tipo de prenda, y WhatsApp del coordinador para alertas en tiempo real.</p></div>
+    <div class="prop-card"><div class="step">3</div><h4>Siguiente evento</h4><p>El equipo de montaje aprende el flujo en 20 minutos. Primer escaneo pre-evento en vivo — desde el primer día tienes trazabilidad completa.</p></div>
+  </div>
+  <div class="cta-bar">
+    <div><h4 style="font-size:12pt;font-weight:700;color:#f1f5f9;margin-bottom:1mm">¿Listos para ver el sistema en acción?</h4><p style="font-size:8.5pt;color:#9ca3af">Agenda una demo en vivo — conectamos en tiempo real con datos reales de tu salón.</p></div>
+    <div style="font-size:11pt;font-weight:700;color:#3ecf8e;padding-left:20mm">emiliano.villarreal99@gmail.com</div>
+  </div>
+  <div class="foot"><span>ON Sistema de Inventario</span><span>9 / 9</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+(function () {
+  const avgs = [38, 28, 22, 18, 12, 9];
+  const labels = ['Servilleta', 'Mantel red.', 'Cubre-m.', 'Faldón', 'Cover silla', 'Lazo'];
+  new Chart(document.getElementById('chartWash'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: avgs, backgroundColor: avgs.map(v => v >= 30 ? '#f59e0b' : '#3ecf8e'), borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 8 }, color: '#6b7280' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 4 }, suggestedMin: 0, suggestedMax: 50 } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels: ['En lavandería', 'En almacén', 'En evento', 'Críticas'], datasets: [{ data: [620, 1980, 157, 83], backgroundColor: ['#f59e0b', '#3ecf8e', '#3b82f6', '#ef4444'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 5, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } } }
+  });
+})();
+
+(function () {
+  new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      datasets: [
+        { label: 'Recolecciones', data: [6, 8, 9, 10, 12, 11], backgroundColor: '#3ecf8e55', borderColor: '#3ecf8e', borderWidth: 1.5, borderRadius: 3 },
+        { label: 'Entregas',      data: [6, 7, 9, 10, 11, 11], backgroundColor: '#3b82f655', borderColor: '#3b82f6', borderWidth: 1.5, borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 7 }, color: '#9ca3af', padding: 8, boxWidth: 8, boxHeight: 8 } }, tooltip: { enabled: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 7.5 }, color: '#6b7280' } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7.5 }, color: '#6b7280', maxTicksLimit: 4, stepSize: 4 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 /**
  * Seed script — creates a "demo" client with realistic fake data.
- * Run once:  node seed-demo.js
- * Safe to re-run: skips creation if client already exists.
+ * Run once:        node seed-demo.js
+ * Force re-seed:   node seed-demo.js --force   (wipes existing demo data first)
  */
 
 require('dotenv').config();
@@ -156,16 +156,28 @@ function buildDamageReports(tagDocs) {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+    const force = process.argv.includes('--force');
     const client = new MongoClient(MONGO_URI);
     await client.connect();
     const db = client.db(DB_NAME);
 
-    // Guard: skip if demo client already exists
     const existing = await db.collection('clientes').findOne({ name: CLIENT_NAME });
     if (existing) {
-        console.log(`Client "${CLIENT_NAME}" already exists — nothing written. Delete it first to re-seed.`);
-        await client.close();
-        return;
+        if (!force) {
+            console.log(`Client "${CLIENT_NAME}" already exists — nothing written.\nRun with --force to wipe and re-seed.`);
+            await client.close();
+            return;
+        }
+        console.log(`--force: wiping existing "${CLIENT_NAME}" data…`);
+        await Promise.all([
+            db.collection('tags').deleteMany({ client: CLIENT_NAME }),
+            db.collection('recoleccion').deleteMany({ client: CLIENT_NAME }),
+            db.collection('entrega').deleteMany({ client: CLIENT_NAME }),
+            db.collection('damage').deleteMany({ client: CLIENT_NAME }),
+            db.collection('inventory_snapshots').deleteMany({ client: CLIENT_NAME }),
+            db.collection('clientes').deleteOne({ name: CLIENT_NAME }),
+        ]);
+        console.log('  ✓ Existing demo data wiped');
     }
 
     console.log('Inserting tags…');

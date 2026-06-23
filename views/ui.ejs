@@ -431,10 +431,32 @@
         .manual-panel { margin-top: 14px; display: none; }
         .manual-panel.open { display: block; }
 
-        .manual-fields {
-            display: grid; grid-template-columns: 1fr 1fr 80px; gap: 10px; margin-bottom: 12px;
+        .manual-client-row { margin-bottom: 10px; }
+
+        .manual-article-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+        .manual-article-row {
+            display: grid; grid-template-columns: 1fr 76px 26px; gap: 8px; align-items: end;
         }
-        @media (max-width: 540px) { .manual-fields { grid-template-columns: 1fr; } }
+        @media (max-width: 540px) {
+            .manual-article-row { grid-template-columns: 1fr 76px 26px; }
+        }
+
+        .manual-rm-btn {
+            background: none; border: 1px solid #374151; border-radius: 5px;
+            color: #6b7280; font-size: 13px; cursor: pointer; height: 34px;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .manual-rm-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+        .manual-add-row-btn {
+            background: none; border: 1px dashed #374151; border-radius: 6px;
+            color: #6b7280; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+            cursor: pointer; padding: 5px 12px; margin-bottom: 12px;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .manual-add-row-btn:hover { border-color: var(--green); color: var(--green); }
 
         .manual-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -839,20 +861,12 @@
                 <i class="chevron">›</i> Registro manual (sin escáner)
             </button>
             <div class="manual-panel" id="manualPanel">
-                <div class="manual-fields">
-                    <div>
-                        <label class="field-label-sm" for="manualClient">Cliente</label>
-                        <input type="text" class="field-input" id="manualClient" placeholder="Nombre del cliente" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="field-label-sm" for="manualArticle">Artículo</label>
-                        <input type="text" class="field-input" id="manualArticle" placeholder="Ej. sabana" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="field-label-sm" for="manualCount">Cantidad</label>
-                        <input type="number" class="field-input" id="manualCount" value="1" min="1">
-                    </div>
+                <div class="manual-client-row">
+                    <label class="field-label-sm" for="manualClient">Cliente</label>
+                    <input type="text" class="field-input" id="manualClient" placeholder="Nombre del cliente" autocomplete="off">
                 </div>
+                <div class="manual-article-rows" id="manualArticleRows"></div>
+                <button type="button" class="manual-add-row-btn" id="manualAddRow">+ Agregar artículo</button>
                 <div class="manual-actions">
                     <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
                     <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
@@ -1424,26 +1438,54 @@
             manualPanel.classList.toggle('open');
         });
 
-        async function submitManual(type) {
-            const client  = document.getElementById('manualClient').value.trim();
-            const article = document.getElementById('manualArticle').value.trim();
-            const count   = parseInt(document.getElementById('manualCount').value) || 0;
+        function addManualRow(art = '', qty = 1) {
+            const row = document.createElement('div');
+            row.className = 'manual-article-row';
+            row.innerHTML = `
+                <div>
+                    <label class="field-label-sm">Artículo</label>
+                    <input type="text" class="field-input manual-art" placeholder="Ej. sabana king" value="${art}" autocomplete="off">
+                </div>
+                <div>
+                    <label class="field-label-sm">Cantidad</label>
+                    <input type="number" class="field-input manual-qty" value="${qty}" min="1">
+                </div>
+                <button type="button" class="manual-rm-btn" title="Eliminar fila">✕</button>
+            `;
+            row.querySelector('.manual-rm-btn').addEventListener('click', () => {
+                if (document.querySelectorAll('.manual-article-row').length > 1) row.remove();
+            });
+            document.getElementById('manualArticleRows').appendChild(row);
+        }
 
-            if (!client || !article || count <= 0) {
-                toast('error', 'Datos incompletos', 'Ingresa cliente, artículo y cantidad mayor a 0.');
+        // Start with one empty row
+        addManualRow();
+        document.getElementById('manualAddRow').addEventListener('click', () => addManualRow());
+
+        async function submitManual(type) {
+            const client = document.getElementById('manualClient').value.trim();
+
+            const articles = {};
+            document.querySelectorAll('.manual-article-row').forEach(row => {
+                const art = row.querySelector('.manual-art').value.trim();
+                const qty = parseInt(row.querySelector('.manual-qty').value) || 0;
+                if (art && qty > 0) articles[art] = (articles[art] || 0) + qty;
+            });
+
+            if (!client || Object.keys(articles).length === 0) {
+                toast('error', 'Datos incompletos', 'Ingresa cliente y al menos un artículo con cantidad mayor a 0.');
                 return;
             }
 
-            const payload = {
-                timestamp: getTimestamp(),
-                items: {
-                    [client]: {
-                        [article]: { count, epcs: [], declared_count: count }
-                    }
-                }
-            };
+            const clientItems = {};
+            for (const [art, qty] of Object.entries(articles)) {
+                clientItems[art] = { count: qty, epcs: [], declared_count: qty };
+            }
 
+            const payload = { timestamp: getTimestamp(), items: { [client]: clientItems } };
             const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual' };
+            const totalQty = Object.values(articles).reduce((s, v) => s + v, 0);
+            const artList  = Object.entries(articles).map(([a, q]) => `${q} ${a}`).join(', ');
 
             try {
                 const res = await fetch(`/api/${type}`, {
@@ -1452,8 +1494,10 @@
                     body: JSON.stringify(payload),
                 });
                 if (res.ok) {
-                    toast('success', labels[type], `${count} ${article}(s) registrados para ${client}.`);
-                    document.getElementById('manualCount').value = '1';
+                    toast('success', labels[type], `${artList} registrados para ${client}.`);
+                    // Reset rows back to one empty row
+                    document.getElementById('manualArticleRows').innerHTML = '';
+                    addManualRow();
                 } else {
                     const msg = await res.text().catch(() => 'Error desconocido');
                     toast('error', 'Error al registrar', msg);

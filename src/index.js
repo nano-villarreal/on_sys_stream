@@ -251,12 +251,14 @@ const sendMessage = async (content, senderID, accion, options = {}) => {
                 dateTimeStr = d.toLocaleDateString('es-MX', {
                     day: 'numeric',
                     month: 'short',
-                    year: 'numeric'
+                    year: 'numeric',
+                    timeZone: 'America/Monterrey'
                 }).replace(/\./g, '') + ' ' +
                     d.toLocaleTimeString('es-MX', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: false
+                        hour12: false,
+                        timeZone: 'America/Monterrey'
                     });
             }
 
@@ -886,7 +888,7 @@ webApp.post('/api/dar-de-alta', async (req, res) => {
         }
 
         const db = mongoClient.db("on");
-        const results = { inserted: 0, skipped_duplicate: 0, skipped_invalid: 0 };
+        const results = { inserted: 0, updated: 0, skipped_duplicate: 0, skipped_invalid: 0 };
 
         for (const epc of epcs) {
             const trimmedEpc = String(epc).trim().toUpperCase();
@@ -898,7 +900,45 @@ webApp.post('/api/dar-de-alta', async (req, res) => {
 
             const existingTag = await db.collection("tags").findOne({ scanId: trimmedEpc });
             if (existingTag) {
-                results.skipped_duplicate++;
+                // Exact same article + client → true duplicate, nothing to do
+                if (existingTag.article === articulo.trim() && existingTag.client === cliente.trim()) {
+                    results.skipped_duplicate++;
+                    continue;
+                }
+
+                // Article or client changed → update the tag
+                const oldClient = existingTag.client;
+                const newClient = cliente.trim();
+
+                await db.collection("tags").updateOne(
+                    { scanId: trimmedEpc },
+                    { $set: { article: articulo.trim(), client: newClient, last_seen: Date.now() } }
+                );
+
+                // If the client changed, move the tag reference between client documents
+                if (oldClient !== newClient) {
+                    await db.collection("clientes").updateOne(
+                        { name: oldClient },
+                        { $pull: { tags: existingTag._id } }
+                    );
+                    const newClientDoc = await db.collection("clientes").findOne({ name: newClient });
+                    if (newClientDoc) {
+                        await db.collection("clientes").updateOne(
+                            { _id: newClientDoc._id },
+                            { $addToSet: { tags: existingTag._id } }
+                        );
+                    } else {
+                        await db.collection("clientes").insertOne({
+                            name: newClient,
+                            recolecciones: [],
+                            entregas: [],
+                            numero: "+15129654086",
+                            tags: [existingTag._id]
+                        });
+                    }
+                }
+
+                results.updated++;
                 continue;
             }
 
