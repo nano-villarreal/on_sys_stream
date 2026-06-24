@@ -6,8 +6,6 @@
     <title>ON Sistema — Dashboard · <%= client || 'Cliente' %></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --bg:           #0e1117;
@@ -353,7 +351,8 @@
                         <input type="date" class="pdf-date" id="pdfFrom" title="Desde" />
                         <span style="font-size:11px;color:var(--text-3);">—</span>
                         <input type="date" class="pdf-date" id="pdfTo" title="Hasta" />
-                        <button class="btn-pdf-gen" id="btnGeneratePDF">Generar</button>
+                        <button class="btn-pdf-gen" id="btnGeneratePDF">Reporte simple</button>
+                        <button class="btn-pdf-gen" id="btnInsightfulPDF" style="background:var(--green);color:#091a12;">Reporte detallado</button>
                     </div>
                 </div>
                 <% } %>
@@ -810,6 +809,9 @@
         });
 
         generateBtn.addEventListener('click', () => downloadDashboardPDF(fromInput.value, toInput.value));
+
+        const insightBtn = document.getElementById('btnInsightfulPDF');
+        if (insightBtn) insightBtn.addEventListener('click', () => openInsightfulReport(fromInput.value, toInput.value));
     })();
 
     async function downloadDashboardPDF(from, to) {
@@ -820,126 +822,435 @@
         try {
             const resp = await fetch(`/api/pdf-data?client=${encodeURIComponent(CLIENT_NAME)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
             if (!resp.ok) throw new Error('pdf-data fetch failed');
-            const data = await resp.json();
+            const d = await resp.json();
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const W = doc.internal.pageSize.getWidth();
-            const H = doc.internal.pageSize.getHeight();
-            const GREEN  = [62, 207, 142];
-            const DARK   = [14, 17, 23];
-            const GRAY   = [100, 106, 128];
-            const LIGHT  = [248, 250, 252];
+            const fmtD = iso => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+            const fmtS = iso => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+            const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const period    = `${fmtD(d.from)} — ${fmtD(d.to)}`;
+            const generated = new Date().toLocaleString('es-MX', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-            // ── Header bar ──────────────────────────────────────────────
-            doc.setFillColor(...GREEN);
-            doc.rect(0, 0, W, 22, 'F');
+            const artRows = (d.articleBreakdown || []).map(a => `
+                <tr>
+                  <td>${esc(a.article)}</td>
+                  <td class="num">${Number(a.count).toLocaleString('es-MX')}</td>
+                  <td class="num">${Number(a.totalWashes).toLocaleString('es-MX')}</td>
+                  <td class="num">${a.avgWashes}</td>
+                </tr>`).join('');
 
-            doc.setFillColor(...DARK);
-            doc.roundedRect(8, 5, 12, 12, 2, 2, 'F');
-            doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-            doc.text('ON', 14, 13, { align: 'center' });
+            const evtRows = (d.events || []).slice(0, 18).map(e => `
+                <tr>
+                  <td class="dt">${fmtS(e.date)}</td>
+                  <td class="${e.type === 'Entrega' ? 'ent' : 'rec'}">${e.type === 'Entrega' ? '📦 Entrega' : '↩ Recolección'}</td>
+                  <td class="arts">${esc(e.articles.slice(0, 70))}${e.articles.length > 70 ? '…' : ''}</td>
+                  <td class="num">${e.epcCount}</td>
+                </tr>`).join('');
 
-            doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-            doc.text('ON Sistema de Inventario', 24, 11);
-            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-            doc.text('DASHBOARD — REPORTE DE INVENTARIO', 24, 17);
+            const chartLabels = JSON.stringify((d.articleBreakdown || []).map(a => a.article));
+            const chartData   = JSON.stringify((d.articleBreakdown || []).map(a => a.count));
 
-            let y = 32;
+            const html = `<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<title>Reporte ${esc(d.client)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>
+<style>
+:root{--bg:#0e1117;--ac:#3ecf8e;--t:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--s:#161b27;--s2:#1c2333;--b:rgba(255,255,255,0.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+@page{size:A4 landscape;margin:0}
+html,body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.slide{width:297mm;height:210mm;padding:34px 44px;display:flex;flex-direction:column;page-break-after:always;overflow:hidden;position:relative}
+.slide:last-child{page-break-after:auto}
+.wm{position:absolute;right:44px;top:34px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.04);text-transform:uppercase}
+.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:14px}
+/* slide 1 */
+.s1-top{display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--ac);text-transform:uppercase}
+.gen{font-size:9px;color:var(--t3)}
+.accent-bar{width:36px;height:3px;background:var(--ac);border-radius:2px;margin:auto 0 18px}
+.client{font-size:48px;font-weight:800;color:var(--t);line-height:1;letter-spacing:-1px}
+.period{font-size:13px;color:var(--t2);margin-top:7px;margin-bottom:30px}
+.kpis{display:flex;gap:18px}
+.kpi{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:14px 20px;min-width:110px}
+.kpi .v{font-size:30px;font-weight:800;color:var(--ac);line-height:1}
+.kpi.dim .v{color:var(--t2)}
+.kpi.red .v{color:#f87171}
+.kpi .l{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--t3);margin-top:4px}
+.footer{font-size:9px;color:var(--t3);margin-top:auto}
+/* slide 2 */
+.s2-body{display:grid;grid-template-columns:1fr 1fr;gap:36px;flex:1;min-height:0}
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--t3);padding:0 10px 8px 0;border-bottom:1px solid var(--b)}
+.tbl th.num,.tbl td.num{text-align:right;padding-right:0}
+.tbl td{padding:6px 10px 6px 0;border-bottom:1px solid var(--b);color:var(--t2);font-size:11px}
+.tbl td:first-child{color:var(--t);font-weight:500}
+.tbl tr:last-child td{border-bottom:none}
+.chart-box{position:relative;height:100%}
+/* slide 3 */
+.s3-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.s3-kpi{background:var(--s);border:1px solid var(--b);border-radius:9px;padding:13px 16px}
+.s3-kpi .v{font-size:22px;font-weight:800;color:var(--t)}
+.s3-kpi .l{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--t3);margin-top:3px}
+.evt-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.evt-tbl th{text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--t3);padding:0 0 8px;border-bottom:1px solid var(--b)}
+.evt-tbl td{padding:5px 8px 5px 0;border-bottom:1px solid var(--b);color:var(--t2);vertical-align:top}
+.evt-tbl td.dt{white-space:nowrap;color:var(--t3);font-size:10px}
+.evt-tbl td.num{text-align:right;white-space:nowrap}
+.evt-tbl td.arts{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evt-tbl td.ent{color:var(--ac);font-weight:600;white-space:nowrap}
+.evt-tbl td.rec{color:#60a5fa;font-weight:600;white-space:nowrap}
+.evt-tbl tr:last-child td{border-bottom:none}
+.rate{font-size:10px;color:var(--t2)}
+.rate strong{color:var(--ac)}
+</style></head><body>
 
-            // ── Client + date range ──────────────────────────────────────
-            doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-            doc.text(data.client, 14, y); y += 7;
+<!-- Slide 1: Cover -->
+<div class="slide">
+  <div class="s1-top">
+    <div class="logo">ON Sistema · Inventario RFID</div>
+    <div class="gen">${esc(generated)}</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="accent-bar"></div>
+    <div class="client">${esc(d.client)}</div>
+    <div class="period">Período: ${period}</div>
+    <div class="kpis">
+      <div class="kpi"><div class="v">${Number(d.stats.totalItems).toLocaleString('es-MX')}</div><div class="l">Total prendas</div></div>
+      <div class="kpi"><div class="v">${Number(d.stats.totalWashCount).toLocaleString('es-MX')}</div><div class="l">Lavados totales</div></div>
+      <div class="kpi dim"><div class="v">${d.stats.overallAvg}</div><div class="l">Prom. lavados</div></div>
+      <div class="kpi dim"><div class="v">${Number(d.stats.currentlyOut).toLocaleString('es-MX')}</div><div class="l">En lavandería</div></div>
+      ${d.stats.damagedCount > 0 ? `<div class="kpi red"><div class="v">${d.stats.damagedCount}</div><div class="l">Dañadas</div></div>` : ''}
+    </div>
+  </div>
+  <div class="footer">ON Sistema de Inventario RFID · Reporte generado automáticamente · Confidencial</div>
+</div>
 
-            const fmtDate = (iso) => new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-            doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
-            doc.text(`Período: ${fmtDate(data.from)} — ${fmtDate(data.to)}`, 14, y); y += 14;
+<!-- Slide 2: Article breakdown -->
+<div class="slide">
+  <div class="wm">ON SYS</div>
+  <div class="sec">Desglose por artículo — inventario total</div>
+  <div class="s2-body">
+    <div style="overflow:auto">
+      <table class="tbl">
+        <thead><tr><th>Artículo</th><th class="num">Prendas</th><th class="num">Lavados</th><th class="num">Promedio</th></tr></thead>
+        <tbody>${artRows || '<tr><td colspan="4" style="color:var(--t3);padding-top:12px">Sin artículos registrados</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="chart-box"><canvas id="artChart"></canvas></div>
+  </div>
+</div>
 
-            // ── Stats boxes ──────────────────────────────────────────────
-            const statsData = [
-                { label: 'TOTAL PRENDAS',    value: data.stats.totalItems,      color: DARK },
-                { label: 'LAVADOS TOTALES',  value: data.stats.totalWashCount,  color: GREEN },
-                { label: 'PROMEDIO',         value: data.stats.overallAvg,      color: [99, 102, 241] },
-                { label: 'EN CIRCULACIÓN',   value: data.stats.currentlyOut,    color: [59, 130, 246] },
-                { label: 'DAÑADAS',          value: data.stats.damagedCount,    color: [239, 68, 68] }
-            ];
-            const boxW = (W - 28 - 4 * 3) / 5;
-            statsData.forEach((s, i) => {
-                const x = 14 + i * (boxW + 3);
-                doc.setFillColor(...LIGHT);
-                doc.roundedRect(x, y, boxW, 22, 2, 2, 'F');
-                doc.setFontSize(17); doc.setFont('helvetica', 'bold'); doc.setTextColor(...s.color);
-                doc.text(String(s.value), x + boxW / 2, y + 12, { align: 'center' });
-                doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
-                doc.text(s.label, x + boxW / 2, y + 18.5, { align: 'center' });
-            });
-            y += 30;
+<!-- Slide 3: Activity -->
+<div class="slide">
+  <div class="wm">ON SYS</div>
+  <div class="sec">Actividad del período: ${period}</div>
+  <div class="s3-kpis">
+    <div class="s3-kpi"><div class="v">${d.summary.totalRecolecciones}</div><div class="l">Recolecciones</div></div>
+    <div class="s3-kpi"><div class="v">${d.summary.totalEntregas}</div><div class="l">Entregas</div></div>
+    <div class="s3-kpi"><div class="v">${Number(d.summary.totalPrendasRecogidas).toLocaleString('es-MX')}</div><div class="l">Prendas recogidas</div></div>
+    <div class="s3-kpi"><div class="v">${Number(d.summary.totalPrendasEntregadas).toLocaleString('es-MX')}</div><div class="l">Prendas entregadas</div></div>
+  </div>
+  <div style="flex:1;overflow:auto">
+    ${d.events && d.events.length > 0 ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--t3)">Registro de movimientos</span>
+      ${d.returnRate !== null ? `<span class="rate">Tasa de retorno: <strong>${d.returnRate}%</strong></span>` : ''}
+    </div>
+    <table class="evt-tbl">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Artículos</th><th class="num">EPCs</th></tr></thead>
+      <tbody>${evtRows}</tbody>
+    </table>` : '<p style="color:var(--t3);font-size:12px;margin-top:16px">Sin movimientos en el período.</p>'}
+  </div>
+</div>
 
-            // ── Daily wash chart ─────────────────────────────────────────
-            const chartImg = await renderUsageChartToBase64(data.dailyUsage, data.dailyArticles);
-            if (chartImg) {
-                if (y + 74 > H - 20) { doc.addPage(); y = 20; }
-                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-                doc.text('ACTIVIDAD DIARIA POR ARTÍCULO', 14, y); y += 4;
-                const chartW = W - 28;
-                const chartH = Math.round((300 / 880) * chartW);
-                doc.addImage(chartImg, 'PNG', 14, y, chartW, chartH);
-                y += chartH + 10;
-            }
+<script>
+(function(){
+  const labels=${chartLabels}, data=${chartData};
+  const ctx=document.getElementById('artChart');
+  if(!ctx||!labels.length) return;
+  new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'Prendas',data,backgroundColor:'#3ecf8ecc',borderColor:'#3ecf8e',borderWidth:1,borderRadius:4}]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw.toLocaleString('es-MX')}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b',font:{size:9}}},
+        y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxTicksLimit:12}}
+      }
+    }
+  });
+})();
+<\/script>
+</body></html>`;
 
-            // ── Activity in period ───────────────────────────────────────
-            if (y + 40 > H - 20) { doc.addPage(); y = 20; }
-            doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-            doc.text('ACTIVIDAD EN EL PERÍODO', 14, y); y += 3;
-            doc.autoTable({
-                startY: y,
-                head: [['Indicador', 'Valor']],
-                body: [
-                    ['Recolecciones', data.summary.totalRecolecciones],
-                    ['Entregas', data.summary.totalEntregas],
-                    ['Prendas recogidas', data.summary.totalPrendasRecogidas],
-                    ['Prendas entregadas', data.summary.totalPrendasEntregadas],
-                    ['Tasa de retorno', data.returnRate !== null ? data.returnRate + '%' : 'N/A']
-                ],
-                styles: { font: 'helvetica', fontSize: 9, cellPadding: 3.5 },
-                headStyles: { fillColor: DARK, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
-                alternateRowStyles: { fillColor: LIGHT },
-                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 90 }, 1: { halign: 'right' } },
-                margin: { left: 14, right: 14 },
-                tableLineColor: [220, 225, 235], tableLineWidth: 0.1
-            });
-            y = doc.lastAutoTable.finalY + 10;
-
-            // ── Article breakdown ────────────────────────────────────────
-            if (data.articleBreakdown && data.articleBreakdown.length > 0) {
-                if (y + 30 > H - 20) { doc.addPage(); y = 20; }
-                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
-                doc.text('DESGLOSE POR ARTÍCULO', 14, y); y += 3;
-                doc.autoTable({
-                    startY: y,
-                    head: [['Artículo', 'Cantidad', 'Lavados Totales', 'Promedio']],
-                    body: data.articleBreakdown.map(a => [a.article, a.count, a.totalWashes, a.avgWashes]),
-                    styles: { font: 'helvetica', fontSize: 9, cellPadding: 3.5 },
-                    headStyles: { fillColor: GREEN, textColor: [5, 30, 15], fontStyle: 'bold', fontSize: 8 },
-                    alternateRowStyles: { fillColor: LIGHT },
-                    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
-                    margin: { left: 14, right: 14 },
-                    tableLineColor: [220, 225, 235], tableLineWidth: 0.1
-                });
-            }
-
-            // ── Footer ───────────────────────────────────────────────────
-            const generated = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRAY);
-            doc.text(`Generado el ${generated} · ON Sistema de Inventario`, 14, H - 10);
-            doc.text('Confidencial', W - 14, H - 10, { align: 'right' });
-
-            doc.save(`dashboard-${CLIENT_NAME.replace(/\s+/g, '-')}-${from}.pdf`);
+            const win = window.open('', '_blank');
+            if (!win) { alert('Permite ventanas emergentes para generar el reporte.'); return; }
+            win.document.write(html);
+            win.document.close();
         } catch (err) {
             console.error('PDF error:', err);
-            alert('Error al generar el PDF. Intenta de nuevo.');
+            alert('Error al generar el reporte. Intenta de nuevo.');
         } finally {
-            btn.textContent = 'Generar';
+            btn.textContent = 'Reporte simple';
+            btn.disabled = false;
+        }
+    }
+
+    // ── Insightful report (dark-theme HTML, opens in new tab) ───────────────
+    async function openInsightfulReport(from, to) {
+        const btn = document.getElementById('btnInsightfulPDF');
+        btn.textContent = 'Generando…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`/api/pdf-data?client=${encodeURIComponent(CLIENT_NAME)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+            if (!resp.ok) throw new Error('pdf-data failed');
+            const d = await resp.json();
+
+            const esc     = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const fmtD    = iso => new Date(iso).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' });
+            const fmtS    = iso => new Date(iso).toLocaleDateString('es-MX', { day:'numeric', month:'short' });
+            const num     = n  => Number(n).toLocaleString('es-MX');
+            const period  = `${fmtD(d.from)} — ${fmtD(d.to)}`;
+            const gen     = new Date().toLocaleString('es-MX', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+            // ── Slide 1 data ──────────────────────────────────────────────────
+            const totEnd   = (d.comparison || []).reduce((s, r) => s + r.curr, 0);
+            const totStart = (d.comparison || []).reduce((s, r) => s + r.prev, 0);
+            const totDelta = totEnd - totStart;
+            const top3     = (d.comparison || []).slice(0, 3);
+
+            // ── Slide 2: comparison table rows ───────────────────────────────
+            const cmpRows = (d.comparison || []).map(r => {
+                const pct = r.prev > 0 ? ((r.delta / r.prev) * 100).toFixed(1) : (r.curr > 0 ? '+∞' : '0');
+                const col = r.delta > 0 ? '#3ecf8e' : r.delta < 0 ? '#f87171' : '#94a3b8';
+                const sign = r.delta > 0 ? '+' : '';
+                return `<tr>
+                  <td>${esc(r.article)}</td>
+                  <td class="num">${num(r.prev)}</td>
+                  <td class="num">${num(r.curr)}</td>
+                  <td class="num" style="color:${col};font-weight:700">${sign}${num(r.delta)}</td>
+                  <td class="num" style="color:${col}">${sign}${pct}%</td>
+                </tr>`;
+            }).join('');
+
+            // ── Slide 2: grouped bar chart data ──────────────────────────────
+            const cmpLabels = JSON.stringify((d.comparison || []).map(r => r.article));
+            const cmpPrev   = JSON.stringify((d.comparison || []).map(r => r.prev));
+            const cmpCurr   = JSON.stringify((d.comparison || []).map(r => r.curr));
+
+            // ── Slide 3: stacked weekly trend ────────────────────────────────
+            const trend = d.weeklyTrend || [];
+            // Top articles by current total, rest → "Otros"
+            const artOrder = (d.comparison || []).map(r => r.article).slice(0, 5);
+            const COLORS   = ['#3ecf8e','#60a5fa','#a78bfa','#f59e0b','#f87171'];
+
+            const trendLabels   = JSON.stringify(trend.map(w => fmtS(w.date)));
+            const trendDatasets = JSON.stringify(artOrder.map((art, i) => ({
+                label: art,
+                data: trend.map(w => w.articles[art] || 0),
+                backgroundColor: COLORS[i] + 'cc',
+                borderColor: COLORS[i],
+                borderWidth: 1,
+                borderRadius: 3,
+            })));
+
+            // ── Slide 3: insights bullets ─────────────────────────────────────
+            const insights = [];
+            const movers = [...(d.comparison || [])].filter(r => r.prev > 0 || r.curr > 0);
+            const biggest = [...movers].sort((a,b) => b.delta - a.delta);
+            if (biggest[0]?.delta > 0)  insights.push(`<li><strong>${esc(biggest[0].article)}</strong> registró el mayor aumento: <span style="color:#3ecf8e">+${num(biggest[0].delta)} prendas</span></li>`);
+            if (biggest[biggest.length-1]?.delta < 0) {
+                const worst = biggest[biggest.length-1];
+                insights.push(`<li><strong>${esc(worst.article)}</strong> registró la mayor baja: <span style="color:#f87171">${num(worst.delta)} prendas</span></li>`);
+            }
+            if (d.summary.totalRecolecciones > 0 || d.summary.totalEntregas > 0)
+                insights.push(`<li>${d.summary.totalRecolecciones} recolecciones y ${d.summary.totalEntregas} entregas en el período (<strong>${num(d.summary.totalPrendasRecogidas + d.summary.totalPrendasEntregadas)} movimientos</strong> totales)</li>`);
+            if (d.stats.currentlyOut > 0)
+                insights.push(`<li><strong>${num(d.stats.currentlyOut)}</strong> prendas en lavandería actualmente</li>`);
+            // threshold alerts
+            for (const ab of (d.articleBreakdown || [])) {
+                const thr = d.thresholds?.[ab.article];
+                if (thr && Number(ab.avgWashes) / thr >= 0.80)
+                    insights.push(`<li>⚠ <strong>${esc(ab.article)}</strong> al ${Math.round(Number(ab.avgWashes)/thr*100)}% de su umbral de lavados (${ab.avgWashes} / ${thr})</li>`);
+            }
+            if (d.returnRate !== null)
+                insights.push(`<li>Tasa de retorno del período: <strong>${d.returnRate}%</strong></li>`);
+            const insightHTML = insights.length
+                ? `<ul style="list-style:none;display:flex;flex-direction:column;gap:10px">${insights.join('')}</ul>`
+                : '<p style="color:var(--t3)">Sin datos suficientes para generar insights.</p>';
+
+            const html = `<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<title>Reporte Detallado — ${esc(d.client)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>
+<style>
+:root{--bg:#0e1117;--ac:#3ecf8e;--t:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--s:#161b27;--b:rgba(255,255,255,0.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+@page{size:A4 landscape;margin:0}
+html,body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.slide{width:297mm;height:210mm;padding:34px 44px;display:flex;flex-direction:column;page-break-after:always;overflow:hidden;position:relative}
+.slide:last-child{page-break-after:auto}
+.wm{position:absolute;right:44px;top:34px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.04);text-transform:uppercase;pointer-events:none}
+.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:14px}
+/* Slide 1 */
+.accent-bar{width:36px;height:3px;background:var(--ac);border-radius:2px;margin-bottom:16px}
+.client{font-size:46px;font-weight:800;color:var(--t);line-height:1;letter-spacing:-1px}
+.period-lbl{font-size:13px;color:var(--t2);margin-top:8px;margin-bottom:28px}
+.hero-stat{display:flex;align-items:flex-end;gap:14px;margin-bottom:28px}
+.hero-val{font-size:56px;font-weight:800;color:var(--ac);line-height:1}
+.hero-delta{font-size:18px;font-weight:700;padding:4px 10px;border-radius:6px;line-height:1.2;align-self:center}
+.hero-delta.up{background:rgba(62,207,142,0.12);color:var(--ac)}
+.hero-delta.down{background:rgba(248,113,113,0.12);color:#f87171}
+.hero-delta.flat{background:rgba(148,163,184,0.10);color:var(--t3)}
+.hero-sub{font-size:11px;color:var(--t3);align-self:flex-end;margin-bottom:6px}
+.top-arts{display:flex;gap:14px}
+.top-art{background:var(--s);border:1px solid var(--b);border-radius:9px;padding:11px 16px;flex:1}
+.top-art .v{font-size:22px;font-weight:800;color:var(--t);line-height:1}
+.top-art .d{font-size:10px;font-weight:600;margin-top:2px}
+.top-art .d.up{color:var(--ac)}.top-art .d.down{color:#f87171}.top-art .d.flat{color:var(--t3)}
+.top-art .l{font-size:9px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Slide 2 */
+.s2-body{display:grid;grid-template-columns:1fr 1fr;gap:32px;flex:1;min-height:0}
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--t3);padding:0 8px 8px 0;border-bottom:1px solid var(--b)}
+.tbl th.num,.tbl td.num{text-align:right;padding-right:0}
+.tbl td{padding:5.5px 8px 5.5px 0;border-bottom:1px solid var(--b);color:var(--t2)}
+.tbl td:first-child{color:var(--t);font-weight:500}
+.tbl tr:last-child td{border-bottom:none}
+.chart-box{position:relative;height:100%}
+/* Slide 3 */
+.s3-body{display:grid;grid-template-columns:1fr 1fr;gap:32px;flex:1;min-height:0;align-items:start}
+.insights{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:18px 20px;height:100%;display:flex;flex-direction:column;gap:0}
+.insights-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:14px}
+.insights li{font-size:11px;color:var(--t2);line-height:1.5;padding-left:14px;position:relative}
+.insights li::before{content:"›";position:absolute;left:0;color:var(--ac);font-weight:700}
+.insights li strong{color:var(--t)}
+</style></head><body>
+
+<!-- Slide 1: Cover + KPIs -->
+<div class="slide">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:var(--ac);text-transform:uppercase">ON Sistema · Inventario RFID</div>
+    <div style="font-size:9px;color:var(--t3)">${esc(gen)}</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="accent-bar"></div>
+    <div class="client">${esc(d.client)}</div>
+    <div class="period-lbl">Período: ${period}</div>
+    <div class="hero-stat">
+      <div class="hero-val">${num(totEnd)}</div>
+      <div class="hero-delta ${totDelta > 0 ? 'up' : totDelta < 0 ? 'down' : 'flat'}">${totDelta >= 0 ? '+' : ''}${num(totDelta)} prendas</div>
+      <div class="hero-sub">vs. inicio del período (${num(totStart)})</div>
+    </div>
+    <div class="top-arts">
+      ${top3.map(r => {
+        const sign = r.delta >= 0 ? '+' : '';
+        const cls  = r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'flat';
+        return `<div class="top-art">
+          <div class="v">${num(r.curr)}</div>
+          <div class="d ${cls}">${sign}${num(r.delta)}</div>
+          <div class="l">${esc(r.article)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div style="font-size:9px;color:var(--t3);margin-top:auto">ON Sistema de Inventario RFID · Reporte detallado · Confidencial</div>
+</div>
+
+<!-- Slide 2: Comparison table + chart -->
+<div class="slide">
+  <div class="wm">ON SYS</div>
+  <div class="sec">Comparación de inventario — inicio vs fin de período</div>
+  <div class="s2-body">
+    <div style="overflow:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th>Artículo</th>
+          <th class="num">Inicio</th>
+          <th class="num">Fin</th>
+          <th class="num">Δ Prendas</th>
+          <th class="num">Δ %</th>
+        </tr></thead>
+        <tbody>${cmpRows || '<tr><td colspan="5" style="color:var(--t3);padding-top:12px">Sin datos de inventario histórico.</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="chart-box"><canvas id="cmpChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Slide 3: Weekly trend + insights -->
+<div class="slide">
+  <div class="wm">ON SYS</div>
+  <div class="sec">Tendencia semanal (últimas ${trend.length} semanas) · Insights</div>
+  <div class="s3-body">
+    <div class="chart-box"><canvas id="trendChart"></canvas></div>
+    <div class="insights">
+      <div class="insights-title">Análisis automático del período</div>
+      ${insightHTML}
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Slide 2: grouped bar
+  const cmpLabels=${cmpLabels}, cmpPrev=${cmpPrev}, cmpCurr=${cmpCurr};
+  const c2=document.getElementById('cmpChart');
+  if(c2&&cmpLabels.length){
+    new Chart(c2,{
+      type:'bar',
+      data:{labels:cmpLabels,datasets:[
+        {label:'Inicio',data:cmpPrev,backgroundColor:'#94a3b855',borderColor:'#94a3b8',borderWidth:1,borderRadius:3},
+        {label:'Fin',data:cmpCurr,backgroundColor:'#3ecf8ecc',borderColor:'#3ecf8e',borderWidth:1,borderRadius:3}
+      ]},
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},tooltip:{callbacks:{label:c=>' '+c.raw.toLocaleString('es-MX')}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b',font:{size:9}}},
+          y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxTicksLimit:10}}
+        }
+      }
+    });
+  }
+  // Slide 3: stacked trend
+  const tLabels=${trendLabels}, tDatasets=${trendDatasets};
+  const c3=document.getElementById('trendChart');
+  if(c3&&tLabels.length){
+    new Chart(c3,{
+      type:'bar',
+      data:{labels:tLabels,datasets:tDatasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{labels:{color:'#94a3b8',font:{size:9},boxWidth:10}},
+          tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('es-MX')}}
+        },
+        scales:{
+          x:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b',font:{size:9}}},
+          y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#64748b',font:{size:9}}}
+        }
+      }
+    });
+  }
+})();
+<\/script>
+</body></html>`;
+
+            const win = window.open('', '_blank');
+            if (!win) { alert('Permite ventanas emergentes para generar el reporte.'); return; }
+            win.document.write(html);
+            win.document.close();
+        } catch (err) {
+            console.error('Insightful report error:', err);
+            alert('Error al generar el reporte. Intenta de nuevo.');
+        } finally {
+            btn.textContent = 'Reporte detallado';
             btn.disabled = false;
         }
     }

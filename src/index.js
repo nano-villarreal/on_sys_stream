@@ -349,7 +349,7 @@ const sendMessage = async (content, senderID, accion, options = {}) => {
  */
 webApp.post('/api/recoleccion', async (req, res) => {
     try {
-        const { timestamp, items } = req.body;
+        const { timestamp, items, customDate } = req.body;
 
         if (!items || Object.keys(items).length === 0) {
             return res.status(400).json({
@@ -358,7 +358,8 @@ webApp.post('/api/recoleccion', async (req, res) => {
             });
         }
 
-        console.log(`Recolección recibida el ${timestamp}`);
+        const recordDate = customDate ? new Date(customDate) : new Date();
+        console.log(`Recolección recibida el ${timestamp}${customDate ? ` (fecha retroactiva: ${recordDate.toISOString()})` : ''}`);
 
         let totalUpdated = 0;
         let totalProcessed = 0;
@@ -402,13 +403,41 @@ webApp.post('/api/recoleccion', async (req, res) => {
                     }
                 }
 
+                // Auto-create tags for manual articles that don't yet exist for this client
+                if (epcs.length === 0 && things_in[article] > 0) {
+                    const existingCount = await Tags.countDocuments({ client, article });
+                    if (existingCount === 0) {
+                        const qty = things_in[article];
+                        const now = new Date();
+                        const prefix = Date.now().toString(36).toUpperCase();
+                        const newTags = Array.from({ length: qty }, (_, i) => ({
+                            scanId:    `MAN${prefix}${i.toString(36).padStart(4, '0').toUpperCase()}`,
+                            article,
+                            client,
+                            status:    'Recoleccion',
+                            wash_count: 0,
+                            damaged:   false,
+                            damage:    false,
+                            last_seen: now,
+                            createdAt: now,
+                            isManual:  true,
+                        }));
+                        const tagInsert = await Tags.insertMany(newTags);
+                        const newTagIds = Object.values(tagInsert.insertedIds);
+                        await Cliente.updateOne(
+                            { name: client },
+                            { $push: { tags: { $each: newTagIds } } }
+                        );
+                        console.log(`  ✓ Auto-created ${qty} manual tags for new article "${article}" (client: ${client})`);
+                    }
+                }
             }
 
             // 1. Guardar la recolección y obtener su _id
             const newRecoleccion = {
                 articles: things_in,
                 client: client,
-                date: new Date(),
+                date: recordDate,
                 EPCs: EPCList,
                 manual: EPCList.length === 0,
             };
@@ -480,7 +509,7 @@ webApp.post('/api/recoleccion', async (req, res) => {
  */
 webApp.post('/api/entrega', async (req, res) => {
     try {
-        const { timestamp, items } = req.body;
+        const { timestamp, items, customDate } = req.body;
 
         if (!items || Object.keys(items).length === 0) {
             return res.status(400).json({
@@ -489,7 +518,8 @@ webApp.post('/api/entrega', async (req, res) => {
             });
         }
 
-        console.log(`Entrega recibida el ${timestamp}`);
+        const recordDate = customDate ? new Date(customDate) : new Date();
+        console.log(`Entrega recibida el ${timestamp}${customDate ? ` (fecha retroactiva: ${recordDate.toISOString()})` : ''}`);
 
         let totalUpdated = 0;
         let totalProcessed = 0;
@@ -536,13 +566,41 @@ webApp.post('/api/entrega', async (req, res) => {
                     }
                 }
 
+                // Auto-create tags for manual articles that don't yet exist for this client
+                if (epcs.length === 0 && things_in[article] > 0) {
+                    const existingCount = await Tags.countDocuments({ client, article });
+                    if (existingCount === 0) {
+                        const qty = things_in[article];
+                        const now = new Date();
+                        const prefix = Date.now().toString(36).toUpperCase();
+                        const newTags = Array.from({ length: qty }, (_, i) => ({
+                            scanId:    `MAN${prefix}${i.toString(36).padStart(4, '0').toUpperCase()}`,
+                            article,
+                            client,
+                            status:    'Entregado',
+                            wash_count: 1,
+                            damaged:   false,
+                            damage:    false,
+                            last_seen: now,
+                            createdAt: now,
+                            isManual:  true,
+                        }));
+                        const tagInsert = await Tags.insertMany(newTags);
+                        const newTagIds = Object.values(tagInsert.insertedIds);
+                        await Cliente.updateOne(
+                            { name: client },
+                            { $push: { tags: { $each: newTagIds } } }
+                        );
+                        console.log(`  ✓ Auto-created ${qty} manual tags for new article "${article}" (client: ${client})`);
+                    }
+                }
             }
 
             // 1. Guardar la entrega y obtener su _id
             const newEntrega = {
                 articles: things_in,
                 client: client,
-                date: new Date(),
+                date: recordDate,
                 EPCs: EPCList,
                 manual: EPCList.length === 0,
             };
@@ -1473,6 +1531,54 @@ webApp.get('/api/pdf-data', async (req, res) => {
         const dailyArticles = [...dailyArticleSet].sort();
         const dailyUsage = Object.keys(dailyMap).sort().map(date => ({ date, ...dailyMap[date] }));
 
+        // ── Extra data for insightful report ─────────────────────────────────
+
+        // Helper: sum all statuses in a snapshot entry
+        const snapTotals = (snap) => {
+            const t = {};
+            for (const [art, statuses] of Object.entries(snap?.snapshot || {}))
+                t[art] = Object.values(statuses).reduce((s, v) => s + Number(v), 0);
+            return t;
+        };
+
+        // Inventory at start and end of period (from snapshots)
+        const [snapAtStart, snapAtEnd] = await Promise.all([
+            db.collection('inventory_snapshots')
+                .findOne({ client: clientName, date: { $lte: fromDate.toISOString().slice(0, 10) } }, { sort: { date: -1 } }),
+            db.collection('inventory_snapshots')
+                .findOne({ client: clientName, date: { $lte: toDate.toISOString().slice(0, 10) } }, { sort: { date: -1 } })
+        ]);
+        const startTotals = snapTotals(snapAtStart);
+        const endTotals   = snapTotals(snapAtEnd);
+        const allArtKeys  = new Set([...Object.keys(startTotals), ...Object.keys(endTotals)]);
+        const comparison  = [...allArtKeys]
+            .map(art => ({ article: art, prev: startTotals[art] || 0, curr: endTotals[art] || 0,
+                           delta: (endTotals[art] || 0) - (startTotals[art] || 0) }))
+            .sort((a, b) => b.curr - a.curr);
+
+        // Weekly trend: last 6 weeks (one snapshot per Sun-Sat bucket)
+        const rawSnaps = await db.collection('inventory_snapshots')
+            .find({ client: clientName })
+            .sort({ date: -1 })
+            .limit(60)
+            .toArray();
+        const weekBuckets = {};
+        for (const snap of rawSnaps) {
+            const d = new Date(snap.date);
+            const sunday = new Date(d);
+            sunday.setDate(d.getDate() + (7 - d.getDay()) % 7);
+            const wk = sunday.toISOString().slice(0, 10);
+            if (!weekBuckets[wk] || snap.date > weekBuckets[wk].date) weekBuckets[wk] = snap;
+        }
+        const weeklyTrend = Object.values(weekBuckets)
+            .sort((a, b) => (a.date < b.date ? -1 : 1))
+            .slice(-6)
+            .map(snap => ({ date: snap.date, articles: snapTotals(snap) }));
+
+        // Thresholds for lifecycle context in insights
+        const clientDoc  = await db.collection('clientes').findOne({ name: clientName }, { projection: { thresholds: 1 } });
+        const thresholds = clientDoc?.thresholds || {};
+
         res.json({
             client: clientName,
             from: fromDate.toISOString(),
@@ -1494,7 +1600,10 @@ webApp.get('/api/pdf-data', async (req, res) => {
             },
             returnRate,
             dailyUsage,
-            dailyArticles
+            dailyArticles,
+            comparison,
+            weeklyTrend,
+            thresholds
         });
 
     } catch (err) {

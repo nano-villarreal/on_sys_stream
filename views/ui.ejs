@@ -611,6 +611,24 @@
             transform: translateY(-1px);
         }
 
+        /* ─── Date override ─────────────────────────────────────────── */
+        .date-override-row {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .date-override-label {
+            font-size: 11px; color: var(--text-3); white-space: nowrap;
+        }
+        input[type="datetime-local"].date-field {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text);
+            font-size: 12px; font-family: 'Inter', sans-serif;
+            padding: 5px 10px; color-scheme: dark; cursor: pointer; flex: 1;
+        }
+        input[type="datetime-local"].date-field:focus { outline: none; border-color: var(--border-focus); }
+        input[type="datetime-local"].date-field.is-past { border-color: rgba(251,191,36,0.45); color: #fbbf24; }
+
         /* ─── Reprocesado toggle ────────────────────────────────────── */
         .toggle-wrap {
             display: flex; align-items: center; gap: 8px; margin-left: auto;
@@ -897,6 +915,10 @@
                     </label>
                 </div>
             </div>
+            <div class="date-override-row">
+                <span class="date-override-label">Fecha de operación:</span>
+                <input type="datetime-local" class="date-field" id="operationDate">
+            </div>
         </div>
 
         <!-- ─── Manual entry card ──────────────────────────────────── -->
@@ -911,6 +933,10 @@
                 </div>
                 <div class="manual-article-rows" id="manualArticleRows"></div>
                 <button type="button" class="manual-add-row-btn" id="manualAddRow">+ Agregar artículo</button>
+                <div class="date-override-row" style="margin-top:12px;padding-top:12px">
+                    <span class="date-override-label">Fecha de operación:</span>
+                    <input type="datetime-local" class="date-field" id="manualOperationDate">
+                </div>
                 <div class="manual-actions">
                     <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
                     <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
@@ -1432,11 +1458,12 @@
                 repro:       'Reprocesado',
             };
 
+            const customDate = getCustomDate('operationDate');
             try {
                 const res = await fetch(`/api/${type}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify({ ...payload, customDate }),
                 });
 
                 if (res.ok) {
@@ -1627,7 +1654,8 @@
                 clientItems[art] = { count: qty, epcs: [], declared_count: qty };
             }
 
-            const payload = { timestamp: getTimestamp(), items: { [client]: clientItems } };
+            const customDate = getCustomDate('manualOperationDate');
+            const payload = { timestamp: getTimestamp(), items: { [client]: clientItems }, customDate };
             const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual' };
             const totalQty = Object.values(articles).reduce((s, v) => s + v, 0);
             const artList  = Object.entries(articles).map(([a, q]) => `${q} ${a}`).join(', ');
@@ -1655,6 +1683,31 @@
 
         document.getElementById('btnManualRec').addEventListener('click', () => submitManual('recoleccion'));
         document.getElementById('btnManualEnt').addEventListener('click', () => submitManual('entrega'));
+
+        // ─────────────────────────────────────────────────────────────
+        //  Date pickers — default to now, highlight when past date chosen
+        // ─────────────────────────────────────────────────────────────
+        function localDatetimeValue(d) {
+            const p = v => String(v).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+        function initDateField(id) {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.value = localDatetimeValue(new Date());
+            input.addEventListener('change', () => {
+                const chosen = new Date(input.value);
+                const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+                input.classList.toggle('is-past', chosen < fiveMinAgo);
+            });
+        }
+        initDateField('operationDate');
+        initDateField('manualOperationDate');
+
+        function getCustomDate(inputId) {
+            const input = document.getElementById(inputId);
+            return input?.value ? new Date(input.value).toISOString() : undefined;
+        }
 
         // ─────────────────────────────────────────────────────────────
         //  Initial render
