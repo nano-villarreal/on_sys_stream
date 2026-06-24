@@ -461,6 +461,22 @@
         .manual-inline-rm:hover { color: #f87171; }
 
         /* ─── Manual entry card ─────────────────────────────────────── */
+        select.field-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        select.field-input option { background: #1c2333; color: #e2e8f0; }
+
+        .manual-art-prefilled {
+            background: rgba(62,207,142,0.06);
+            border-color: rgba(62,207,142,0.2) !important;
+            color: var(--text) !important;
+        }
+        .manual-qty-zero { color: var(--text-3); }
+
         .manual-toggle-btn {
             background: none; border: none;
             font-size: 11px; font-weight: 600;
@@ -943,17 +959,21 @@
             <div class="manual-panel" id="manualPanel">
                 <div class="manual-client-row">
                     <label class="field-label-sm" for="manualClient">Cliente</label>
-                    <input type="text" class="field-input" id="manualClient" placeholder="Nombre del cliente" autocomplete="off">
+                    <select class="field-input" id="manualClient" style="cursor:pointer">
+                        <option value="">— Selecciona cliente —</option>
+                    </select>
                 </div>
-                <div class="manual-article-rows" id="manualArticleRows"></div>
-                <button type="button" class="manual-add-row-btn" id="manualAddRow">+ Agregar artículo</button>
-                <div class="date-override-row" style="margin-top:12px;padding-top:12px">
-                    <span class="date-override-label">Fecha de operación:</span>
-                    <input type="datetime-local" class="date-field" id="manualOperationDate">
-                </div>
-                <div class="manual-actions">
-                    <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
-                    <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
+                <div id="manualArticlesWrap" style="display:none">
+                    <div class="manual-article-rows" id="manualArticleRows"></div>
+                    <button type="button" class="manual-add-row-btn" id="manualAddRow">+ Agregar artículo</button>
+                    <div class="date-override-row" style="margin-top:12px;padding-top:12px">
+                        <span class="date-override-label">Fecha de operación:</span>
+                        <input type="datetime-local" class="date-field" id="manualOperationDate">
+                    </div>
+                    <div class="manual-actions">
+                        <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
+                        <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1662,37 +1682,83 @@
         // ─────────────────────────────────────────────────────────────
         //  Manual entry panel
         // ─────────────────────────────────────────────────────────────
-        const manualToggleBtn = document.getElementById('manualToggleBtn');
-        const manualPanel     = document.getElementById('manualPanel');
+        const manualToggleBtn  = document.getElementById('manualToggleBtn');
+        const manualPanel      = document.getElementById('manualPanel');
+        const manualClientSel  = document.getElementById('manualClient');
+        const manualArticlesWrap = document.getElementById('manualArticlesWrap');
+        const manualRowsEl     = document.getElementById('manualArticleRows');
 
         manualToggleBtn.addEventListener('click', () => {
             manualToggleBtn.classList.toggle('open');
             manualPanel.classList.toggle('open');
         });
 
-        function addManualRow(art = '', qty = 1) {
+        // ── Load client list into the select ─────────────────────────
+        (async () => {
+            try {
+                const clients = await fetch('/api/clients').then(r => r.json());
+                for (const name of clients) {
+                    const opt = document.createElement('option');
+                    opt.value = opt.textContent = name;
+                    manualClientSel.appendChild(opt);
+                }
+            } catch (e) { console.error('Failed to load clients', e); }
+        })();
+
+        // ── When client changes, load its articles ────────────────────
+        manualClientSel.addEventListener('change', async () => {
+            const client = manualClientSel.value;
+            manualRowsEl.innerHTML = '';
+
+            if (!client) {
+                manualArticlesWrap.style.display = 'none';
+                return;
+            }
+
+            manualArticlesWrap.style.display = 'none'; // hide while loading
+            try {
+                const articles = await fetch(`/api/client-articles?client=${encodeURIComponent(client)}`).then(r => r.json());
+                // Pre-populate one row per known article (qty 0), then one blank row
+                for (const art of articles) addManualRow(art, 0, true);
+                addManualRow('', 1, false); // blank row for new articles
+            } catch (e) {
+                console.error('Failed to load articles', e);
+                addManualRow('', 1, false);
+            }
+            manualArticlesWrap.style.display = '';
+        });
+
+        function addManualRow(art = '', qty = 1, prefilled = false) {
             const row = document.createElement('div');
             row.className = 'manual-article-row';
             row.innerHTML = `
                 <div>
                     <label class="field-label-sm">Artículo</label>
-                    <input type="text" class="field-input manual-art" placeholder="Ej. sabana king" value="${art}" autocomplete="off">
+                    <input type="text" class="field-input manual-art${prefilled ? ' manual-art-prefilled' : ''}"
+                           placeholder="Nuevo artículo…" value="${art}" autocomplete="off"
+                           ${prefilled ? 'readonly' : ''}>
                 </div>
                 <div>
                     <label class="field-label-sm">Cantidad</label>
-                    <input type="number" class="field-input manual-qty" value="${qty}" min="1">
+                    <input type="number" class="field-input manual-qty${qty === 0 ? ' manual-qty-zero' : ''}"
+                           value="${qty}" min="0" placeholder="0">
                 </div>
                 <button type="button" class="manual-rm-btn" title="Eliminar fila">✕</button>
             `;
-            row.querySelector('.manual-rm-btn').addEventListener('click', () => {
-                if (document.querySelectorAll('.manual-article-row').length > 1) row.remove();
-            });
-            document.getElementById('manualArticleRows').appendChild(row);
+            // Highlight qty when user starts typing
+            const qtyInput = row.querySelector('.manual-qty');
+            qtyInput.addEventListener('focus', () => { if (qtyInput.value === '0') qtyInput.value = ''; });
+            qtyInput.addEventListener('input', () => qtyInput.classList.remove('manual-qty-zero'));
+            // Allow unlocking a prefilled article name by double-clicking
+            if (prefilled) {
+                const artInput = row.querySelector('.manual-art');
+                artInput.addEventListener('dblclick', () => { artInput.removeAttribute('readonly'); artInput.classList.remove('manual-art-prefilled'); artInput.focus(); });
+            }
+            row.querySelector('.manual-rm-btn').addEventListener('click', () => row.remove());
+            manualRowsEl.appendChild(row);
         }
 
-        // Start with one empty row
-        addManualRow();
-        document.getElementById('manualAddRow').addEventListener('click', () => addManualRow());
+        document.getElementById('manualAddRow').addEventListener('click', () => addManualRow('', 1, false));
 
         async function submitManual(type) {
             const client = document.getElementById('manualClient').value.trim();

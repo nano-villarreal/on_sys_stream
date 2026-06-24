@@ -407,10 +407,6 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 things_in[article] = declared_count !== undefined ? declared_count : count;
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
-                if (epcs.length > 0) {
-                    rfid_things[article] = things_in[article];
-                }
-
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
                     EPCList.push(trimmedEpc);
@@ -429,10 +425,16 @@ webApp.post('/api/recoleccion', async (req, res) => {
                     }
                 }
 
-                // Auto-create tags for manual articles that don't yet exist for this client
-                if (epcs.length === 0 && things_in[article] > 0) {
+                if (epcs.length > 0) {
+                    // Scanned via RFID → always in conteo
+                    rfid_things[article] = things_in[article];
+                } else if (things_in[article] > 0) {
+                    // Manual entry → check if this article already has tags for this client
                     const existingCount = await Tags.countDocuments({ client, article });
-                    if (existingCount === 0) {
+                    if (existingCount > 0) {
+                        rfid_things[article] = things_in[article];
+                    } else {
+                        // Brand-new article — auto-create inventory tags
                         const qty = things_in[article];
                         const now = new Date();
                         const prefix = Date.now().toString(36).toUpperCase();
@@ -573,10 +575,6 @@ webApp.post('/api/entrega', async (req, res) => {
                 things_in[article] = declared_count !== undefined ? declared_count : count;
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
-                if (epcs.length > 0) {
-                    rfid_things[article] = things_in[article];
-                }
-
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
                     EPCList.push(trimmedEpc);
@@ -598,10 +596,16 @@ webApp.post('/api/entrega', async (req, res) => {
                     }
                 }
 
-                // Auto-create tags for manual articles that don't yet exist for this client
-                if (epcs.length === 0 && things_in[article] > 0) {
+                if (epcs.length > 0) {
+                    // Scanned via RFID → always in conteo
+                    rfid_things[article] = things_in[article];
+                } else if (things_in[article] > 0) {
+                    // Manual entry → check if this article already has tags for this client
                     const existingCount = await Tags.countDocuments({ client, article });
-                    if (existingCount === 0) {
+                    if (existingCount > 0) {
+                        rfid_things[article] = things_in[article];
+                    } else {
+                        // Brand-new article — auto-create inventory tags
                         const qty = things_in[article];
                         const now = new Date();
                         const prefix = Date.now().toString(36).toUpperCase();
@@ -1468,6 +1472,41 @@ webApp.get('/api/analytics', async (req, res) => {
     } catch (err) {
         console.error('Error en /api/analytics:', err);
         res.status(500).json({ error: 'Error del servidor' });
+    }
+});
+
+/**
+ * GET /api/clients
+ * Returns all client names sorted alphabetically.
+ */
+webApp.get('/api/clients', async (req, res) => {
+    try {
+        const clients = await mongoClient.db('on').collection('clientes')
+            .find({}, { projection: { name: 1 } })
+            .sort({ name: 1 })
+            .toArray();
+        res.json(clients.map(c => c.name));
+    } catch (err) {
+        console.error('/api/clients error:', err);
+        res.status(500).json([]);
+    }
+});
+
+/**
+ * GET /api/client-articles?client=X
+ * Returns all distinct article names that have tags for the given client,
+ * sorted alphabetically. Used to pre-populate the manual entry panel.
+ */
+webApp.get('/api/client-articles', async (req, res) => {
+    const clientName = req.query.client?.trim();
+    if (!clientName) return res.json([]);
+    try {
+        const articles = await mongoClient.db('on').collection('tags')
+            .distinct('article', { client: clientName });
+        res.json(articles.sort());
+    } catch (err) {
+        console.error('/api/client-articles error:', err);
+        res.status(500).json([]);
     }
 });
 
