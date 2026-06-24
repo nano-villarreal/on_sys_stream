@@ -591,6 +591,17 @@
             transform: translateY(-1px);
         }
 
+        .btn-doble {
+            background: linear-gradient(135deg, rgba(62,207,142,0.15) 0%, rgba(96,165,250,0.15) 100%);
+            color: var(--text);
+            border: 1px solid rgba(62,207,142,0.30);
+        }
+        .btn-doble:not(:disabled):hover {
+            background: linear-gradient(135deg, rgba(62,207,142,0.25) 0%, rgba(96,165,250,0.25) 100%);
+            border-color: rgba(62,207,142,0.55);
+            transform: translateY(-1px);
+        }
+
         .btn-reprocesado {
             background: var(--amber-dim);
             color: var(--amber);
@@ -897,6 +908,9 @@
                 <button id="btnRecoleccion" class="btn btn-recoleccion" disabled>
                     ↩ Recolección
                 </button>
+                <button id="btnDoble" class="btn btn-doble" disabled>
+                    ↩↪ Rec + Entrega
+                </button>
                 <button id="btnEntrega" class="btn btn-entrega" disabled>
                     ↪ Entrega
                 </button>
@@ -959,6 +973,7 @@
             notfound:         document.getElementById('notfound'),
             summary:          document.getElementById('summary'),
             btnRecoleccion:   document.getElementById('btnRecoleccion'),
+            btnDoble:         document.getElementById('btnDoble'),
             btnReprocesado:   document.getElementById('btnReprocesado'),
             btnEntrega:       document.getElementById('btnEntrega'),
             btnBodega:        document.getElementById('btnBodega'),
@@ -1269,6 +1284,7 @@
         // ─────────────────────────────────────────────────────────────
         function setButtonsEnabled(enabled) {
             el.btnRecoleccion.disabled = !enabled;
+            el.btnDoble.disabled       = !enabled;
             el.btnReprocesado.disabled = !enabled;
             el.btnEntrega.disabled     = !enabled;
             el.btnBodega.disabled      = !enabled;
@@ -1517,6 +1533,49 @@
         }
 
         // ─────────────────────────────────────────────────────────────
+        //  Recolección + Entrega combinada
+        //  Submits the same inventory list as a recoleccion immediately
+        //  followed by an entrega, so both sides of the flow are recorded.
+        // ─────────────────────────────────────────────────────────────
+        async function createDoubleOperation() {
+            if (!currentEPCs.length) {
+                toast('error', 'Sin EPCs', 'No hay EPCs válidos para registrar.');
+                return;
+            }
+            const { payload, hasItems } = buildPayload(currentResults, currentEPCs);
+            if (!hasItems) {
+                toast('error', 'Sin artículos', 'Ninguno de los EPCs está registrado en el sistema.');
+                return;
+            }
+
+            const customDate = getCustomDate('operationDate');
+            const body = JSON.stringify({ ...payload, customDate });
+
+            el.btnDoble.disabled = true;
+            el.btnDoble.textContent = 'Registrando…';
+
+            try {
+                const [recRes, entRes] = await Promise.all([
+                    fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
+                    fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
+                ]);
+
+                if (recRes.ok && entRes.ok) {
+                    toast('success', 'Recolección + Entrega registradas', 'Ambas operaciones guardadas correctamente.');
+                } else {
+                    const msg = (!recRes.ok ? 'Recolección falló. ' : '') + (!entRes.ok ? 'Entrega falló.' : '');
+                    toast('error', 'Error parcial', msg);
+                }
+            } catch (err) {
+                console.error(err);
+                toast('error', 'Error de conexión', 'No se pudo contactar al servidor.');
+            } finally {
+                el.btnDoble.disabled = false;
+                el.btnDoble.textContent = '↩↪ Rec + Entrega';
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
         //  Event listeners
         // ─────────────────────────────────────────────────────────────
 
@@ -1526,6 +1585,7 @@
         });
 
         el.btnRecoleccion.addEventListener('click', () => createOperation('recoleccion'));
+        el.btnDoble.addEventListener('click',       () => createDoubleOperation());
         el.btnEntrega.addEventListener('click',     () => createOperation('entrega'));
         el.btnReprocesado.addEventListener('click', () => createOperation('repro'));
         el.btnBodega.addEventListener('click',      () => createConteoBodega());

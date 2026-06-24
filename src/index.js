@@ -262,26 +262,47 @@ const sendMessage = async (content, senderID, accion, options = {}) => {
                     });
             }
 
-            // Sum quantities across all items (usually 1 item now)
-            let totalItems = 0;
-            const articleParts = [];
-
-            for (const item of items) {
-                if (item.articles && typeof item.articles === 'object') {
-                    for (const [type, qty] of Object.entries(item.articles)) {
-                        totalItems += Number(qty) || 0;
-                        articleParts.push(`• ${qty}  ${type}`);
-                    }
-                }
-            }
-
-            const artLines = articleParts.length > 0
-                ? articleParts.join('\n')
-                : `• ${totalItems} artículo${totalItems === 1 ? '' : 's'}`;
+            const allArts     = first.articles  || {};
+            const rfidArts    = first.rfid_articles;  // present when mixed manual+rfid
+            const hasManualOnly = rfidArts &&
+                Object.keys(allArts).some(k => !(k in rfidArts));
 
             const accionEmoji = accion === 'entrega' ? '📦' : '↩';
             const accionLabel = accion === 'entrega' ? 'Entrega' : 'Recolección';
-            const body = `*${accionEmoji} ${accionLabel}* — ${client}\n${dateTimeStr}\n\n${artLines}\n\n_${totalItems} prenda${totalItems === 1 ? '' : 's'} en total_`;
+
+            let body;
+
+            if (hasManualOnly) {
+                // ── Split message: conteo RFID + remisión digital ──────────
+                const rfidLines  = Object.entries(rfidArts)
+                    .map(([t, q]) => `• ${q}  ${t}`).join('\n');
+                const rfidTotal  = Object.values(rfidArts)
+                    .reduce((s, v) => s + (Number(v) || 0), 0);
+
+                let allTotal = 0;
+                const allLines = Object.entries(allArts)
+                    .map(([t, q]) => { allTotal += Number(q) || 0; return `• ${q}  ${t}`; })
+                    .join('\n');
+
+                body = `*${accionEmoji} Conteo de ${accionLabel}* — ${client}\n${dateTimeStr}\n\n${rfidLines || '_(sin artículos RFID)_'}\n\n_${rfidTotal} prenda${rfidTotal !== 1 ? 's' : ''} con RFID_\n\n━━━━━━━━━━━\n*📋 Remisión digital*\n\n${allLines}\n\n_${allTotal} prenda${allTotal !== 1 ? 's' : ''} en total_`;
+            } else {
+                // ── Standard single-block message ──────────────────────────
+                let totalItems = 0;
+                const articleParts = [];
+                for (const item of items) {
+                    if (item.articles && typeof item.articles === 'object') {
+                        for (const [type, qty] of Object.entries(item.articles)) {
+                            totalItems += Number(qty) || 0;
+                            articleParts.push(`• ${qty}  ${type}`);
+                        }
+                    }
+                }
+                const artLines = articleParts.length > 0
+                    ? articleParts.join('\n')
+                    : `• ${totalItems} artículo${totalItems === 1 ? '' : 's'}`;
+
+                body = `*${accionEmoji} ${accionLabel}* — ${client}\n${dateTimeStr}\n\n${artLines}\n\n_${totalItems} prenda${totalItems === 1 ? '' : 's'} en total_`;
+            }
 
             const msg = await twilioClient.messages.create({
                 from: 'whatsapp:+14155238886',
@@ -374,8 +395,9 @@ webApp.post('/api/recoleccion', async (req, res) => {
         for (const [client, articles] of Object.entries(items)) {
             console.log(`Cliente: ${client}`);
 
-            const EPCList = [];
-            const things_in = {};   // articles → count
+            const EPCList    = [];
+            const things_in  = {};   // all articles (rfid + manual)
+            const rfid_things = {};  // only articles that had real EPCs scanned
 
             for (const [article, data] of Object.entries(articles)) {
                 const { count, epcs = [], declared_count } = data;
@@ -384,6 +406,10 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 // Use declared_count if operator overrode the scanned count
                 things_in[article] = declared_count !== undefined ? declared_count : count;
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
+
+                if (epcs.length > 0) {
+                    rfid_things[article] = things_in[article];
+                }
 
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
@@ -436,6 +462,7 @@ webApp.post('/api/recoleccion', async (req, res) => {
             // 1. Guardar la recolección y obtener su _id
             const newRecoleccion = {
                 articles: things_in,
+                rfid_articles: rfid_things,
                 client: client,
                 date: recordDate,
                 EPCs: EPCList,
@@ -534,8 +561,9 @@ webApp.post('/api/entrega', async (req, res) => {
         for (const [client, articles] of Object.entries(items)) {
             console.log(`Cliente: ${client}`);
 
-            const EPCList = [];
-            const things_in = {};   // artículo → cantidad
+            const EPCList     = [];
+            const things_in   = {};   // all articles (rfid + manual)
+            const rfid_things = {};   // only articles that had real EPCs scanned
 
             for (const [article, data] of Object.entries(articles)) {
                 const { count, epcs = [], declared_count } = data;
@@ -544,6 +572,10 @@ webApp.post('/api/entrega', async (req, res) => {
                 // Use declared_count if operator overrode the scanned count
                 things_in[article] = declared_count !== undefined ? declared_count : count;
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
+
+                if (epcs.length > 0) {
+                    rfid_things[article] = things_in[article];
+                }
 
                 for (const epc of epcs) {
                     const trimmedEpc = epc.trim();
@@ -599,6 +631,7 @@ webApp.post('/api/entrega', async (req, res) => {
             // 1. Guardar la entrega y obtener su _id
             const newEntrega = {
                 articles: things_in,
+                rfid_articles: rfid_things,
                 client: client,
                 date: recordDate,
                 EPCs: EPCList,
