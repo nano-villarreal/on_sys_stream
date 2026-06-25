@@ -400,7 +400,7 @@
             border-radius: 6px;
             color: var(--text); font-size: 13px; font-weight: 700;
             text-align: center; padding: 0;
-            -moz-appearance: textfield;
+            -moz-appearance: textfield; appearance: textfield;
         }
         .cnt-input::-webkit-inner-spin-button,
         .cnt-input::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -535,7 +535,7 @@
             font-size: 14px; color: var(--text);
             transition: border-color 0.2s;
             caret-color: var(--green);
-            -moz-appearance: textfield;
+            -moz-appearance: textfield; appearance: textfield;
         }
         input[type="number"].field-input::-webkit-inner-spin-button,
         input[type="number"].field-input::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -1570,7 +1570,7 @@
             }
 
             const recDate = getCustomDate('operationDate') || new Date().toISOString();
-            const entDate = new Date(new Date(recDate).getTime() - 1000).toISOString();
+            const entDate = new Date(new Date(recDate).getTime() + 1000).toISOString();
             const recBody = JSON.stringify({ ...payload, customDate: recDate });
             const entBody = JSON.stringify({ ...payload, customDate: entDate });
 
