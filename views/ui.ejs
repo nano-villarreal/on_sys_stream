@@ -1570,7 +1570,7 @@
             }
 
             const recDate = getCustomDate('operationDate') || new Date().toISOString();
-            const entDate = new Date(new Date(recDate).getTime() + 1000).toISOString();
+            const entDate = new Date(new Date(recDate).getTime() - 1000).toISOString();
             const recBody = JSON.stringify({ ...payload, customDate: recDate });
             const entBody = JSON.stringify({ ...payload, customDate: entDate });
 
