@@ -1569,16 +1569,18 @@
                 return;
             }
 
-            const customDate = getCustomDate('operationDate');
-            const body = JSON.stringify({ ...payload, customDate });
+            const recDate = getCustomDate('operationDate') || new Date().toISOString();
+            const entDate = new Date(new Date(recDate).getTime() + 1000).toISOString();
+            const recBody = JSON.stringify({ ...payload, customDate: recDate });
+            const entBody = JSON.stringify({ ...payload, customDate: entDate });
 
             el.btnDoble.disabled = true;
             el.btnDoble.textContent = 'Registrando…';
 
             try {
                 const [recRes, entRes] = await Promise.all([
-                    fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
-                    fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
+                    fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: recBody }),
+                    fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: entBody }),
                 ]);
 
                 if (recRes.ok && entRes.ok) {
@@ -1786,14 +1788,15 @@
             const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual', doble: 'Rec + Entrega manual' };
             const totalQty = Object.values(articles).reduce((s, v) => s + v, 0);
             const artList  = Object.entries(articles).map(([a, q]) => `${q} ${a}`).join(', ');
-            const bodyStr  = JSON.stringify(payload);
+            const recDate = customDate || new Date().toISOString();
+            const entDate = new Date(new Date(recDate).getTime() + 1000).toISOString();
 
             try {
                 let ok = false;
                 if (type === 'doble') {
                     const [r1, r2] = await Promise.all([
-                        fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr }),
-                        fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr }),
+                        fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, customDate: recDate }) }),
+                        fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, customDate: entDate }) }),
                     ]);
                     ok = r1.ok && r2.ok;
                     if (!ok) {
@@ -1801,7 +1804,7 @@
                         toast('error', 'Error al registrar', msg);
                     }
                 } else {
-                    const res = await fetch(`/api/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr });
+                    const res = await fetch(`/api/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     ok = res.ok;
                     if (!ok) {
                         const msg = await res.text().catch(() => 'Error desconocido');
