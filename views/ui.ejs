@@ -972,6 +972,7 @@
                     </div>
                     <div class="manual-actions">
                         <button class="btn btn-recoleccion" id="btnManualRec">↩ Recolección</button>
+                        <button class="btn btn-doble" id="btnManualDoble">↩↪ Rec + Entrega</button>
                         <button class="btn btn-entrega" id="btnManualEnt">↪ Entrega</button>
                     </div>
                 </div>
@@ -1782,24 +1783,35 @@
 
             const customDate = getCustomDate('manualOperationDate');
             const payload = { timestamp: getTimestamp(), items: { [client]: clientItems }, customDate };
-            const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual' };
+            const labels = { recoleccion: 'Recolección manual', entrega: 'Entrega manual', doble: 'Rec + Entrega manual' };
             const totalQty = Object.values(articles).reduce((s, v) => s + v, 0);
             const artList  = Object.entries(articles).map(([a, q]) => `${q} ${a}`).join(', ');
+            const bodyStr  = JSON.stringify(payload);
 
             try {
-                const res = await fetch(`/api/${type}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                if (res.ok) {
-                    toast('success', labels[type], `${artList} registrados para ${client}.`);
-                    // Reset rows back to one empty row
-                    document.getElementById('manualArticleRows').innerHTML = '';
-                    addManualRow();
+                let ok = false;
+                if (type === 'doble') {
+                    const [r1, r2] = await Promise.all([
+                        fetch('/api/recoleccion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr }),
+                        fetch('/api/entrega',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr }),
+                    ]);
+                    ok = r1.ok && r2.ok;
+                    if (!ok) {
+                        const msg = await (!r1.ok ? r1 : r2).text().catch(() => 'Error desconocido');
+                        toast('error', 'Error al registrar', msg);
+                    }
                 } else {
-                    const msg = await res.text().catch(() => 'Error desconocido');
-                    toast('error', 'Error al registrar', msg);
+                    const res = await fetch(`/api/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr });
+                    ok = res.ok;
+                    if (!ok) {
+                        const msg = await res.text().catch(() => 'Error desconocido');
+                        toast('error', 'Error al registrar', msg);
+                    }
+                }
+                if (ok) {
+                    toast('success', labels[type], `${artList} registrados para ${client}.`);
+                    // Re-trigger client selection to refresh qty back to 0
+                    manualClientSel.dispatchEvent(new Event('change'));
                 }
             } catch (err) {
                 console.error(err);
@@ -1807,8 +1819,9 @@
             }
         }
 
-        document.getElementById('btnManualRec').addEventListener('click', () => submitManual('recoleccion'));
-        document.getElementById('btnManualEnt').addEventListener('click', () => submitManual('entrega'));
+        document.getElementById('btnManualRec').addEventListener('click',   () => submitManual('recoleccion'));
+        document.getElementById('btnManualDoble').addEventListener('click', () => submitManual('doble'));
+        document.getElementById('btnManualEnt').addEventListener('click',   () => submitManual('entrega'));
 
         // ─────────────────────────────────────────────────────────────
         //  Date pickers — default to now, highlight when past date chosen

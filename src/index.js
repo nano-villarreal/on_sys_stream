@@ -430,7 +430,7 @@ webApp.post('/api/recoleccion', async (req, res) => {
                     rfid_things[article] = things_in[article];
                 } else if (things_in[article] > 0) {
                     // Manual entry → check if this article already has tags for this client
-                    const existingCount = await Tags.countDocuments({ client, article });
+                    const existingCount = await Tags.countDocuments({ client, article, isManual: { $ne: true } });
                     if (existingCount > 0) {
                         rfid_things[article] = things_in[article];
                     } else {
@@ -601,7 +601,7 @@ webApp.post('/api/entrega', async (req, res) => {
                     rfid_things[article] = things_in[article];
                 } else if (things_in[article] > 0) {
                     // Manual entry → check if this article already has tags for this client
-                    const existingCount = await Tags.countDocuments({ client, article });
+                    const existingCount = await Tags.countDocuments({ client, article, isManual: { $ne: true } });
                     if (existingCount > 0) {
                         rfid_things[article] = things_in[article];
                     } else {
