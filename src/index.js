@@ -106,7 +106,7 @@ webApp.use(session({
 }));
 
 // Paths that do NOT require authentication
-const PUBLIC_PATHS = ['/login', '/logout', '/summary'];
+const PUBLIC_PATHS = ['/login', '/logout', '/summary', '/api/login'];
 
 webApp.use((req, res, next) => {
     const isPublic = PUBLIC_PATHS.some(p => req.path === p || req.path.startsWith(p + '?'));
@@ -139,6 +139,17 @@ webApp.post('/login', (req, res) => {
 
 webApp.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/login'));
+});
+
+// JSON login for Android/mobile clients
+webApp.post('/api/login', (req, res) => {
+    const { password } = req.body;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+    if (password === ADMIN_PASSWORD) {
+        req.session.authenticated = true;
+        return res.json({ success: true });
+    }
+    res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
 });
 
 // ── Home route ───────────────────────────────────────────────────────────────
@@ -1410,6 +1421,45 @@ webApp.get('/log', async (req, res) => {
 });
 
 /**
+ * GET /api/log?client=X  — JSON version of the bitácora for the Android app
+ */
+webApp.get('/api/log', async (req, res) => {
+    const clientName = req.query.client?.trim();
+    if (!clientName) return res.status(400).json({ error: 'client param required' });
+    try {
+        const db = mongoClient.db('on');
+        const safeSumArticles = (articles) => {
+            if (!articles || typeof articles !== 'object') return 0;
+            return Object.values(articles).reduce((acc, val) => acc + (typeof val === 'number' ? val : 0), 0);
+        };
+        const [recolecciones, entregas] = await Promise.all([
+            db.collection('recoleccion').find({ client: clientName }).sort({ date: -1 }).toArray(),
+            db.collection('entrega').find({ client: clientName }).sort({ date: -1 }).toArray(),
+        ]);
+        const toEvent = (doc, type) => ({
+            type,
+            date: doc.date instanceof Date ? doc.date.toISOString() : String(doc.date),
+            articles: doc.articles && typeof doc.articles === 'object' ? doc.articles : {},
+            totalItems: safeSumArticles(doc.articles),
+        });
+        const events = [
+            ...recolecciones.map(d => toEvent(d, 'recoleccion')),
+            ...entregas.map(d => toEvent(d, 'entrega')),
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        res.json({
+            events,
+            totalRecolecciones: recolecciones.length,
+            totalEntregas: entregas.length,
+            totalPrendasRecogidas: recolecciones.reduce((s, r) => s + safeSumArticles(r.articles), 0),
+            totalPrendasEntregadas: entregas.reduce((s, e) => s + safeSumArticles(e.articles), 0),
+        });
+    } catch (err) {
+        console.error('/api/log error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * GET /api/analytics?client=X
  *
  * Returns aggregated analytics data used by Chart.js on the dashboard and bitácora pages.
@@ -1422,10 +1472,12 @@ webApp.get('/api/analytics', async (req, res) => {
 
     try {
         const db = mongoClient.db("on");
-        const [entregas, recolecciones, tags] = await Promise.all([
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const [entregas, recolecciones, tags, recentEntregas] = await Promise.all([
             db.collection('entrega').find({ client: clientName }).sort({ date: 1 }).toArray(),
             db.collection('recoleccion').find({ client: clientName }).sort({ date: 1 }).toArray(),
-            db.collection('tags').find({ client: clientName }, { projection: { status: 1, article: 1 } }).toArray()
+            db.collection('tags').find({ client: clientName }, { projection: { status: 1, article: 1, wash_count: 1, damaged: 1 } }).toArray(),
+            db.collection('entrega').find({ client: clientName, date: { $gte: thirtyDaysAgo } }).toArray(),
         ]);
 
         // Status breakdown and article discovery from tags
@@ -1461,12 +1513,40 @@ webApp.get('/api/analytics', async (req, res) => {
             monthlyMap[m].entregas++;
         }
 
+        const totalTags = tags.length;
+        const totalWashes = tags.reduce((s, t) => s + (Number(t.wash_count) || 0), 0);
+        const avgWashCount = totalTags > 0 ? totalWashes / totalTags : 0;
+        const damagedCount = tags.filter(t => t.damaged === true || t.status === 'Dañado').length;
+        // 30-day return rate: unique EPCs returned (entrega) / unique EPCs sent out (recoleccion) in period
+        const recentRecolecciones = recolecciones.filter(r => new Date(r.date) >= thirtyDaysAgo);
+        const sentOut = new Set(recentRecolecciones.flatMap(r => r.EPCs || []));
+        const returned = new Set(recentEntregas.flatMap(e => e.EPCs || []));
+        const returnRate30d = sentOut.size > 0
+            ? [...returned].filter(epc => sentOut.has(epc)).length / sentOut.size
+            : 0;
+        const articleBreakdown = {};
+        const articleWashes = {};
+        const articleCounts = {};
+        for (const tag of tags) {
+            if (!tag.article) continue;
+            if (!articleWashes[tag.article]) { articleWashes[tag.article] = 0; articleCounts[tag.article] = 0; }
+            articleWashes[tag.article] += Number(tag.wash_count) || 0;
+            articleCounts[tag.article]++;
+        }
+        for (const [art, total] of Object.entries(articleWashes)) {
+            articleBreakdown[art] = articleCounts[art] > 0 ? total / articleCounts[art] : 0;
+        }
         res.json({
             articles: [...articleSet].sort(),
             dailyUsage: Object.keys(dailyMap).sort().map(date => ({ date, ...dailyMap[date] })),
             monthlyActivity: Object.keys(monthlyMap).sort().map(month => ({ month, ...monthlyMap[month] })),
             statusBreakdown,
-            currentlyOut: statusBreakdown['Recoleccion'] || 0
+            currentlyOut: statusBreakdown['Recoleccion'] || 0,
+            totalTags,
+            avgWashCount,
+            damagedCount,
+            returnRate30d,
+            articleBreakdown,
         });
 
     } catch (err) {
