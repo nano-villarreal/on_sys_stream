@@ -109,7 +109,7 @@ webApp.use(session({
 const PUBLIC_PATHS = ['/login', '/logout', '/summary', '/api'];
 
 webApp.use((req, res, next) => {
-    const isPublic = PUBLIC_PATHS.some(p => req.path === p || req.path.startsWith(p + '?'));
+    const isPublic = PUBLIC_PATHS.some(p => req.path === p || req.path.startsWith(p + '/') || req.path.startsWith(p + '?'));
     if (isPublic || req.session?.authenticated) return next();
     if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'No autorizado' });
     return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
