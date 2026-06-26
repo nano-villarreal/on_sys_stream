@@ -106,7 +106,7 @@ webApp.use(session({
 }));
 
 // Paths that do NOT require authentication
-const PUBLIC_PATHS = ['/login', '/logout', '/summary', '/api/login'];
+const PUBLIC_PATHS = ['/login', '/logout', '/summary', '/api'];
 
 webApp.use((req, res, next) => {
     const isPublic = PUBLIC_PATHS.some(p => req.path === p || req.path.startsWith(p + '?'));
