@@ -502,12 +502,6 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 // Opcional: aquí podrías decidir si crear el cliente o solo loguear
             }
         }
-        const final_client_name = await Cliente.findOne({ name: client_name })
-        console.log(final_client_name)
-        console.log(client_name)
-
-        await sendMessage(recoleccion_final, final_client_name.numero, accion = 'recoleccion')
-
         console.log(`Resumen: ${totalProcessed} EPCs procesados → ${totalUpdated} actualizados`);
 
         res.json({
@@ -519,6 +513,14 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 tagsUpdated: totalUpdated,
             }
         });
+
+        // Fire-and-forget WhatsApp notification
+        Cliente.findOne({ name: client_name }).then(final_client_name => {
+            if (final_client_name?.numero) {
+                sendMessage(recoleccion_final, final_client_name.numero, 'recoleccion')
+                    .catch(e => console.error('[whatsapp] recoleccion error:', e));
+            }
+        }).catch(e => console.error('[whatsapp] client lookup error:', e));
 
         // Fire-and-forget snapshot — does not block the response
         if (client_name) {
@@ -673,12 +675,6 @@ webApp.post('/api/entrega', async (req, res) => {
                 // Opcional: aquí podrías crear el cliente o solo registrar el warning
             }
         }
-        console.log(cliente_name)
-        const final_client_name = await Cliente.findOne({ name: cliente_name })
-        console.log(final_client_name)
-
-        await sendMessage(entrega_final, final_client_name.numero, accion = 'entrega')
-
         console.log(`Resumen: ${totalProcessed} EPCs procesados → ${totalUpdated} actualizados (+1 lavado cada uno)`);
 
         res.json({
@@ -690,6 +686,14 @@ webApp.post('/api/entrega', async (req, res) => {
                 tagsUpdated: totalUpdated,
             }
         });
+
+        // Fire-and-forget WhatsApp notification
+        Cliente.findOne({ name: cliente_name }).then(final_client_name => {
+            if (final_client_name?.numero) {
+                sendMessage(entrega_final, final_client_name.numero, 'entrega')
+                    .catch(e => console.error('[whatsapp] entrega error:', e));
+            }
+        }).catch(e => console.error('[whatsapp] client lookup error:', e));
 
         // Fire-and-forget snapshot — does not block the response
         if (cliente_name) {
