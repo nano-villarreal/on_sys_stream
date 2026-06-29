@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Semanal · Regis · Jun 24–28, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+:root{--accent:#3ecf8e;--accent-dim:#3ecf8e22;--accent-border:#1f5c38;--accent-bg:#0d2b1c}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent) 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot .brand{color:var(--accent);font-weight:600}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:20pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;line-height:1.1}
+.slide-head{margin-bottom:5mm}
+.card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:4mm 5mm}
+.cmp{width:100%;border-collapse:collapse;font-size:7.5pt}
+.cmp th{font-size:6pt;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#4b5563;padding:2mm 2.5mm;border-bottom:1px solid #1e2431;background:#0f141a;white-space:nowrap}
+.cmp th:not(:first-child){text-align:right}
+.cmp td{padding:1.8mm 2.5mm;border-bottom:1px solid #0a0e14;vertical-align:middle}
+.cmp td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.cmp .art{color:#cbd5e1;font-size:7pt}
+.cmp .prev{color:#6b7280;font-weight:500}
+.cmp .curr{color:#f1f5f9;font-weight:700}
+.cmp .up{color:#3ecf8e;font-weight:700}
+.cmp .dn{color:#ef4444;font-weight:700}
+.cmp tr.total td{background:#0d2b1c;color:#3ecf8e;font-weight:700;border-top:1px solid #1f5c38}
+.cmp tr:nth-child(even) td{background:#080b0f}
+.insight{background:#0f141a;border-left:3px solid var(--accent);border-radius:0 2mm 2mm 0;padding:3mm 4mm;margin-bottom:3mm}
+.insight-title{font-size:7.5pt;font-weight:700;color:var(--accent);margin-bottom:1mm}
+.insight-body{font-size:7pt;color:#9ca3af;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- ══ SLIDE 1 — PORTADA ══════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:12mm;height:12mm;background:#3ecf8e;border-radius:2.5mm;display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:900;color:#091a12">ON</div>
+    <div>
+      <div style="font-size:13pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+      <div style="font-size:7.5pt;color:#6b7280;margin-top:0.5mm">Reporte semanal de entregas</div>
+    </div>
+  </div>
+  <div style="font-size:32pt;font-weight:900;color:#f1f5f9;letter-spacing:-1px;margin-bottom:3mm">Regis</div>
+  <div style="font-size:10pt;font-weight:600;color:#3ecf8e;letter-spacing:1px;margin-bottom:8mm">24 – 28 DE JUNIO, 2026</div>
+  <div style="display:flex;align-items:center;gap:12mm;margin-bottom:8mm">
+    <div style="text-align:center">
+      <div style="font-size:44pt;font-weight:900;letter-spacing:-2px;color:#f1f5f9;line-height:1">365</div>
+      <div style="font-size:8.5pt;color:#9ca3af">prendas entregadas</div>
+    </div>
+    <div style="width:1px;height:20mm;background:#1e2431"></div>
+    <div style="display:flex;flex-direction:column;gap:3mm">
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Promedio diario</div>
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">73 prendas / día</div>
+      </div>
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Día pico</div>
+        <div style="font-size:14pt;font-weight:700;color:#f1f5f9">Vie 28 Jun — 105</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:4mm">
+    <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:3px 12px;font-size:8pt;color:#3ecf8e;font-weight:600">Ropa cama: 284</div>
+    <div style="background:#1a2744;border:1px solid #2d3f6e;border-radius:99px;padding:3px 12px;font-size:8pt;color:#60a5fa;font-weight:600">Toalla Baño: 81</div>
+  </div>
+  <div style="font-size:7pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Generado el 29 Jun 2026</div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>1 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 2 — DETALLE SEMANAL ═════════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Regis · Jun 24–28, 2026</div>
+    <div class="slide-title">Detalle semanal <span style="color:#3ecf8e;font-size:16pt">por artículo</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:6mm;flex:1;min-height:0">
+    <div style="display:flex;flex-direction:column">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th style="text-align:left">Artículo</th>
+            <th>Jun 24</th>
+            <th>Jun 28</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="art">Sábana</td><td class="prev">42</td><td class="curr">39</td><td class="curr">141</td></tr>
+          <tr><td class="art">Funda</td><td class="prev">34</td><td class="curr">46</td><td class="curr">137</td></tr>
+          <tr><td class="art">Toalla de Baño</td><td class="prev">23</td><td class="curr">20</td><td class="curr">81</td></tr>
+          <tr><td class="art">Cobertor</td><td class="prev">1</td><td class="curr" style="color:#4b5563">—</td><td class="curr">2</td></tr>
+          <tr><td class="art">Protector</td><td class="prev">2</td><td class="curr" style="color:#4b5563">—</td><td class="curr">4</td></tr>
+          <tr class="total"><td>Total</td><td>102</td><td>105</td><td>365</td></tr>
+        </tbody>
+      </table>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:4mm">
+        <div class="card" style="padding:3mm 4mm">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Ropa de cama</div>
+          <div style="font-size:16pt;font-weight:800;color:#3ecf8e">284</div>
+          <div style="font-size:6.5pt;color:#9ca3af">77.8% del total · Jun 24–28</div>
+        </div>
+        <div class="card" style="padding:3mm 4mm;border-color:#2d3f6e">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Toalla de Baño</div>
+          <div style="font-size:16pt;font-weight:800;color:#60a5fa">81</div>
+          <div style="font-size:6.5pt;color:#9ca3af">22.2% del total · Jun 24–28</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e44;border-radius:1px"></div><span style="font-size:6.5pt;color:#6b7280">Jun 24</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e;border-radius:1px"></div><span style="font-size:6.5pt;color:#9ca3af">Jun 28</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">prendas por artículo</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartCompare"></canvas></div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>2 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 3 — VOLUMEN POR ARTÍCULO ═══════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Regis · Tendencia 24–28 Jun 2026</div>
+    <div class="slide-title">Volumen diario <span style="color:#3ecf8e">por artículo</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 68mm;gap:7mm;flex:1;min-height:0">
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:4mm;flex-wrap:wrap;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#3ecf8e;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Sábana</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#60a5fa;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Funda</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#f59e0b;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Toalla Baño</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#64748b;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Otros</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">24 Jun → 28 Jun 2026</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartTrend"></canvas></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div class="card" style="margin-bottom:4mm">
+        <div style="font-size:6pt;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Totales diarios</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 4mm;font-size:6.5pt">
+          <span style="color:#6b7280">Lun 24 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">102</span>
+          <span style="color:#6b7280">Mar 25 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">50</span>
+          <span style="color:#6b7280">Mié 26 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">25</span>
+          <span style="color:#6b7280">Jue 27 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">83</span>
+          <span style="color:#3ecf8e;font-weight:700">Vie 28 Jun ●</span><span style="color:#3ecf8e;text-align:right;font-weight:800">105 ↑ pico</span>
+          <span style="color:#3ecf8e;font-weight:700;border-top:1px solid #1e2431;padding-top:1mm">Total semana</span><span style="color:#3ecf8e;text-align:right;font-weight:800;border-top:1px solid #1e2431;padding-top:1mm">365</span>
+        </div>
+      </div>
+      <div class="insight">
+        <div class="insight-title">Miércoles 26 — mínimo semanal</div>
+        <div class="insight-body">Solo 25 prendas entregadas el miércoles, apenas el 24.5% del promedio diario (73). Recuperación marcada los días siguientes: +232% el jueves.</div>
+      </div>
+      <div class="insight">
+        <div class="insight-title">Sábana y Funda: volumen equilibrado</div>
+        <div class="insight-body">141 sábanas vs 137 fundas — diferencia de solo 4 unidades. Patrón muy consistente que refleja un ratio de reposición 1:1.</div>
+      </div>
+      <div class="insight">
+        <div class="insight-title">Toalla de Baño: soporte constante</div>
+        <div class="insight-body">81 unidades (22.2%) con presencia todos los días. Flujo predecible sin variaciones extremas, señal de ocupación estable.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>3 / 3 · Semana 24–28 Jun 2026</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+new Chart(document.getElementById('chartCompare'), {
+  type: 'bar',
+  data: {
+    labels: ['Sábana', 'Funda', 'Toalla Baño', 'Cobertor', 'Protector'],
+    datasets: [
+      { label: 'Jun 24', data: [42, 34, 23, 1, 2], backgroundColor: '#3ecf8e33', borderColor: '#3ecf8e55', borderWidth: 1, borderRadius: 2 },
+      { label: 'Jun 28', data: [39, 46, 20, 0, 0], backgroundColor: '#3ecf8e',   borderColor: '#3ecf8e',   borderWidth: 1, borderRadius: 2 },
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7 }, color: '#6b7280', maxTicksLimit: 6 } },
+      y: { grid: { display: false }, ticks: { font: { size: 7 }, color: '#9ca3af' } },
+    }
+  }
+});
+
+new Chart(document.getElementById('chartTrend'), {
+  type: 'bar',
+  data: {
+    labels: ['24 Jun', '25 Jun', '26 Jun', '27 Jun', '28 Jun'],
+    datasets: [
+      { label: 'Sábana',     data: [42, 20,  7, 33, 39], backgroundColor: '#3ecf8e', borderRadius: 2 },
+      { label: 'Funda',      data: [34, 19,  9, 29, 46], backgroundColor: '#60a5fa', borderRadius: 2 },
+      { label: 'Toalla Baño',data: [23, 11,  7, 20, 20], backgroundColor: '#f59e0b', borderRadius: 2 },
+      { label: 'Otros',      data: [3,   0,  2,  1,  0], backgroundColor: '#64748b', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280' } },
+      y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 5 }, suggestedMax: 130 },
+    }
+  }
+});
+</script>
+</body>
+</html>

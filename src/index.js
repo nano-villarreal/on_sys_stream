@@ -1268,6 +1268,28 @@ webApp.post('/dashboard', async (req, res) => {
                 .limit(5)
                 .toArray();
 
+            // For manual-only clients (no RFID tags), derive stats from entrega collection
+            if (stats.totalItems === 0 && recentEntregas.length > 0) {
+                const sumArts = (arts) => Object.values(arts || {})
+                    .reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0);
+                const allEntregas = await mongoClient.db("on").collection("entrega")
+                    .find({ client: clientName }).toArray();
+                const totalPrendasEntregadas = allEntregas.reduce((s, e) => s + sumArts(e.articles), 0);
+                const artTotals = {};   // article → { qty, batches }
+                for (const e of allEntregas) {
+                    for (const [art, qty] of Object.entries(e.articles || {})) {
+                        if (!artTotals[art]) artTotals[art] = { qty: 0, batches: 0 };
+                        artTotals[art].qty += typeof qty === 'number' ? qty : 0;
+                        artTotals[art].batches += 1;
+                    }
+                }
+                stats = { totalItems: totalPrendasEntregadas, totalWashCount: totalPrendasEntregadas, damagedCount: 0 };
+                overallAverage = totalPrendasEntregadas > 0 ? '1.0' : '0';
+                articleAverages = Object.entries(artTotals)
+                    .map(([art, { qty, batches }]) => ({ _id: art, itemCount: qty, totalWashes: batches, avgWashes: batches }))
+                    .sort((a, b) => b.itemCount - a.itemCount);
+            }
+
         } catch (err) {
             console.error('Error en dashboard:', err);
             error = 'Error al consultar la base de datos.';
