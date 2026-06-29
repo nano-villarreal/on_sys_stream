@@ -1822,6 +1822,49 @@ webApp.get('/api/article-status', async (req, res) => {
 
         // Historical daily snapshots
         const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+        // Manual-only fallback: no RFID tags → build from entrega collection
+        if (articleSet.size === 0) {
+            const allEntregas = await db.collection('entrega')
+                .find({ client: clientName })
+                .sort({ date: 1 })
+                .toArray();
+
+            if (allEntregas.length > 0) {
+                for (const e of allEntregas) {
+                    for (const art of Object.keys(e.articles || {})) {
+                        articleSet.add(art);
+                        statusSet.add('Entregado');
+                    }
+                }
+                // current = latest entrega quantities
+                const latest = allEntregas[allEntregas.length - 1];
+                for (const [art, qty] of Object.entries(latest.articles || {})) {
+                    if (!current[art]) current[art] = {};
+                    current[art]['Entregado'] = typeof qty === 'number' ? qty : 0;
+                }
+                // history = one snapshot per entrega date (within window)
+                const byDate = {};
+                for (const e of allEntregas) {
+                    const date = new Date(e.date).toISOString().slice(0, 10);
+                    if (date < since) continue;
+                    if (!byDate[date]) byDate[date] = {};
+                    for (const [art, qty] of Object.entries(e.articles || {})) {
+                        if (!byDate[date][art]) byDate[date][art] = {};
+                        byDate[date][art]['Entregado'] = (byDate[date][art]['Entregado'] || 0) + (typeof qty === 'number' ? qty : 0);
+                    }
+                }
+                return res.json({
+                    articles: [...articleSet].sort(),
+                    statuses: ['Entregado'],
+                    current,
+                    history: Object.entries(byDate)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([date, snapshot]) => ({ date, snapshot }))
+                });
+            }
+        }
+
         const history = await db.collection('inventory_snapshots')
             .find({ client: clientName, date: { $gte: since } })
             .sort({ date: 1 }).toArray();
