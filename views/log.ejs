@@ -273,6 +273,13 @@
             color: var(--text-2); cursor: pointer; transition: all 0.15s;
         }
         .btn-cancel-edit:hover { color: var(--text); }
+        .btn-delete-event {
+            padding: 6px 14px; font-size: 12px; font-weight: 600;
+            background: none; border: 1px solid rgba(239,68,68,0.35); border-radius: 8px;
+            color: #ef4444; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-delete-event:hover { background: rgba(239,68,68,0.08); border-color: #ef4444; }
+        .btn-delete-event:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-edit-event {
             padding: 3px 9px; font-size: 10px; font-weight: 600;
             background: none; border: 1px solid var(--border); border-radius: 6px;
@@ -419,7 +426,7 @@
                          data-date="<%= new Date(event.date).toISOString().slice(0,10) %>"
                          data-id="<%= event._id %>"
                          data-type="<%= event.type %>"
-                         data-articles="<%- JSON.stringify(event.articles || {}) %>">
+                         data-articles="<%= JSON.stringify(event.articles || {}) %>">
                         <div class="event-main" onclick="toggleEPC(this)">
                             <div class="event-icon">
                                 <%= event.type === 'recoleccion' ? '↓' : '↑' %>
@@ -453,6 +460,7 @@
                             <div class="edit-rows"></div>
                             <div class="edit-footer">
                                 <button class="btn-add-art" onclick="addEditRow(this.closest('.edit-panel'))">+ Artículo</button>
+                                <button class="btn-delete-event" onclick="deleteEvent(this)">Borrar</button>
                                 <button class="btn-cancel-edit" onclick="closeEditPanel(this.closest('.edit-panel'))">Cancelar</button>
                                 <button class="btn-save-edit" onclick="saveEdit(this)">Guardar</button>
                             </div>
@@ -575,6 +583,24 @@
             alert('Error al guardar: ' + err.message);
             btn.disabled = false;
             btn.textContent = 'Guardar';
+        }
+    }
+
+    async function deleteEvent(btn) {
+        const eventEl = btn.closest('.event');
+        const id   = eventEl.dataset.id;
+        const type = eventEl.dataset.type;
+        if (!confirm('¿Seguro que quieres borrar este registro? Esta acción no se puede deshacer.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Borrando…';
+        try {
+            const r = await fetch(`/api/event/${type}/${id}`, { method: 'DELETE' });
+            if (!r.ok) throw new Error((await r.json()).error || 'Error del servidor');
+            eventEl.remove();
+        } catch (err) {
+            alert('Error al borrar: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Borrar';
         }
     }
 

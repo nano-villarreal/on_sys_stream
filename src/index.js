@@ -1523,6 +1523,37 @@ webApp.patch('/api/event/:collection/:id', async (req, res) => {
 });
 
 /**
+ * DELETE /api/event/:collection/:id
+ * Permanently removes a recoleccion or entrega document and pulls its reference from clientes.
+ */
+webApp.delete('/api/event/:collection/:id', async (req, res) => {
+    const { collection, id } = req.params;
+    if (!['recoleccion', 'entrega'].includes(collection)) {
+        return res.status(400).json({ error: 'Colección inválida' });
+    }
+    try {
+        const db  = mongoClient.db('on');
+        const oid = new ObjectId(id);
+
+        const doc = await db.collection(collection).findOne({ _id: oid });
+        if (!doc) return res.status(404).json({ error: 'Documento no encontrado' });
+
+        await db.collection(collection).deleteOne({ _id: oid });
+
+        const arrayField = collection === 'recoleccion' ? 'recolecciones' : 'entregas';
+        await db.collection('clientes').updateOne(
+            { name: doc.client },
+            { $pull: { [arrayField]: oid } }
+        );
+
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('DELETE /api/event error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * GET /api/analytics?client=X
  *
  * Returns aggregated analytics data used by Chart.js on the dashboard and bitácora pages.
