@@ -419,7 +419,9 @@ webApp.post('/api/recoleccion', async (req, res) => {
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
                 for (const epc of epcs) {
+                    if (!epc) continue;
                     const trimmedEpc = epc.trim();
+                    if (!trimmedEpc) continue;
                     EPCList.push(trimmedEpc);
 
                     const updatedTag = await Tags.findOneAndUpdate(
@@ -589,7 +591,9 @@ webApp.post('/api/entrega', async (req, res) => {
                 console.log(`  ${things_in[article]} ${article} (${epcs.length} EPCs escaneados)`);
 
                 for (const epc of epcs) {
+                    if (!epc) continue;
                     const trimmedEpc = epc.trim();
+                    if (!trimmedEpc) continue;
                     EPCList.push(trimmedEpc);
 
                     const updatedTag = await Tags.findOneAndUpdate(
@@ -823,6 +827,7 @@ webApp.post('/api/lookup', async (req, res) => {
             .toArray();
 
         const map = new Map(docs.map(d => [d.scanId, {
+            epc: d.scanId,
             found: true,
             client: d.client,
             article: d.article

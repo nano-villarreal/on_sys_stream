@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Mensual · Icon · Jun 1–29, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 landscape;margin:0}
+:root{--accent:#3ecf8e;--accent-dim:#3ecf8e22;--accent-border:#1f5c38;--accent-bg:#0d2b1c}
+body{font-family:'Inter',system-ui,sans-serif;background:#0e1117}
+.slide{width:297mm;height:210mm;page-break-after:always;page-break-inside:avoid;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0e1117;color:#e2e8f0}
+.slide:last-child{page-break-after:auto}
+.accent-bar{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent) 0%,#27ae74 60%,#1a6644 100%)}
+.foot{position:absolute;bottom:0;left:0;right:0;height:7mm;background:#0a0d11;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:7pt;color:#4b5563}
+.foot .brand{color:var(--accent);font-weight:600}
+.slide-label{font-size:7pt;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:2mm}
+.slide-title{font-size:20pt;font-weight:800;color:#f1f5f9;letter-spacing:-0.5px;line-height:1.1}
+.slide-head{margin-bottom:5mm}
+.card{background:#13181f;border:1px solid #1e2431;border-radius:3mm;padding:4mm 5mm}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 11px;font-size:7.5pt;font-weight:600;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
+
+/* comparison table */
+.cmp{width:100%;border-collapse:collapse;font-size:7.5pt}
+.cmp th{font-size:6pt;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#4b5563;padding:2mm 2.5mm;border-bottom:1px solid #1e2431;background:#0f141a;white-space:nowrap}
+.cmp th:not(:first-child){text-align:right}
+.cmp td{padding:1.8mm 2.5mm;border-bottom:1px solid #0a0e14;vertical-align:middle}
+.cmp td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.cmp .art{color:#cbd5e1;font-size:7pt}
+.cmp .prev{color:#6b7280;font-weight:500}
+.cmp .curr{color:#f1f5f9;font-weight:700}
+.cmp .up{color:#3ecf8e;font-weight:700}
+.cmp .dn{color:#ef4444;font-weight:700}
+.cmp .flat{color:#6b7280}
+.cmp tr.total td{background:#0d2b1c;color:#3ecf8e;font-weight:700;border-top:1px solid #1f5c38}
+.cmp tr:nth-child(even) td{background:#080b0f}
+
+/* insight cards */
+.insight{background:#0f141a;border-left:3px solid var(--accent);border-radius:0 2mm 2mm 0;padding:3mm 4mm;margin-bottom:3mm}
+.insight-title{font-size:7.5pt;font-weight:700;color:var(--accent);margin-bottom:1mm}
+.insight-body{font-size:7pt;color:#9ca3af;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- ══ SLIDE 1 — PORTADA ══════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;background:radial-gradient(ellipse 80% 60% at 50% 40%,#0d2b1c 0%,#0e1117 70%)">
+  <div class="accent-bar"></div>
+
+  <!-- ON logo -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12mm">
+    <div style="width:12mm;height:12mm;background:#3ecf8e;border-radius:2.5mm;display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:900;color:#091a12">ON</div>
+    <div>
+      <div style="font-size:13pt;font-weight:800;color:#e2e8f0">Sistema de Inventario</div>
+      <div style="font-size:7.5pt;color:#6b7280;margin-top:0.5mm">Reporte mensual de entregas</div>
+    </div>
+  </div>
+
+  <!-- Client name -->
+  <div style="font-size:32pt;font-weight:900;color:#f1f5f9;letter-spacing:-1px;margin-bottom:3mm">Icon</div>
+  <div style="font-size:10pt;font-weight:600;color:#3ecf8e;letter-spacing:1px;margin-bottom:8mm">1 – 29 DE JUNIO, 2026</div>
+
+  <!-- Hero KPIs -->
+  <div style="display:flex;align-items:center;gap:12mm;margin-bottom:8mm">
+    <div style="text-align:center">
+      <div style="font-size:44pt;font-weight:900;letter-spacing:-2px;color:#f1f5f9;line-height:1">9,279</div>
+      <div style="font-size:8.5pt;color:#9ca3af">prendas entregadas</div>
+    </div>
+    <div style="width:1px;height:20mm;background:#1e2431"></div>
+    <div style="display:flex;flex-direction:column;gap:3mm">
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Promedio por entrega</div>
+        <div style="font-size:18pt;font-weight:800;color:#3ecf8e">1,031 prendas / factura</div>
+      </div>
+      <div>
+        <div style="font-size:8pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Factura pico</div>
+        <div style="font-size:14pt;font-weight:700;color:#f1f5f9">1 Jun — 3,254</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category pills -->
+  <div style="display:flex;gap:4mm">
+    <div style="background:#0d2b1c;border:1px solid #1f5c38;border-radius:99px;padding:3px 12px;font-size:8pt;color:#3ecf8e;font-weight:600">Servilletas: 8,700</div>
+    <div style="background:#1a2744;border:1px solid #2d3f6e;border-radius:99px;padding:3px 12px;font-size:8pt;color:#60a5fa;font-weight:600">Manteles: 495</div>
+    <div style="background:#1a1120;border:1px solid #3d2d5e;border-radius:99px;padding:3px 12px;font-size:8pt;color:#a78bfa;font-weight:600">Varios: 84</div>
+  </div>
+
+  <div style="font-size:7pt;color:#4b5563;position:absolute;bottom:10mm;right:10mm">Generado el 29 Jun 2026 · 9 facturas</div>
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>1 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 2 — DETALLE MENSUAL ═════════════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Icon · Jun 1–29, 2026</div>
+    <div class="slide-title">Detalle mensual <span style="color:#3ecf8e;font-size:16pt">por artículo</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:6mm;flex:1;min-height:0">
+
+    <!-- Comparison table -->
+    <div style="display:flex;flex-direction:column">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th style="text-align:left">Artículo</th>
+            <th>1 Jun</th>
+            <th>22 Jun</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="art">Servilleta</td><td class="prev">3,053</td><td class="curr">834</td><td class="curr">8,700</td></tr>
+          <tr><td class="art">Mantel</td><td class="prev">162</td><td class="curr">7</td><td class="curr">449</td></tr>
+          <tr><td class="art">Mantel XL</td><td class="prev">19</td><td class="curr" style="color:#4b5563">—</td><td class="curr">46</td></tr>
+          <tr><td class="art">Molletón</td><td class="prev">11</td><td class="curr">3</td><td class="curr">56</td></tr>
+          <tr><td class="art">Otros</td><td class="prev">9</td><td class="curr">2</td><td class="curr">28</td></tr>
+          <tr class="total"><td>Total</td><td>3,254</td><td>846</td><td>9,279</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Category summary cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:4mm">
+        <div class="card" style="padding:3mm 4mm">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Servilletas</div>
+          <div style="font-size:16pt;font-weight:800;color:#3ecf8e">8,700</div>
+          <div style="font-size:6.5pt;color:#9ca3af">93.8% del total · Jun 1–29</div>
+        </div>
+        <div class="card" style="padding:3mm 4mm;border-color:#2d3f6e">
+          <div style="font-size:6pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1mm">Manteles (std + XL)</div>
+          <div style="font-size:16pt;font-weight:800;color:#60a5fa">495</div>
+          <div style="font-size:6.5pt;color:#9ca3af">5.3% del total · Jun 1–29</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grouped bar chart — 1 Jun vs 22 Jun per article -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:5mm;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e44;border-radius:1px"></div><span style="font-size:6.5pt;color:#6b7280">1 Jun</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:4px;background:#3ecf8e;border-radius:1px"></div><span style="font-size:6.5pt;color:#9ca3af">22 Jun</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">prendas por artículo</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartCompare"></canvas></div>
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>2 / 3</span></div>
+</div>
+
+<!-- ══ SLIDE 3 — VOLUMEN POR ARTÍCULO ═══════════════════════════════════ -->
+<div class="slide" style="padding:11mm 13mm 9mm">
+  <div class="accent-bar"></div>
+  <div class="slide-head">
+    <div class="slide-label">Icon · Tendencia 1–29 Jun 2026</div>
+    <div class="slide-title">Volumen por entrega <span style="color:#3ecf8e">por artículo</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 68mm;gap:7mm;flex:1;min-height:0">
+
+    <!-- Stacked bar chart by article per invoice date -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:4mm;flex-wrap:wrap;margin-bottom:3mm">
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#3ecf8e;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Servilleta</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#60a5fa;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Mantel</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#f59e0b;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Mantel XL</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#a78bfa;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Molletón</span></div>
+        <div style="display:flex;align-items:center;gap:2mm"><div style="width:10px;height:10px;background:#64748b;border-radius:2px"></div><span style="font-size:6pt;color:#9ca3af">Otros</span></div>
+        <div style="margin-left:auto;font-size:6pt;color:#4b5563">1 Jun → 22 Jun 2026 · 9 facturas</div>
+      </div>
+      <div style="position:relative;flex:1"><canvas id="chartTrend"></canvas></div>
+    </div>
+
+    <!-- Right panel: totals + insights -->
+    <div style="display:flex;flex-direction:column;gap:0">
+
+      <!-- Per-delivery mini table -->
+      <div class="card" style="margin-bottom:4mm">
+        <div style="font-size:6pt;color:#4b5563;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2mm">Totales por entrega</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1mm 4mm;font-size:6.5pt">
+          <span style="color:#f1f5f9;font-weight:700">1 Jun ●</span><span style="color:#3ecf8e;text-align:right;font-weight:800">3,254 ↑ pico</span>
+          <span style="color:#6b7280">3 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,525</span>
+          <span style="color:#6b7280">6 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">341</span>
+          <span style="color:#6b7280">11 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">501</span>
+          <span style="color:#6b7280">17 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,650</span>
+          <span style="color:#6b7280">18 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">134</span>
+          <span style="color:#6b7280">20 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">1,028</span>
+          <span style="color:#6b7280">22 Jun</span><span style="color:#e2e8f0;text-align:right;font-weight:600">846</span>
+          <span style="color:#3ecf8e;font-weight:700;border-top:1px solid #1e2431;padding-top:1mm">Total mes</span><span style="color:#3ecf8e;text-align:right;font-weight:800;border-top:1px solid #1e2431;padding-top:1mm">9,279</span>
+        </div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">1 Jun — factura pico (35.1%)</div>
+        <div class="insight-body">3,254 prendas en dos facturas simultáneas (INV-000502 + INV-000503). Un tercio del volumen mensual concentrado en un solo día.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Servilleta: 93.8% del flujo total</div>
+        <div class="insight-body">8,700 servilletas de 9,279 totales. Presente en las 9 entregas con volumen estable salvo el 18 jun (71 uds), entrega menor del período.</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">Manteles: flujo orientado a eventos</div>
+        <div class="insight-body">449 manteles estándar y 46 XL (495 total). Mayor concentración el 1 y 3 jun — patrones propios de montajes de gran escala.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot"><span class="brand">ON Sistema de Inventario</span><span>3 / 3 · Jun 1–29, 2026</span></div>
+</div>
+
+<script>
+Chart.defaults.animation = false;
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+
+// ── Slide 2 — Grouped horizontal bar: 1 Jun vs 22 Jun ──────────────────────
+new Chart(document.getElementById('chartCompare'), {
+  type: 'bar',
+  data: {
+    labels: ['Servilleta', 'Mantel', 'Mantel XL', 'Molletón', 'Otros'],
+    datasets: [
+      { label: '1 Jun',  data: [3053, 162, 19, 11, 9], backgroundColor: '#3ecf8e33', borderColor: '#3ecf8e55', borderWidth: 1, borderRadius: 2 },
+      { label: '22 Jun', data: [834,    7,  0,  3, 2], backgroundColor: '#3ecf8e',   borderColor: '#3ecf8e',   borderWidth: 1, borderRadius: 2 },
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 7 }, color: '#6b7280', maxTicksLimit: 6 } },
+      y: { grid: { display: false }, ticks: { font: { size: 7 }, color: '#9ca3af' } },
+    }
+  }
+});
+
+// ── Slide 3 — Stacked bar by article per invoice date ──────────────────────
+new Chart(document.getElementById('chartTrend'), {
+  type: 'bar',
+  data: {
+    labels: ['1 Jun', '3 Jun', '6 Jun', '11 Jun', '17 Jun', '18 Jun', '20 Jun', '22 Jun'],
+    datasets: [
+      { label: 'Servilleta', data: [3053, 1400, 334, 450, 1569, 71, 989, 834], backgroundColor: '#3ecf8e', borderRadius: 2 },
+      { label: 'Mantel',     data: [162,    95,   7,  24,   68, 56,  30,   7], backgroundColor: '#60a5fa', borderRadius: 2 },
+      { label: 'Mantel XL',  data: [19,      3,   0,   9,    6,  3,   6,   0], backgroundColor: '#f59e0b', borderRadius: 2 },
+      { label: 'Molletón',   data: [11,     10,   0,  18,    7,  4,   3,   3], backgroundColor: '#a78bfa', borderRadius: 2 },
+      { label: 'Otros',      data: [9,      17,   0,   0,    0,  0,   0,   2], backgroundColor: '#64748b', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280' } },
+      y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 8 }, color: '#6b7280', maxTicksLimit: 6 }, suggestedMax: 3500 },
+    }
+  }
+});
+</script>
+</body>
+</html>
