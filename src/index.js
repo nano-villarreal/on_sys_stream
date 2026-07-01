@@ -17,7 +17,7 @@
 // ── External packages ────────────────────────────────────────────────────────
 const express = require('express');
 const bodyParser = require('body-parser');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 require('dotenv').config();
 const uri = process.env.MONGO_LINK;
 var accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -1486,6 +1486,38 @@ webApp.get('/api/log', async (req, res) => {
         });
     } catch (err) {
         console.error('/api/log error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * PATCH /api/event/:collection/:id
+ * Update articles (and rfid_articles) on an existing recoleccion or entrega.
+ */
+webApp.patch('/api/event/:collection/:id', async (req, res) => {
+    const { collection, id } = req.params;
+    if (!['recoleccion', 'entrega'].includes(collection)) {
+        return res.status(400).json({ error: 'Colección inválida' });
+    }
+    const articles = req.body.articles;
+    if (!articles || typeof articles !== 'object' || Array.isArray(articles)) {
+        return res.status(400).json({ error: 'articles requerido' });
+    }
+    // Sanitize: only numeric quantities, drop zeroes
+    const clean = {};
+    for (const [art, qty] of Object.entries(articles)) {
+        const n = Number(qty);
+        if (art.trim() && Number.isFinite(n) && n > 0) clean[art.trim()] = n;
+    }
+    try {
+        const result = await mongoClient.db('on').collection(collection).updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { articles: clean, rfid_articles: clean, manual: true } }
+        );
+        if (result.matchedCount === 0) return res.status(404).json({ error: 'Documento no encontrado' });
+        res.json({ ok: true, articles: clean });
+    } catch (err) {
+        console.error('PATCH /api/event error:', err);
         res.status(500).json({ error: err.message });
     }
 });

@@ -226,6 +226,60 @@
         }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ── Inline edit panel ── */
+        .edit-panel {
+            display: none; padding: 14px 20px 16px 72px;
+            border-top: 1px solid var(--border); background: rgba(22,27,34,0.6);
+        }
+        .edit-panel.open { display: block; }
+        .edit-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+        .edit-row {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .edit-art-name {
+            flex: 1; padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+        }
+        .edit-art-name:focus { outline: none; border-color: rgba(62,207,142,0.35); }
+        .edit-art-name[readonly] { color: var(--text-2); cursor: default; }
+        .edit-qty {
+            width: 80px; padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px;
+            text-align: right;
+        }
+        .edit-qty:focus { outline: none; border-color: rgba(62,207,142,0.35); }
+        .edit-del {
+            background: none; border: none; color: var(--text-3); cursor: pointer;
+            font-size: 16px; padding: 2px 4px; border-radius: 4px; transition: color 0.15s;
+        }
+        .edit-del:hover { color: #ef4444; }
+        .edit-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn-add-art {
+            padding: 5px 12px; font-size: 11px; font-weight: 600;
+            background: none; border: 1px dashed var(--border); border-radius: 8px;
+            color: var(--text-3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-add-art:hover { border-color: var(--green); color: var(--green); }
+        .btn-save-edit {
+            padding: 6px 16px; font-size: 12px; font-weight: 700;
+            background: var(--green); color: #091a12; border: none; border-radius: 8px;
+            cursor: pointer; transition: background 0.15s; margin-left: auto;
+        }
+        .btn-save-edit:hover { background: #4ddfaa; }
+        .btn-save-edit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-cancel-edit {
+            padding: 6px 14px; font-size: 12px; font-weight: 600;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-2); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-cancel-edit:hover { color: var(--text); }
+        .btn-edit-event {
+            padding: 3px 9px; font-size: 10px; font-weight: 600;
+            background: none; border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-3); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .btn-edit-event:hover { border-color: rgba(62,207,142,0.35); color: var(--green); }
+
         /* ── PDF Panel ── */
         .pdf-date-row {
             display: none; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -361,7 +415,11 @@
 
                 <div class="timeline" id="timeline">
                     <% allEvents.forEach(event => { %>
-                    <div class="event <%= event.type %>" data-date="<%= new Date(event.date).toISOString().slice(0,10) %>">
+                    <div class="event <%= event.type %>"
+                         data-date="<%= new Date(event.date).toISOString().slice(0,10) %>"
+                         data-id="<%= event._id %>"
+                         data-type="<%= event.type %>"
+                         data-articles="<%- JSON.stringify(event.articles || {}) %>">
                         <div class="event-main" onclick="toggleEPC(this)">
                             <div class="event-icon">
                                 <%= event.type === 'recoleccion' ? '↓' : '↑' %>
@@ -379,6 +437,7 @@
                                         <% if (event.EPCs && event.EPCs.length > 0) { %>
                                         <span class="event-toggle"><%= event.EPCs.length %> EPCs ▾</span>
                                         <% } %>
+                                        <button class="btn-edit-event" onclick="openEditPanel(event, this)">✏ Editar</button>
                                     </div>
                                 </div>
                                 <div class="event-articles">
@@ -388,6 +447,14 @@
                                     </span>
                                     <% }) %>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="edit-panel">
+                            <div class="edit-rows"></div>
+                            <div class="edit-footer">
+                                <button class="btn-add-art" onclick="addEditRow(this.closest('.edit-panel'))">+ Artículo</button>
+                                <button class="btn-cancel-edit" onclick="closeEditPanel(this.closest('.edit-panel'))">Cancelar</button>
+                                <button class="btn-save-edit" onclick="saveEdit(this)">Guardar</button>
                             </div>
                         </div>
                         <% if (event.EPCs && event.EPCs.length > 0) { %>
@@ -426,6 +493,89 @@
         const panel = mainEl.closest('.event').querySelector('.epc-panel');
         if (!panel) return;
         panel.classList.toggle('open');
+    }
+
+    // ── Inline edit ──────────────────────────────────────────────────────────
+    function openEditPanel(e, btn) {
+        e.stopPropagation();
+        const eventEl   = btn.closest('.event');
+        const editPanel = eventEl.querySelector('.edit-panel');
+        if (editPanel.classList.contains('open')) { closeEditPanel(editPanel); return; }
+
+        const articles = JSON.parse(eventEl.dataset.articles || '{}');
+        const rowsEl   = editPanel.querySelector('.edit-rows');
+        rowsEl.innerHTML = '';
+
+        for (const [art, qty] of Object.entries(articles)) {
+            rowsEl.appendChild(makeEditRow(art, qty, true));
+        }
+        editPanel.classList.add('open');
+        editPanel.querySelector('.edit-rows input.edit-qty')?.focus();
+    }
+
+    function closeEditPanel(panel) {
+        panel.classList.remove('open');
+        panel.querySelector('.edit-rows').innerHTML = '';
+    }
+
+    function makeEditRow(artName, qty, readonly) {
+        const row = document.createElement('div');
+        row.className = 'edit-row';
+        row.innerHTML = `
+            <input class="edit-art-name" type="text" value="${artName.replace(/"/g,'&quot;')}" ${readonly ? 'readonly' : 'placeholder="Artículo"'}>
+            <input class="edit-qty" type="number" min="0" value="${qty}">
+            <button class="edit-del" title="Eliminar" onclick="this.closest('.edit-row').remove()">×</button>
+        `;
+        return row;
+    }
+
+    function addEditRow(panel) {
+        const rowsEl = panel.querySelector('.edit-rows');
+        const row = makeEditRow('', '', false);
+        rowsEl.appendChild(row);
+        row.querySelector('.edit-art-name').focus();
+    }
+
+    async function saveEdit(btn) {
+        const panel   = btn.closest('.edit-panel');
+        const eventEl = panel.closest('.event');
+        const id      = eventEl.dataset.id;
+        const col     = eventEl.dataset.type;
+
+        const articles = {};
+        panel.querySelectorAll('.edit-row').forEach(row => {
+            const name = row.querySelector('.edit-art-name').value.trim();
+            const qty  = Number(row.querySelector('.edit-qty').value);
+            if (name && qty > 0) articles[name] = qty;
+        });
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando…';
+
+        try {
+            const r = await fetch(`/api/event/${col}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articles })
+            });
+            if (!r.ok) throw new Error((await r.json()).error || 'Error');
+            const { articles: saved } = await r.json();
+
+            // Update the data attribute
+            eventEl.dataset.articles = JSON.stringify(saved);
+
+            // Re-render article pills
+            const pillsEl = eventEl.querySelector('.event-articles');
+            pillsEl.innerHTML = Object.entries(saved)
+                .map(([a, c]) => `<span class="article-pill"><strong style="color:var(--text)">${c}</strong> ${a}</span>`)
+                .join('');
+
+            closeEditPanel(panel);
+        } catch (err) {
+            alert('Error al guardar: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Guardar';
+        }
     }
 
     // ── Date range filter ────────────────────────────────────────────────────
